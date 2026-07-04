@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<title>Mein Tag</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Mein Tag">
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --muted: #8a8a8a;
+    --blue: #4a9eff;
+    --green: #34c759;
+    --red: #ff453a;
+    --gold: #ffd60a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    min-height: 100vh;
+  }
+  .app { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  nav {
+    display: flex; gap: 8px; margin: 24px 0;
+    border-bottom: 1px solid var(--border); padding-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  nav button {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 16px; border-radius: 20px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .15s;
+  }
+  nav button.active[data-tab="todo"]  { color: var(--green); border-color: var(--green); }
+  nav button.active[data-tab="daily"] { color: var(--blue);  border-color: var(--blue); }
+  nav button.active[data-tab="avoid"] { color: var(--red);   border-color: var(--red); }
+  nav button.active[data-tab="know"]  { color: var(--gold);  border-color: var(--gold); }
+  nav button:hover { color: var(--text); }
+
+  .tab { display: none; }
+  .tab.visible { display: block; }
+
+  .add-form {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; margin-bottom: 20px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .add-form .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .add-form input {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 10px 12px;
+    font-size: 14px; font-family: inherit; flex: 1; min-width: 120px;
+  }
+  .add-form input:focus { outline: none; border-color: var(--muted); }
+  .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+  .add-form label input { width: 100%; }
+  .add-form input[type="date"], .add-form input[type="time"] { color-scheme: dark; }
+  .add-form button {
+    border: none; border-radius: 8px; padding: 10px 18px;
+    font-size: 14px; font-weight: 700; cursor: pointer; color: #000;
+    align-self: flex-start;
+  }
+  #tab-todo .add-form button  { background: var(--green); }
+  #tab-daily .add-form button { background: var(--blue); }
+  #tab-avoid .add-form button { background: var(--red); }
+  #tab-know .add-form button  { background: var(--gold); }
+
+  ul.items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  li.item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; display: flex;
+    align-items: flex-start; gap: 12px;
+  }
+  #tab-todo  li.item { border-left: 3px solid var(--green); }
+  #tab-daily li.item { border-left: 3px solid var(--blue); }
+  #tab-avoid li.item { border-left: 3px solid var(--red); }
+  #tab-know  li.item { border-left: 3px solid var(--gold); flex-direction: column; }
+
+  .item .body { flex: 1; }
+  .item .title { font-size: 15px; font-weight: 600; }
+  .item .meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .item.done .title { text-decoration: line-through; color: var(--muted); }
+  .item .meta .overdue { color: var(--red); font-weight: 700; }
+
+  .check {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--muted); background: transparent;
+    cursor: pointer; flex-shrink: 0; margin-top: 2px;
+    font-size: 13px; line-height: 1; color: #000;
+  }
+  #tab-todo .item.done .check   { background: var(--green); border-color: var(--green); }
+  #tab-daily .item.today .check { background: var(--blue); border-color: var(--blue); }
+
+  .streak { font-size: 13px; font-weight: 700; }
+  #tab-daily .streak { color: var(--blue); }
+  #tab-avoid .streak { color: var(--red); }
+
+  .small-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 8px; padding: 6px 10px;
+    font-size: 12px; cursor: pointer; flex-shrink: 0;
+  }
+  .small-btn:hover { color: var(--text); }
+  .small-btn.danger:hover { color: var(--red); border-color: var(--red); }
+
+  .know-q { font-size: 15px; font-weight: 600; color: var(--gold); }
+  .know-a { font-size: 14px; line-height: 1.55; margin-top: 8px; white-space: pre-wrap; }
+  .know-a.empty { color: var(--muted); font-style: italic; }
+  .know-head { display: flex; align-items: flex-start; gap: 12px; width: 100%; }
+  .know-head .body { flex: 1; }
+  .know-edit {
+    width: 100%; margin-top: 8px; background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 10px; font-size: 14px;
+    font-family: inherit; min-height: 80px; resize: vertical;
+  }
+  .empty-state { color: var(--muted); font-size: 14px; text-align: center; padding: 30px 0; }
+  .hint { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+
+  footer {
+    margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  footer summary { font-size: 13px; color: var(--muted); cursor: pointer; }
+  footer .settings-body { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+  footer .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  footer input[type="password"] {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 8px 12px;
+    font-size: 13px; flex: 1; min-width: 200px; font-family: inherit;
+  }
+  footer .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .usage-badge { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .usage-badge b { color: var(--gold); font-weight: 700; }
+
+  .know-cost { font-size: 11px; color: var(--muted); }
+  .ask-btn {
+    background: var(--gold); border: none; color: #000;
+    border-radius: 8px; padding: 6px 12px; font-size: 12px;
+    font-weight: 700; cursor: pointer; flex-shrink: 0;
+  }
+  .ask-btn:disabled { opacity: .5; cursor: wait; }
+
+  /* Antwort-Overlay (großansicht) */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; z-index: 100;
+  }
+  .modal {
+    background: var(--surface); border: 1px solid var(--gold);
+    border-radius: 16px; max-width: 760px; width: 100%;
+    max-height: 85vh; display: flex; flex-direction: column;
+    padding: 24px;
+  }
+  .modal h2 { font-size: 20px; color: var(--gold); margin-bottom: 4px; }
+  .modal .modal-meta { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .modal .modal-answer {
+    font-size: 17px; line-height: 1.7; overflow-y: auto;
+    white-space: pre-wrap; flex: 1; padding-right: 6px;
+  }
+  .modal .modal-answer.empty { color: var(--muted); font-style: italic; }
+  .modal .modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .modal textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 12px; font-size: 16px;
+    font-family: inherit; min-height: 200px; resize: vertical; flex: 1;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Mein Tag</h1>
+    <p id="dateline"></p>
+    <p class="usage-badge">KI-Verbrauch insgesamt: <b id="usage-total">$0.0000</b></p>
+  </header>
+
+  <nav>
+    <button data-tab="todo" class="active">To-Do</button>
+    <button data-tab="daily">Täglich</button>
+    <button data-tab="avoid">Vermeiden</button>
+    <button data-tab="know">Wissen</button>
+  </nav>
+
+  <!-- TO-DO -->
+  <section class="tab visible" id="tab-todo">
+    <form class="add-form" id="form-todo">
+      <input type="text" id="todo-title" placeholder="Was willst du erledigen?" required>
+      <div class="row">
+        <label>Tag <input type="date" id="todo-day"></label>
+        <label>Uhrzeit <input type="time" id="todo-time"></label>
+        <label>Deadline <input type="date" id="todo-deadline"></label>
+      </div>
+      <button type="submit">Hinzufügen</button>
+    </form>
+    <ul class="items" id="list-todo"></ul>
+  </section>
+
+  <!-- TÄGLICH -->
+  <section class="tab" id="tab-daily">
+    <p class="hint">Hake jeden Tag ab, was du geschafft hast – die Serie zählt, wie viele Tage in Folge du dranbleibst. Lässt du einen Tag aus, startet sie wieder bei 0.</p>
+    <form class="add-form" id="form-daily">
+      <input type="text" id="daily-title" placeholder="Was willst du jeden Tag machen? (z.B. 20 Min lesen)" required>
+      <button type="submit">Hinzufügen</button>
+    </form>
+    <ul class="items" id="list-daily"></ul>
+  </section>
+
+  <!-- VERMEIDEN -->
+  <section class="tab" id="tab-avoid">
+    <p class="hint">Der Zähler läuft automatisch hoch. Wenn du rückfällig wirst, drücke „Rückfall“ – dann startet er neu bei 0.</p>
+    <form class="add-form" id="form-avoid">
+      <input type="text" id="avoid-title" placeholder="Was willst du dir abgewöhnen?" required>
+      <button type="submit">Hinzufügen</button>
+    </form>
+    <ul class="items" id="list-avoid"></ul>
+  </section>
+
+  <!-- WISSEN -->
+  <section class="tab" id="tab-know">
+    <p class="hint">Notiere Fragen oder füge einen Website-Link ein – Claude beantwortet sie direkt (dafür muss unten in den Einstellungen dein API-Schlüssel eingetragen sein). Klicke auf eine Frage, um die Antwort groß zu lesen.</p>
+    <form class="add-form" id="form-know">
+      <input type="text" id="know-title" placeholder="Frage oder Website-Link, z.B. https://..." required>
+      <button type="submit">Hinzufügen</button>
+    </form>
+    <ul class="items" id="list-know"></ul>
+  </section>
+
+  <footer>
+    <details>
+      <summary>⚙️ Einstellungen</summary>
+      <div class="settings-body">
+        <div class="settings-row">
+          <input type="password" id="api-key" placeholder="Anthropic API-Schlüssel (sk-ant-...)">
+          <button class="small-btn" id="btn-save-key">Speichern</button>
+          <span id="key-status" class="note"></span>
+        </div>
+        <p class="note">Der Schlüssel wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin. Denk an dein Ausgabenlimit im Anthropic-Konto!</p>
+        <div class="settings-row">
+          <button class="small-btn" id="btn-export">Daten kopieren (Backup)</button>
+          <button class="small-btn" id="btn-import">Daten einfügen (Import)</button>
+        </div>
+      </div>
+    </details>
+  </footer>
+</div>
+
+<script>
+const STORE_KEY = "meinTagData";
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch { return {}; }
+}
+const data = Object.assign({ todos: [], dailies: [], avoids: [], knows: [], usage: { input: 0, output: 0, cost: 0 } }, load());
+if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function isoDate(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function todayStr() { return isoDate(new Date()); }
+function yesterdayStr() {
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  return isoDate(d);
+}
+function fmtDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return d + "." + m + "." + y;
+}
+function daysSince(ts) {
+  return Math.max(0, Math.floor((Date.now() - ts) / 86400000));
+}
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* ---------- Kopfzeile ---------- */
+document.getElementById("dateline").textContent =
+  new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll("nav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("visible"));
+    document.getElementById("tab-" + btn.dataset.tab).classList.add("visible");
+  });
+});
+
+/* ---------- To-Do ---------- */
+document.getElementById("form-todo").addEventListener("submit", e => {
+  e.preventDefault();
+  data.todos.push({
+    id: uid(),
+    title: document.getElementById("todo-title").value.trim(),
+    day: document.getElementById("todo-day").value,
+    time: document.getElementById("todo-time").value,
+    deadline: document.getElementById("todo-deadline").value,
+    done: false
+  });
+  save(); e.target.reset(); renderTodos();
+});
+
+function renderTodos() {
+  const ul = document.getElementById("list-todo");
+  ul.innerHTML = "";
+  if (!data.todos.length) { ul.innerHTML = '<div class="empty-state">Noch keine Aufgaben – trag oben deine erste ein.</div>'; return; }
+  const sorted = [...data.todos].sort((a, b) => (a.done - b.done) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+  for (const t of sorted) {
+    const li = document.createElement("li");
+    li.className = "item" + (t.done ? " done" : "");
+    const overdue = !t.done && t.deadline && t.deadline < todayStr();
+    li.innerHTML = `
+      <button class="check" title="Erledigt">${t.done ? "✓" : ""}</button>
+      <div class="body">
+        <div class="title">${esc(t.title)}</div>
+        <div class="meta">
+          ${t.day ? "<span>📅 " + fmtDate(t.day) + "</span>" : ""}
+          ${t.time ? "<span>🕐 " + t.time + " Uhr</span>" : ""}
+          ${t.deadline ? '<span class="' + (overdue ? "overdue" : "") + '">⏳ Deadline: ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span>" : ""}
+        </div>
+      </div>
+      <button class="small-btn danger" title="Löschen">✕</button>`;
+    li.querySelector(".check").addEventListener("click", () => { t.done = !t.done; save(); renderTodos(); });
+    li.querySelector(".small-btn").addEventListener("click", () => {
+      data.todos = data.todos.filter(x => x.id !== t.id); save(); renderTodos();
+    });
+    ul.appendChild(li);
+  }
+}
+
+/* ---------- Tägliche Gewohnheiten ---------- */
+document.getElementById("form-daily").addEventListener("submit", e => {
+  e.preventDefault();
+  data.dailies.push({
+    id: uid(),
+    title: document.getElementById("daily-title").value.trim(),
+    streak: 0,
+    lastDone: null,
+    prevStreak: 0,
+    prevLastDone: null
+  });
+  save(); e.target.reset(); renderDailies();
+});
+
+function renderDailies() {
+  const ul = document.getElementById("list-daily");
+  ul.innerHTML = "";
+  if (!data.dailies.length) { ul.innerHTML = '<div class="empty-state">Noch keine täglichen Gewohnheiten.</div>'; return; }
+  const today = todayStr(), yest = yesterdayStr();
+  for (const h of data.dailies) {
+    // Serie zählt nur, wenn zuletzt heute oder gestern abgehakt wurde
+    const effectiveStreak = (h.lastDone === today || h.lastDone === yest) ? h.streak : 0;
+    const doneToday = h.lastDone === today;
+    const li = document.createElement("li");
+    li.className = "item" + (doneToday ? " today" : "");
+    li.innerHTML = `
+      <button class="check" title="Heute erledigt">${doneToday ? "✓" : ""}</button>
+      <div class="body">
+        <div class="title">${esc(h.title)}</div>
+        <div class="meta">
+          <span class="streak">🔥 ${effectiveStreak} Tag${effectiveStreak === 1 ? "" : "e"} in Folge</span>
+          ${doneToday ? "<span>Heute erledigt ✓</span>" : "<span>Heute noch offen</span>"}
+        </div>
+      </div>
+      <button class="small-btn danger" title="Löschen">✕</button>`;
+    li.querySelector(".check").addEventListener("click", () => {
+      if (h.lastDone === today) {
+        // Abhaken von heute rückgängig machen
+        h.streak = h.prevStreak;
+        h.lastDone = h.prevLastDone;
+      } else {
+        h.prevStreak = h.streak;
+        h.prevLastDone = h.lastDone;
+        h.streak = (h.lastDone === yest) ? h.streak + 1 : 1;
+        h.lastDone = today;
+      }
+      save(); renderDailies();
+    });
+    li.querySelector(".small-btn").addEventListener("click", () => {
+      if (confirm("„" + h.title + "“ wirklich löschen?")) {
+        data.dailies = data.dailies.filter(x => x.id !== h.id); save(); renderDailies();
+      }
+    });
+    ul.appendChild(li);
+  }
+}
+
+/* ---------- Vermeiden ---------- */
+document.getElementById("form-avoid").addEventListener("submit", e => {
+  e.preventDefault();
+  data.avoids.push({
+    id: uid(),
+    title: document.getElementById("avoid-title").value.trim(),
+    since: Date.now()
+  });
+  save(); e.target.reset(); renderAvoids();
+});
+
+function renderAvoids() {
+  const ul = document.getElementById("list-avoid");
+  ul.innerHTML = "";
+  if (!data.avoids.length) { ul.innerHTML = '<div class="empty-state">Noch nichts eingetragen.</div>'; return; }
+  for (const a of data.avoids) {
+    const days = daysSince(a.since);
+    const li = document.createElement("li");
+    li.className = "item";
+    li.innerHTML = `
+      <div class="body">
+        <div class="title">${esc(a.title)}</div>
+        <div class="meta">
+          <span class="streak">🛡 ${days} Tag${days === 1 ? "" : "e"} ohne</span>
+          <span>seit ${new Date(a.since).toLocaleDateString("de-DE")}</span>
+        </div>
+      </div>
+      <button class="small-btn" title="Zähler zurücksetzen">Rückfall</button>
+      <button class="small-btn danger" title="Löschen">✕</button>`;
+    const [relapseBtn, delBtn] = li.querySelectorAll(".small-btn");
+    relapseBtn.addEventListener("click", () => {
+      if (confirm("Rückfall bei „" + a.title + "“? Der Zähler startet neu bei 0.")) {
+        a.since = Date.now(); save(); renderAvoids();
+      }
+    });
+    delBtn.addEventListener("click", () => {
+      if (confirm("„" + a.title + "“ wirklich löschen?")) {
+        data.avoids = data.avoids.filter(x => x.id !== a.id); save(); renderAvoids();
+      }
+    });
+    ul.appendChild(li);
+  }
+}
+
+/* ---------- API-Schlüssel & Verbrauch ---------- */
+const KEY_STORE = "meinTagApiKey";
+function getApiKey() { return localStorage.getItem(KEY_STORE) || ""; }
+
+function renderKeyStatus() {
+  const status = document.getElementById("key-status");
+  status.textContent = getApiKey() ? "✓ Schlüssel gespeichert" : "Noch kein Schlüssel eingetragen";
+}
+document.getElementById("api-key").value = getApiKey();
+renderKeyStatus();
+
+document.getElementById("btn-save-key").addEventListener("click", () => {
+  const val = document.getElementById("api-key").value.trim();
+  if (val) localStorage.setItem(KEY_STORE, val);
+  else localStorage.removeItem(KEY_STORE);
+  renderKeyStatus();
+  alert(val ? "Schlüssel gespeichert!" : "Schlüssel entfernt.");
+});
+
+// Preise für claude-opus-4-8 in US-Dollar pro 1 Mio. Tokens
+const PRICE = { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 };
+function usdCost(u) {
+  return (u.input_tokens || 0) * PRICE.input / 1e6
+       + (u.output_tokens || 0) * PRICE.output / 1e6
+       + (u.cache_creation_input_tokens || 0) * PRICE.cacheWrite / 1e6
+       + (u.cache_read_input_tokens || 0) * PRICE.cacheRead / 1e6;
+}
+function fmtCost(c) { return "$" + c.toFixed(4); }
+function renderUsage() {
+  document.getElementById("usage-total").textContent =
+    fmtCost(data.usage.cost) + " (" + data.usage.input + " Tokens rein / " + data.usage.output + " raus)";
+}
+
+/* ---------- Claude fragen ---------- */
+async function askClaude(k) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    alert("Bitte trage zuerst unten in den Einstellungen deinen API-Schlüssel ein.");
+    return;
+  }
+  k.loading = true;
+  renderKnows();
+  try {
+    const messages = [{ role: "user", content: k.question }];
+    let questionCost = 0, questionIn = 0, questionOut = 0;
+    let response = null;
+
+    // Schleife für pause_turn (Server-Tools wie web_fetch können pausieren)
+    for (let i = 0; i < 6; i++) {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-opus-4-8",
+          max_tokens: 4096,
+          system: "Du bist der Wissens-Assistent in einer persönlichen Tagesplaner-App. Beantworte Fragen auf Deutsch: klar, korrekt und gut verständlich, gerne mit einem Beispiel. Wenn die Frage einen Website-Link enthält, rufe die Seite mit web_fetch ab und werte sie aus (Zusammenfassung, wichtigste Punkte). Halte dich angenehm kompakt.",
+          messages,
+          tools: [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 5 }]
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        const msg = body?.error?.message || res.statusText;
+        if (res.status === 401) throw new Error("Der API-Schlüssel wurde nicht akzeptiert. Prüfe ihn in den Einstellungen.");
+        throw new Error(msg);
+      }
+      questionCost += usdCost(body.usage || {});
+      questionIn += body.usage?.input_tokens || 0;
+      questionOut += body.usage?.output_tokens || 0;
+      response = body;
+      if (body.stop_reason === "pause_turn") {
+        messages.push({ role: "assistant", content: body.content });
+        continue;
+      }
+      break;
+    }
+
+    if (response.stop_reason === "refusal") {
+      throw new Error("Claude hat diese Anfrage aus Sicherheitsgründen abgelehnt.");
+    }
+    const text = (response.content || [])
+      .filter(b => b.type === "text")
+      .map(b => b.text)
+      .join("\n")
+      .trim();
+    if (!text) throw new Error("Es kam keine Text-Antwort zurück. Versuche es noch einmal.");
+
+    k.answer = text;
+    k.cost = (k.cost || 0) + questionCost;
+    data.usage.cost += questionCost;
+    data.usage.input += questionIn;
+    data.usage.output += questionOut;
+  } catch (err) {
+    alert("Das hat nicht geklappt: " + err.message);
+  } finally {
+    k.loading = false;
+    save(); renderKnows(); renderUsage();
+  }
+}
+
+/* ---------- Antwort-Overlay (Großansicht) ---------- */
+function openModal(k) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <h2>${esc(k.question)}</h2>
+    <div class="modal-meta">${k.cost ? "Kosten dieser Antwort: " + fmtCost(k.cost) : ""}</div>
+    <div class="modal-answer ${k.answer ? "" : "empty"}">${k.answer ? esc(k.answer) : "Noch keine Antwort. Drücke „Claude fragen“."}</div>
+    <div class="modal-actions">
+      <button class="ask-btn" data-act="ask">${k.answer ? "Neu beantworten" : "Claude fragen"}</button>
+      <button class="small-btn" data-act="edit">Selbst bearbeiten</button>
+      <button class="small-btn" data-act="close">Schließen</button>
+    </div>`;
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  const close = () => backdrop.remove();
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  modal.querySelector('[data-act="close"]').addEventListener("click", close);
+  modal.querySelector('[data-act="ask"]').addEventListener("click", async ev => {
+    ev.target.disabled = true;
+    ev.target.textContent = "Claude denkt nach…";
+    await askClaude(k);
+    close();
+    openModal(k);
+  });
+  modal.querySelector('[data-act="edit"]').addEventListener("click", () => {
+    const answerDiv = modal.querySelector(".modal-answer");
+    if (!answerDiv) return;
+    const ta = document.createElement("textarea");
+    ta.value = k.answer;
+    answerDiv.replaceWith(ta);
+    const editBtn = modal.querySelector('[data-act="edit"]');
+    editBtn.textContent = "Speichern";
+    editBtn.onclick = () => {
+      k.answer = ta.value.trim();
+      save(); renderKnows();
+      close(); openModal(k);
+    };
+    ta.focus();
+  });
+}
+
+/* ---------- Wissen ---------- */
+document.getElementById("form-know").addEventListener("submit", e => {
+  e.preventDefault();
+  const k = {
+    id: uid(),
+    question: document.getElementById("know-title").value.trim(),
+    answer: "",
+    cost: 0
+  };
+  data.knows.push(k);
+  save(); e.target.reset(); renderKnows();
+  askClaude(k);
+});
+
+function renderKnows() {
+  const ul = document.getElementById("list-know");
+  ul.innerHTML = "";
+  if (!data.knows.length) { ul.innerHTML = '<div class="empty-state">Noch keine Fragen notiert.</div>'; return; }
+  for (const k of data.knows) {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.style.cursor = "pointer";
+    const preview = k.loading
+      ? "Claude denkt nach…"
+      : (k.answer ? k.answer.slice(0, 140) + (k.answer.length > 140 ? "…" : "") : "Noch keine Antwort.");
+    li.innerHTML = `
+      <div class="know-head">
+        <div class="body">
+          <div class="know-q">${esc(k.question)}</div>
+          <div class="know-a ${k.answer && !k.loading ? "" : "empty"}">${esc(preview)}</div>
+          ${k.cost ? '<div class="know-cost">Kosten: ' + fmtCost(k.cost) + "</div>" : ""}
+        </div>
+        <button class="ask-btn" ${k.loading ? "disabled" : ""}>${k.loading ? "…" : (k.answer ? "Neu fragen" : "Fragen")}</button>
+        <button class="small-btn danger" title="Löschen">✕</button>
+      </div>`;
+    li.querySelector(".ask-btn").addEventListener("click", e => {
+      e.stopPropagation();
+      askClaude(k);
+    });
+    li.querySelector(".small-btn.danger").addEventListener("click", e => {
+      e.stopPropagation();
+      if (confirm("Frage wirklich löschen?")) {
+        data.knows = data.knows.filter(x => x.id !== k.id); save(); renderKnows();
+      }
+    });
+    li.addEventListener("click", () => openModal(k));
+    ul.appendChild(li);
+  }
+}
+
+/* ---------- Export / Import ---------- */
+document.getElementById("btn-export").addEventListener("click", async () => {
+  const text = JSON.stringify(data, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Alle Daten wurden kopiert! Du kannst sie jetzt einfügen (z.B. im Chat mit Claude).");
+  } catch {
+    prompt("Kopieren nicht möglich – markiere den Text und kopiere ihn selbst:", text);
+  }
+});
+
+document.getElementById("btn-import").addEventListener("click", () => {
+  const text = prompt("Füge hier deine exportierten Daten ein:");
+  if (!text) return;
+  try {
+    const imported = JSON.parse(text);
+    if (!imported || typeof imported !== "object") throw new Error();
+    data.todos = imported.todos || [];
+    data.dailies = imported.dailies || [];
+    data.avoids = imported.avoids || [];
+    data.knows = imported.knows || [];
+    data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
+    save();
+    renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderUsage();
+    alert("Daten erfolgreich importiert!");
+  } catch {
+    alert("Das hat leider nicht geklappt – der Text war kein gültiger Export.");
+  }
+});
+
+renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderUsage();
+
+/* ---------- Service Worker (macht die App installierbar & offline-fähig) ---------- */
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
