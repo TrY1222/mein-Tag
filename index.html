@@ -23,6 +23,7 @@
     --green: #34c759;
     --red: #ff453a;
     --gold: #ffd60a;
+    --purple: #bf5af2;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -31,14 +32,11 @@
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     min-height: 100vh;
   }
-  .app { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
-  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-  header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .app { max-width: 720px; margin: 0 auto; padding: 16px 20px 80px; }
 
   nav {
-    display: flex; gap: 8px; margin: 24px 0;
+    display: flex; gap: 8px; margin: 0 0 20px;
     border-bottom: 1px solid var(--border); padding-bottom: 12px;
-    flex-wrap: wrap;
   }
   nav button {
     background: transparent; border: 1px solid var(--border);
@@ -46,10 +44,15 @@
     font-size: 14px; font-weight: 600; cursor: pointer;
     transition: all .15s;
   }
+  @media (max-width: 560px) {
+    nav { gap: 5px; }
+    nav button { flex: 1; padding: 8px 2px; font-size: 12px; text-align: center; }
+  }
   nav button.active[data-tab="todo"]  { color: var(--green); border-color: var(--green); }
   nav button.active[data-tab="daily"] { color: var(--blue);  border-color: var(--blue); }
   nav button.active[data-tab="avoid"] { color: var(--red);   border-color: var(--red); }
   nav button.active[data-tab="know"]  { color: var(--gold);  border-color: var(--gold); }
+  nav button.active[data-tab="books"] { color: var(--purple); border-color: var(--purple); }
   nav button:hover { color: var(--text); }
 
   .tab { display: none; }
@@ -90,6 +93,10 @@
   #tab-daily li.item { border-left: 3px solid var(--blue); }
   #tab-avoid li.item { border-left: 3px solid var(--red); }
   #tab-know  li.item { border-left: 3px solid var(--gold); flex-direction: column; }
+  #tab-books li.item { border-left: 3px solid var(--purple); flex-direction: column; }
+  #tab-books .know-q { color: var(--purple); }
+  #tab-books .add-form button { background: var(--purple); }
+  #tab-books .ask-btn { background: var(--purple); }
 
   .item .body { flex: 1; }
   .item .title { font-size: 15px; font-weight: 600; }
@@ -131,6 +138,17 @@
   }
   .empty-state { color: var(--muted); font-size: 14px; text-align: center; padding: 30px 0; }
   .hint { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+
+  .tips-box {
+    background: var(--surface); border: 1px solid var(--purple);
+    border-radius: 12px; padding: 14px; margin-top: 16px;
+    font-size: 14px; line-height: 1.6;
+  }
+  .tips-box .tips-text { white-space: pre-wrap; }
+  .tips-box h3 { color: var(--purple); font-size: 14px; margin-bottom: 8px; }
+  .tips-box .know-cost { margin-top: 8px; }
+  .modal.purple { border-color: var(--purple); }
+  .modal.purple h2 { color: var(--purple); }
 
   footer {
     margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border);
@@ -196,6 +214,7 @@
     <button data-tab="daily">Täglich</button>
     <button data-tab="avoid">Vermeiden</button>
     <button data-tab="know">Wissen</button>
+    <button data-tab="books">Bücher</button>
   </nav>
 
   <!-- TO-DO -->
@@ -242,6 +261,20 @@
     <ul class="items" id="list-know"></ul>
   </section>
 
+  <!-- BÜCHER -->
+  <section class="tab" id="tab-books">
+    <p class="hint">Trage Bücher ein, die du gelesen hast – Claude schreibt eine kurze Zusammenfassung (extra sparsam bei den Tokens). Unten bekommst du auf Basis deiner Leseliste neue Buchvorschläge.</p>
+    <form class="add-form" id="form-books">
+      <input type="text" id="book-title" placeholder="Buchtitel und Autor, z.B. Momo – Michael Ende" required>
+      <button type="submit">Hinzufügen</button>
+    </form>
+    <ul class="items" id="list-books"></ul>
+    <div class="settings-row" style="margin-top:16px">
+      <button class="ask-btn" id="btn-book-tips">📚 Buchvorschläge holen</button>
+    </div>
+    <div id="book-tips-box"></div>
+  </section>
+
   <footer>
     <details>
       <summary>⚙️ Einstellungen</summary>
@@ -268,8 +301,9 @@ function load() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
   catch { return {}; }
 }
-const data = Object.assign({ todos: [], dailies: [], avoids: [], knows: [], usage: { input: 0, output: 0, cost: 0 } }, load());
+const data = Object.assign({ todos: [], dailies: [], avoids: [], knows: [], books: [], bookTips: null, usage: { input: 0, output: 0, cost: 0 } }, load());
 if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
+if (!data.books) data.books = [];
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -483,70 +517,77 @@ function renderUsage() {
     fmtCost(data.usage.cost) + " (" + data.usage.input + " Tokens rein / " + data.usage.output + " raus)";
 }
 
-/* ---------- Claude fragen ---------- */
-async function askClaude(k) {
+/* ---------- Allgemeiner Claude-Aufruf ---------- */
+async function callClaude({ system, userText, maxTokens = 4096, tools = null }) {
   const apiKey = getApiKey();
   if (!apiKey) {
     alert("Bitte trage zuerst unten in den Einstellungen deinen API-Schlüssel ein.");
-    return;
+    return null;
   }
+  const messages = [{ role: "user", content: userText }];
+  let cost = 0, tokIn = 0, tokOut = 0, response = null;
+
+  // Schleife für pause_turn (Server-Tools wie web_fetch können pausieren)
+  for (let i = 0; i < 6; i++) {
+    const reqBody = { model: "claude-opus-4-8", max_tokens: maxTokens, system, messages };
+    if (tools) reqBody.tools = tools;
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify(reqBody)
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) throw new Error("Der API-Schlüssel wurde nicht akzeptiert. Prüfe ihn in den Einstellungen.");
+      throw new Error(body?.error?.message || res.statusText);
+    }
+    cost += usdCost(body.usage || {});
+    tokIn += body.usage?.input_tokens || 0;
+    tokOut += body.usage?.output_tokens || 0;
+    response = body;
+    if (body.stop_reason === "pause_turn") {
+      messages.push({ role: "assistant", content: body.content });
+      continue;
+    }
+    break;
+  }
+
+  if (response.stop_reason === "refusal") {
+    throw new Error("Claude hat diese Anfrage aus Sicherheitsgründen abgelehnt.");
+  }
+  const text = (response.content || [])
+    .filter(b => b.type === "text")
+    .map(b => b.text)
+    .join("\n")
+    .trim();
+  if (!text) throw new Error("Es kam keine Text-Antwort zurück. Versuche es noch einmal.");
+
+  data.usage.cost += cost;
+  data.usage.input += tokIn;
+  data.usage.output += tokOut;
+  return { text, cost };
+}
+
+/* ---------- Wissens-Frage an Claude ---------- */
+async function askClaude(k) {
   k.loading = true;
   renderKnows();
   try {
-    const messages = [{ role: "user", content: k.question }];
-    let questionCost = 0, questionIn = 0, questionOut = 0;
-    let response = null;
-
-    // Schleife für pause_turn (Server-Tools wie web_fetch können pausieren)
-    for (let i = 0; i < 6; i++) {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-opus-4-8",
-          max_tokens: 4096,
-          system: "Du bist der Wissens-Assistent in einer persönlichen Tagesplaner-App. Beantworte Fragen auf Deutsch: klar, korrekt und gut verständlich, gerne mit einem Beispiel. Wenn die Frage einen Website-Link enthält, rufe die Seite mit web_fetch ab und werte sie aus (Zusammenfassung, wichtigste Punkte). Halte dich angenehm kompakt.",
-          messages,
-          tools: [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 5 }]
-        })
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        const msg = body?.error?.message || res.statusText;
-        if (res.status === 401) throw new Error("Der API-Schlüssel wurde nicht akzeptiert. Prüfe ihn in den Einstellungen.");
-        throw new Error(msg);
-      }
-      questionCost += usdCost(body.usage || {});
-      questionIn += body.usage?.input_tokens || 0;
-      questionOut += body.usage?.output_tokens || 0;
-      response = body;
-      if (body.stop_reason === "pause_turn") {
-        messages.push({ role: "assistant", content: body.content });
-        continue;
-      }
-      break;
+    const r = await callClaude({
+      system: "Du bist der Wissens-Assistent in einer persönlichen Tagesplaner-App. Beantworte Fragen auf Deutsch: klar, korrekt und gut verständlich, gerne mit einem Beispiel. Wenn die Frage einen Website-Link enthält, rufe die Seite mit web_fetch ab und werte sie aus (Zusammenfassung, wichtigste Punkte). Halte dich angenehm kompakt.",
+      userText: k.question,
+      maxTokens: 4096,
+      tools: [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 5 }]
+    });
+    if (r) {
+      k.answer = r.text;
+      k.cost = (k.cost || 0) + r.cost;
     }
-
-    if (response.stop_reason === "refusal") {
-      throw new Error("Claude hat diese Anfrage aus Sicherheitsgründen abgelehnt.");
-    }
-    const text = (response.content || [])
-      .filter(b => b.type === "text")
-      .map(b => b.text)
-      .join("\n")
-      .trim();
-    if (!text) throw new Error("Es kam keine Text-Antwort zurück. Versuche es noch einmal.");
-
-    k.answer = text;
-    k.cost = (k.cost || 0) + questionCost;
-    data.usage.cost += questionCost;
-    data.usage.input += questionIn;
-    data.usage.output += questionOut;
   } catch (err) {
     alert("Das hat nicht geklappt: " + err.message);
   } finally {
@@ -556,17 +597,20 @@ async function askClaude(k) {
 }
 
 /* ---------- Antwort-Overlay (Großansicht) ---------- */
-function openModal(k) {
+function openModal(k, opts = {}) {
+  const askFn = opts.ask || askClaude;
+  const rerender = opts.rerender || renderKnows;
+  const labels = opts.labels || { has: "Neu beantworten", none: "Claude fragen", empty: "Noch keine Antwort. Drücke „Claude fragen“." };
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   const modal = document.createElement("div");
-  modal.className = "modal";
+  modal.className = "modal" + (opts.purple ? " purple" : "");
   modal.innerHTML = `
     <h2>${esc(k.question)}</h2>
     <div class="modal-meta">${k.cost ? "Kosten dieser Antwort: " + fmtCost(k.cost) : ""}</div>
-    <div class="modal-answer ${k.answer ? "" : "empty"}">${k.answer ? esc(k.answer) : "Noch keine Antwort. Drücke „Claude fragen“."}</div>
+    <div class="modal-answer ${k.answer ? "" : "empty"}">${k.answer ? esc(k.answer) : labels.empty}</div>
     <div class="modal-actions">
-      <button class="ask-btn" data-act="ask">${k.answer ? "Neu beantworten" : "Claude fragen"}</button>
+      <button class="ask-btn" data-act="ask">${k.answer ? labels.has : labels.none}</button>
       <button class="small-btn" data-act="edit">Selbst bearbeiten</button>
       <button class="small-btn" data-act="close">Schließen</button>
     </div>`;
@@ -579,9 +623,9 @@ function openModal(k) {
   modal.querySelector('[data-act="ask"]').addEventListener("click", async ev => {
     ev.target.disabled = true;
     ev.target.textContent = "Claude denkt nach…";
-    await askClaude(k);
+    await askFn(k);
     close();
-    openModal(k);
+    openModal(k, opts);
   });
   modal.querySelector('[data-act="edit"]').addEventListener("click", () => {
     const answerDiv = modal.querySelector(".modal-answer");
@@ -593,8 +637,8 @@ function openModal(k) {
     editBtn.textContent = "Speichern";
     editBtn.onclick = () => {
       k.answer = ta.value.trim();
-      save(); renderKnows();
-      close(); openModal(k);
+      save(); rerender();
+      close(); openModal(k, opts);
     };
     ta.focus();
   });
@@ -650,6 +694,122 @@ function renderKnows() {
   }
 }
 
+/* ---------- Bücher ---------- */
+const BOOK_MODAL_OPTS = {
+  purple: true,
+  rerender: () => renderBooks(),
+  ask: b => summarizeBook(b),
+  labels: { has: "Neu zusammenfassen", none: "Zusammenfassen", empty: "Noch keine Zusammenfassung. Drücke „Zusammenfassen“." }
+};
+
+async function summarizeBook(b) {
+  b.loading = true;
+  renderBooks();
+  try {
+    const r = await callClaude({
+      system: "Fasse das genannte Buch auf Deutsch in maximal 4 kurzen Sätzen zusammen: Worum geht es, was ist die Kernaussage? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
+      userText: b.question,
+      maxTokens: 300
+    });
+    if (r) {
+      b.answer = r.text;
+      b.cost = (b.cost || 0) + r.cost;
+    }
+  } catch (err) {
+    alert("Das hat nicht geklappt: " + err.message);
+  } finally {
+    b.loading = false;
+    save(); renderBooks(); renderUsage();
+  }
+}
+
+document.getElementById("form-books").addEventListener("submit", e => {
+  e.preventDefault();
+  const b = {
+    id: uid(),
+    question: document.getElementById("book-title").value.trim(),
+    answer: "",
+    cost: 0
+  };
+  data.books.push(b);
+  save(); e.target.reset(); renderBooks();
+  summarizeBook(b);
+});
+
+function renderBooks() {
+  const ul = document.getElementById("list-books");
+  ul.innerHTML = "";
+  if (!data.books.length) { ul.innerHTML = '<div class="empty-state">Noch keine Bücher eingetragen.</div>'; }
+  for (const b of data.books) {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.style.cursor = "pointer";
+    const preview = b.loading
+      ? "Claude fasst zusammen…"
+      : (b.answer ? b.answer.slice(0, 140) + (b.answer.length > 140 ? "…" : "") : "Noch keine Zusammenfassung.");
+    li.innerHTML = `
+      <div class="know-head">
+        <div class="body">
+          <div class="know-q">${esc(b.question)}</div>
+          <div class="know-a ${b.answer && !b.loading ? "" : "empty"}">${esc(preview)}</div>
+          ${b.cost ? '<div class="know-cost">Kosten: ' + fmtCost(b.cost) + "</div>" : ""}
+        </div>
+        <button class="ask-btn" ${b.loading ? "disabled" : ""}>${b.loading ? "…" : (b.answer ? "Neu" : "Zusammenfassen")}</button>
+        <button class="small-btn danger" title="Löschen">✕</button>
+      </div>`;
+    li.querySelector(".ask-btn").addEventListener("click", e => {
+      e.stopPropagation();
+      summarizeBook(b);
+    });
+    li.querySelector(".small-btn.danger").addEventListener("click", e => {
+      e.stopPropagation();
+      if (confirm("„" + b.question + "“ wirklich löschen?")) {
+        data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks();
+      }
+    });
+    li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
+    ul.appendChild(li);
+  }
+  renderBookTips();
+}
+
+function renderBookTips() {
+  const box = document.getElementById("book-tips-box");
+  if (!data.bookTips) { box.innerHTML = ""; return; }
+  box.innerHTML = `
+    <div class="tips-box">
+      <h3>📚 Buchvorschläge für dich (${esc(data.bookTips.date || "")})</h3>
+      <div class="tips-text">${esc(data.bookTips.text)}</div>
+      <div class="know-cost">Kosten: ${fmtCost(data.bookTips.cost || 0)}</div>
+    </div>`;
+}
+
+document.getElementById("btn-book-tips").addEventListener("click", async ev => {
+  if (!data.books.length) {
+    alert("Trag zuerst mindestens ein Buch ein, das du gelesen hast – dann kann Claude passende Vorschläge machen.");
+    return;
+  }
+  ev.target.disabled = true;
+  ev.target.textContent = "Claude sucht Bücher…";
+  try {
+    const titles = data.books.map(b => b.question).join("; ");
+    const r = await callClaude({
+      system: "Du empfiehlst Bücher. Antworte auf Deutsch und kompakt, ohne Vorwort.",
+      userText: "Diese Bücher habe ich gelesen und mochte sie: " + titles + ". Empfiehl mir 5 Bücher, die dazu passen. Pro Buch genau eine Zeile: Titel – Autor – kurzer Grund (max. 10 Wörter). Keine Bücher, die ich schon gelesen habe.",
+      maxTokens: 500
+    });
+    if (r) {
+      data.bookTips = { text: r.text, cost: r.cost, date: fmtDate(todayStr()) };
+      save(); renderBookTips(); renderUsage();
+    }
+  } catch (err) {
+    alert("Das hat nicht geklappt: " + err.message);
+  } finally {
+    ev.target.disabled = false;
+    ev.target.textContent = "📚 Buchvorschläge holen";
+  }
+});
+
 /* ---------- Export / Import ---------- */
 document.getElementById("btn-export").addEventListener("click", async () => {
   const text = JSON.stringify(data, null, 2);
@@ -671,16 +831,18 @@ document.getElementById("btn-import").addEventListener("click", () => {
     data.dailies = imported.dailies || [];
     data.avoids = imported.avoids || [];
     data.knows = imported.knows || [];
+    data.books = imported.books || [];
+    data.bookTips = imported.bookTips || null;
     data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
     save();
-    renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderUsage();
+    renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderBooks(); renderUsage();
     alert("Daten erfolgreich importiert!");
   } catch {
     alert("Das hat leider nicht geklappt – der Text war kein gültiger Export.");
   }
 });
 
-renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderUsage();
+renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderBooks(); renderUsage();
 
 /* ---------- Service Worker (macht die App installierbar & offline-fähig) ---------- */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
