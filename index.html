@@ -44,28 +44,26 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     min-height: 100vh;
+    color-scheme: dark;
   }
+  body.light { color-scheme: light; }
   .app { max-width: 720px; margin: 0 auto; padding: 60px 20px 140px; }
 
   /* Feste Tab-Leiste unten */
   nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 80;
-    display: flex; justify-content: center; gap: 6px;
+    display: flex; gap: 8px;
     background: var(--surface);
     border-top: 1px solid var(--border);
-    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
   }
   nav button {
-    flex: 1; max-width: 130px; min-width: 0;
+    flex: 1 1 0; min-width: 0;
     background: transparent; border: 1px solid var(--border);
-    color: var(--muted); padding: 9px 0; border-radius: 20px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
+    color: var(--muted); padding: 12px 4px; border-radius: 22px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
     transition: all .15s; text-align: center; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
-  }
-  @media (max-width: 420px) {
-    nav { gap: 4px; }
-    nav button { font-size: 11.5px; }
   }
 
   /* Schwebender Plus-Knopf */
@@ -131,19 +129,18 @@
 
   .add-form {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px; margin-bottom: 20px;
-    display: none; flex-direction: column; gap: 10px;
+    border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    display: none; flex-direction: column; gap: 14px;
   }
   .add-form.open { display: flex; }
   .add-form input, .add-form select {
-    width: 100%;
+    width: 100%; display: block; min-height: 48px;
     background: var(--surface2); border: 1px solid var(--border);
     color: var(--text); border-radius: 8px; padding: 12px 14px;
     font-size: 16px; font-family: inherit;
   }
   .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--muted); }
-  .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 5px; }
-  .add-form input[type="date"], .add-form input[type="time"] { color-scheme: dark; }
+  .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
   .cat-head {
     font-size: 13px; font-weight: 700; color: var(--purple);
     text-transform: uppercase; letter-spacing: .5px;
@@ -151,18 +148,19 @@
   }
 
   /* Kategorie-Ordner */
-  .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .folder-grid { display: flex; flex-direction: column; gap: 10px; }
   .folder {
+    width: 100%;
     background: var(--surface); border: 1px solid var(--border);
     border-left: 3px solid var(--purple);
-    border-radius: 12px; padding: 18px 14px; cursor: pointer;
-    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    border-radius: 12px; padding: 14px; cursor: pointer;
+    display: flex; flex-direction: row; align-items: center; gap: 14px; text-align: left;
     color: var(--text);
   }
   .folder:hover { border-color: var(--purple); }
-  .folder-icon { font-size: 26px; }
-  .folder-name { font-size: 15px; font-weight: 700; color: var(--purple); }
-  .folder-count { font-size: 12px; color: var(--muted); }
+  .folder-icon { font-size: 26px; flex-shrink: 0; }
+  .folder-name { font-size: 15px; font-weight: 700; color: var(--purple); flex: 1; }
+  .folder-count { font-size: 12px; color: var(--muted); flex-shrink: 0; }
 
   /* Aufgeräumte Buchvorschläge im Overlay */
   .tip-card {
@@ -263,7 +261,8 @@
   .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
   .usage-badge { font-size: 14px; color: var(--muted); }
-  .usage-badge b { color: var(--gold); font-weight: 700; }
+  .usage-badge b { color: #e5342a; font-weight: 700; }
+  #btn-settings-close { background: #e5342a; color: #fff; }
 
   .know-cost { font-size: 11px; color: var(--muted); }
   .ask-btn {
