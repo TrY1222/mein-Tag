@@ -302,6 +302,7 @@
     <form class="add-form" id="form-books">
       <input type="text" id="book-title" placeholder="Buchtitel und Autor, z.B. Momo – Michael Ende" required>
       <select id="book-cat">
+        <option value="Auto" selected>Kategorie: Auto (Claude wählt)</option>
         <option value="Fantasy">Fantasy</option>
         <option value="Roman">Roman</option>
         <option value="Krimi & Thriller">Krimi &amp; Thriller</option>
@@ -789,17 +790,27 @@ const BOOK_MODAL_OPTS = {
   labels: { has: "Redo Summary", none: "Summarize", empty: "Noch keine Zusammenfassung. Drücke „Summarize“." }
 };
 
+const BOOK_CATS = ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"];
+
 async function summarizeBook(b) {
   b.loading = true;
   renderBooks();
   try {
     const r = await callClaude({
-      system: "Fasse das genannte Buch auf Deutsch in maximal 4 kurzen Sätzen zusammen: Worum geht es, was ist die Kernaussage? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
+      system: "Antworte auf Deutsch in genau diesem Format: Erste Zeile 'KATEGORIE: X', wobei X genau eine dieser Kategorien ist: " + BOOK_CATS.join(", ") + ". Danach eine Zusammenfassung des genannten Buchs in maximal 4 kurzen Sätzen: Worum geht es, was ist die Kernaussage? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
       userText: b.question,
       maxTokens: 300
     });
     if (r) {
-      b.answer = r.text;
+      let text = r.text;
+      const m = text.match(/^KATEGORIE:\s*(.+)$/m);
+      if (m) {
+        const cat = m[1].trim();
+        // Automatische Einordnung nur, wenn keine Kategorie manuell gewählt wurde
+        if (BOOK_CATS.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
+        text = text.replace(/^KATEGORIE:.*\n?/m, "").trim();
+      }
+      b.answer = text;
       b.cost = (b.cost || 0) + r.cost;
     }
   } catch (err) {
@@ -812,10 +823,12 @@ async function summarizeBook(b) {
 
 document.getElementById("form-books").addEventListener("submit", e => {
   e.preventDefault();
+  const sel = document.getElementById("book-cat").value;
   const b = {
     id: uid(),
     question: document.getElementById("book-title").value.trim(),
-    cat: document.getElementById("book-cat").value,
+    cat: sel === "Auto" ? "" : sel,
+    autoCat: sel === "Auto",
     answer: "",
     cost: 0
   };
