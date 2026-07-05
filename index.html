@@ -141,6 +141,18 @@
   }
   .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--muted); }
   .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+
+  /* Deadline: zwei Knöpfe (Datum + Uhrzeit) */
+  .deadline-row { display: flex; gap: 10px; }
+  .dl-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 8px; padding: 12px 10px; min-height: 48px;
+    font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+  }
+  .dl-btn.set { border-color: var(--green); color: var(--green); }
+  .dl-icon { font-size: 18px; }
+  .hidden-picker { position: absolute; opacity: 0; width: 1px; height: 1px; padding: 0; margin: 0; border: 0; pointer-events: none; }
   .cat-head {
     font-size: 13px; font-weight: 700; color: var(--purple);
     text-transform: uppercase; letter-spacing: .5px;
@@ -176,14 +188,14 @@
     font-size: 15px; font-weight: 600; cursor: pointer; padding: 4px 0;
     margin-bottom: 8px; text-align: left;
   }
-  .add-form button {
+  .add-form button[type="submit"] {
     border: none; border-radius: 8px; padding: 10px 18px;
     font-size: 14px; font-weight: 700; cursor: pointer; color: #000;
     align-self: flex-start;
   }
-  #tab-todo .add-form button  { background: var(--green); }
-  #tab-daily .add-form button { background: var(--blue); }
-  #tab-avoid .add-form button { background: var(--red); }
+  #tab-todo .add-form button[type="submit"]  { background: var(--green); }
+  #tab-daily .add-form button[type="submit"] { background: var(--blue); }
+  #tab-avoid .add-form button[type="submit"] { background: var(--red); }
 
   ul.items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
   li.item {
@@ -196,7 +208,7 @@
   #tab-avoid li.item { border-left: 3px solid var(--red); }
   #tab-books li.item { border-left: 3px solid var(--purple); flex-direction: column; }
   #tab-books .know-q { color: var(--purple); }
-  #tab-books .add-form button { background: var(--purple); }
+  #tab-books .add-form button[type="submit"] { background: var(--purple); }
   #tab-books .ask-btn { background: var(--purple); }
 
   .item .body { flex: 1; }
@@ -315,7 +327,12 @@
   <section class="tab visible" id="tab-todo">
     <form class="add-form" id="form-todo">
       <input type="text" id="todo-title" placeholder="Was willst du erledigen?" required>
-      <label>Deadline <input type="date" id="todo-deadline"></label>
+      <div class="deadline-row">
+        <button type="button" class="dl-btn" id="btn-todo-date"><span class="dl-icon">📅</span><span id="todo-date-label">Datum</span></button>
+        <button type="button" class="dl-btn" id="btn-todo-time"><span class="dl-icon">🕐</span><span id="todo-time-label">Uhrzeit</span></button>
+      </div>
+      <input type="date" id="todo-deadline" class="hidden-picker" tabindex="-1">
+      <input type="time" id="todo-time" class="hidden-picker" tabindex="-1">
       <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-todo"></ul>
@@ -324,7 +341,14 @@
   <!-- TÄGLICH -->
   <section class="tab" id="tab-daily">
     <form class="add-form" id="form-daily">
-      <input type="text" id="daily-title" placeholder="Was willst du jeden Tag machen? (z.B. 20 Min lesen)" required>
+      <input type="text" id="daily-title" placeholder="Was willst du regelmäßig machen? (z.B. 20 Min lesen)" required>
+      <select id="daily-freq">
+        <option value="1">Täglich</option>
+        <option value="2">Alle 2 Tage</option>
+        <option value="3">Alle 3 Tage</option>
+        <option value="7">1x pro Woche</option>
+        <option value="14">Alle 2 Wochen</option>
+      </select>
       <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-daily"></ul>
@@ -489,16 +513,41 @@ darkToggle.addEventListener("change", () => {
 });
 applyTheme();
 
+/* ---------- To-Do: Deadline-Picker (Datum + Uhrzeit) ---------- */
+const todoDateInput = document.getElementById("todo-deadline");
+const todoTimeInput = document.getElementById("todo-time");
+
+function openPicker(input) {
+  try { input.showPicker(); }
+  catch { input.focus(); input.click(); }
+}
+function updateDlLabels() {
+  const dBtn = document.getElementById("btn-todo-date");
+  const tBtn = document.getElementById("btn-todo-time");
+  document.getElementById("todo-date-label").textContent = todoDateInput.value ? fmtDate(todoDateInput.value) : "Datum";
+  document.getElementById("todo-time-label").textContent = todoTimeInput.value ? todoTimeInput.value + " Uhr" : "Uhrzeit";
+  dBtn.classList.toggle("set", !!todoDateInput.value);
+  tBtn.classList.toggle("set", !!todoTimeInput.value);
+}
+document.getElementById("btn-todo-date").addEventListener("click", () => openPicker(todoDateInput));
+document.getElementById("btn-todo-time").addEventListener("click", () => openPicker(todoTimeInput));
+todoDateInput.addEventListener("change", updateDlLabels);
+todoTimeInput.addEventListener("change", updateDlLabels);
+
 /* ---------- To-Do ---------- */
 document.getElementById("form-todo").addEventListener("submit", e => {
   e.preventDefault();
   data.todos.push({
     id: uid(),
     title: document.getElementById("todo-title").value.trim(),
-    deadline: document.getElementById("todo-deadline").value,
+    deadline: todoDateInput.value,
+    deadlineTime: todoTimeInput.value,
     done: false
   });
-  save(); e.target.reset(); renderTodos();
+  save();
+  e.target.reset();
+  todoDateInput.value = ""; todoTimeInput.value = ""; updateDlLabels();
+  renderTodos();
 });
 
 function renderTodos() {
@@ -514,7 +563,10 @@ function renderTodos() {
       <button class="check" title="Erledigt">${t.done ? "✓" : ""}</button>
       <div class="body">
         <div class="title">${esc(t.title)}</div>
-        ${t.deadline ? '<div class="meta"><span class="' + (overdue ? "overdue" : "") + '">⏳ ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span></div>" : ""}
+        ${(t.deadline || t.deadlineTime) ? '<div class="meta">'
+          + (t.deadline ? '<span class="' + (overdue ? "overdue" : "") + '">⏳ ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span>" : "")
+          + (t.deadlineTime ? "<span>🕐 " + t.deadlineTime + " Uhr</span>" : "")
+          + "</div>" : ""}
       </div>
       <button class="small-btn danger" title="Löschen">✕</button>`;
     li.querySelector(".check").addEventListener("click", () => { t.done = !t.done; save(); renderTodos(); });
@@ -525,12 +577,27 @@ function renderTodos() {
   }
 }
 
-/* ---------- Tägliche Gewohnheiten ---------- */
+/* ---------- Regelmäßige Gewohnheiten ---------- */
+function daysBetweenIso(a, b) {
+  const da = new Date(a + "T00:00:00"), db = new Date(b + "T00:00:00");
+  return Math.round((db - da) / 86400000);
+}
+function addDaysIso(iso, n) {
+  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoDate(d);
+}
+function freqLabel(n) {
+  if (n === 1) return "Täglich";
+  if (n === 7) return "1x pro Woche";
+  if (n === 14) return "Alle 2 Wochen";
+  return "Alle " + n + " Tage";
+}
+
 document.getElementById("form-daily").addEventListener("submit", e => {
   e.preventDefault();
   data.dailies.push({
     id: uid(),
     title: document.getElementById("daily-title").value.trim(),
+    interval: parseInt(document.getElementById("daily-freq").value, 10) || 1,
     streak: 0,
     lastDone: null,
     prevStreak: 0,
@@ -542,21 +609,32 @@ document.getElementById("form-daily").addEventListener("submit", e => {
 function renderDailies() {
   const ul = document.getElementById("list-daily");
   ul.innerHTML = "";
-  if (!data.dailies.length) { ul.innerHTML = '<div class="empty-state">Noch keine täglichen Gewohnheiten.</div>'; return; }
-  const today = todayStr(), yest = yesterdayStr();
+  if (!data.dailies.length) { ul.innerHTML = '<div class="empty-state">Noch keine Gewohnheiten – drücke auf +.</div>'; return; }
+  const today = todayStr();
   for (const h of data.dailies) {
-    // Serie zählt nur, wenn zuletzt heute oder gestern abgehakt wurde
-    const effectiveStreak = (h.lastDone === today || h.lastDone === yest) ? h.streak : 0;
+    const interval = h.interval || 1;
+    const gap = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
+    const alive = h.lastDone && gap <= interval;          // Streak noch aktiv?
+    const effectiveStreak = alive ? h.streak : 0;
     const doneToday = h.lastDone === today;
+    const nextDue = h.lastDone ? addDaysIso(h.lastDone, interval) : today;
+    const due = !doneToday && nextDue <= today;
+
+    let statusText;
+    if (doneToday) statusText = "Heute erledigt ✓";
+    else if (due) statusText = "Jetzt fällig";
+    else statusText = "Nächste: " + fmtDate(nextDue);
+
     const li = document.createElement("li");
     li.className = "item" + (doneToday ? " today" : "");
     li.innerHTML = `
-      <button class="check" title="Heute erledigt">${doneToday ? "✓" : ""}</button>
+      <button class="check" title="Erledigt">${doneToday ? "✓" : ""}</button>
       <div class="body">
         <div class="title">${esc(h.title)}</div>
         <div class="meta">
           <span class="streak">🔥 Streak: ${effectiveStreak}</span>
-          ${doneToday ? "<span>Heute erledigt ✓</span>" : "<span>Heute noch offen</span>"}
+          <span>${freqLabel(interval)}</span>
+          <span>${statusText}</span>
         </div>
       </div>
       <button class="small-btn danger" title="Löschen">✕</button>`;
@@ -568,7 +646,8 @@ function renderDailies() {
       } else {
         h.prevStreak = h.streak;
         h.prevLastDone = h.lastDone;
-        h.streak = (h.lastDone === yest) ? h.streak + 1 : 1;
+        const g = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
+        h.streak = (h.lastDone && g <= interval) ? h.streak + 1 : 1;
         h.lastDone = today;
       }
       save(); renderDailies();
@@ -605,7 +684,7 @@ function renderAvoids() {
       <div class="body">
         <div class="title">${esc(a.title)}</div>
         <div class="meta">
-          <span class="streak">🛡 ${days} Tag${days === 1 ? "" : "e"} ohne</span>
+          <span class="streak">🛡 Streak: ${days}</span>
           <span>seit ${new Date(a.since).toLocaleDateString("de-DE")}</span>
         </div>
       </div>
