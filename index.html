@@ -32,22 +32,57 @@
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     min-height: 100vh;
   }
-  .app { max-width: 720px; margin: 0 auto; padding: 16px 20px 80px; }
+  .app { max-width: 720px; margin: 0 auto; padding: 60px 20px 140px; }
 
+  /* Feste Tab-Leiste unten */
   nav {
-    display: flex; gap: 8px; margin: 0 0 20px;
-    border-bottom: 1px solid var(--border); padding-bottom: 12px;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 80;
+    display: flex; justify-content: center; gap: 6px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
   }
   nav button {
+    flex: 1; max-width: 130px; min-width: 0;
     background: transparent; border: 1px solid var(--border);
-    color: var(--muted); padding: 8px 16px; border-radius: 20px;
-    font-size: 14px; font-weight: 600; cursor: pointer;
-    transition: all .15s;
+    color: var(--muted); padding: 9px 0; border-radius: 20px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all .15s; text-align: center; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
   }
-  @media (max-width: 560px) {
-    nav { gap: 5px; }
-    nav button { flex: 1; padding: 8px 2px; font-size: 12px; text-align: center; }
+  @media (max-width: 420px) {
+    nav { gap: 4px; }
+    nav button { font-size: 11.5px; }
   }
+
+  /* Schwebender Plus-Knopf */
+  .fab {
+    position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom));
+    width: 52px; height: 52px; border-radius: 50%; z-index: 80;
+    background: var(--surface); border: 1px solid var(--muted);
+    color: var(--text); font-size: 28px; line-height: 1; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,.6);
+  }
+  .fab:hover { border-color: var(--text); }
+
+  /* Zahnrad oben rechts */
+  .gear {
+    position: fixed; top: 12px; right: 14px; z-index: 80;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); font-size: 18px; cursor: pointer;
+  }
+  .gear:hover { color: var(--text); }
+
+  /* Settings als eigene Seite */
+  .settings-page {
+    position: fixed; inset: 0; z-index: 95;
+    background: var(--bg); overflow-y: auto;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  }
+  .settings-page .settings-inner { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  .settings-page h2 { font-size: 22px; }
+  .settings-page h3 { font-size: 14px; color: var(--muted); margin-top: 16px; text-transform: uppercase; letter-spacing: .5px; }
   nav button.active[data-tab="todo"]  { color: var(--green); border-color: var(--green); }
   nav button.active[data-tab="daily"] { color: var(--blue);  border-color: var(--blue); }
   nav button.active[data-tab="avoid"] { color: var(--red);   border-color: var(--red); }
@@ -61,8 +96,20 @@
   .add-form {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; padding: 14px; margin-bottom: 20px;
-    display: flex; flex-direction: column; gap: 10px;
+    display: none; flex-direction: column; gap: 10px;
   }
+  .add-form.open { display: flex; }
+  .add-form select {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 10px 12px;
+    font-size: 14px; font-family: inherit;
+  }
+  .cat-head {
+    font-size: 13px; font-weight: 700; color: var(--purple);
+    text-transform: uppercase; letter-spacing: .5px;
+    margin: 18px 0 8px;
+  }
+  .cat-head:first-child { margin-top: 0; }
   .add-form .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .add-form input {
     background: var(--surface2); border: 1px solid var(--border);
@@ -150,20 +197,15 @@
   .modal.purple { border-color: var(--purple); }
   .modal.purple h2 { color: var(--purple); }
 
-  footer {
-    margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border);
-  }
-  footer summary { font-size: 13px; color: var(--muted); cursor: pointer; }
-  footer .settings-body { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
-  footer .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  footer input[type="password"] {
+  .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .settings-page input[type="password"] {
     background: var(--surface2); border: 1px solid var(--border);
     color: var(--text); border-radius: 8px; padding: 8px 12px;
     font-size: 13px; flex: 1; min-width: 200px; font-family: inherit;
   }
-  footer .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-  .usage-badge { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .usage-badge { font-size: 14px; color: var(--muted); }
   .usage-badge b { color: var(--gold); font-weight: 700; }
 
   .know-cost { font-size: 11px; color: var(--muted); }
@@ -202,19 +244,16 @@
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1>Mein Tag</h1>
-    <p id="dateline"></p>
-    <p class="usage-badge">KI-Verbrauch insgesamt: <b id="usage-total">$0.0000</b></p>
-  </header>
+<button class="gear" id="btn-settings" title="Settings">⚙️</button>
+<button class="fab" id="btn-add" title="Add">+</button>
 
+<div class="app">
   <nav>
     <button data-tab="todo" class="active">To-Do</button>
-    <button data-tab="daily">Täglich</button>
-    <button data-tab="avoid">Vermeiden</button>
-    <button data-tab="know">Wissen</button>
-    <button data-tab="books">Bücher</button>
+    <button data-tab="daily">Daily</button>
+    <button data-tab="avoid">Avoid</button>
+    <button data-tab="know">Knowledge</button>
+    <button data-tab="books">Books</button>
   </nav>
 
   <!-- TO-DO -->
@@ -226,72 +265,88 @@
         <label>Uhrzeit <input type="time" id="todo-time"></label>
         <label>Deadline <input type="date" id="todo-deadline"></label>
       </div>
-      <button type="submit">Hinzufügen</button>
+      <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-todo"></ul>
   </section>
 
   <!-- TÄGLICH -->
   <section class="tab" id="tab-daily">
-    <p class="hint">Hake jeden Tag ab, was du geschafft hast – die Serie zählt, wie viele Tage in Folge du dranbleibst. Lässt du einen Tag aus, startet sie wieder bei 0.</p>
     <form class="add-form" id="form-daily">
       <input type="text" id="daily-title" placeholder="Was willst du jeden Tag machen? (z.B. 20 Min lesen)" required>
-      <button type="submit">Hinzufügen</button>
+      <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-daily"></ul>
   </section>
 
   <!-- VERMEIDEN -->
   <section class="tab" id="tab-avoid">
-    <p class="hint">Der Zähler läuft automatisch hoch. Wenn du rückfällig wirst, drücke „Rückfall“ – dann startet er neu bei 0.</p>
     <form class="add-form" id="form-avoid">
       <input type="text" id="avoid-title" placeholder="Was willst du dir abgewöhnen?" required>
-      <button type="submit">Hinzufügen</button>
+      <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-avoid"></ul>
   </section>
 
   <!-- WISSEN -->
   <section class="tab" id="tab-know">
-    <p class="hint">Notiere Fragen oder füge einen Website-Link ein – Claude beantwortet sie direkt (dafür muss unten in den Einstellungen dein API-Schlüssel eingetragen sein). Klicke auf eine Frage, um die Antwort groß zu lesen.</p>
     <form class="add-form" id="form-know">
       <input type="text" id="know-title" placeholder="Frage oder Website-Link, z.B. https://..." required>
-      <button type="submit">Hinzufügen</button>
+      <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-know"></ul>
   </section>
 
   <!-- BÜCHER -->
   <section class="tab" id="tab-books">
-    <p class="hint">Trage Bücher ein, die du gelesen hast – Claude schreibt eine kurze Zusammenfassung (extra sparsam bei den Tokens). Unten bekommst du auf Basis deiner Leseliste neue Buchvorschläge.</p>
     <form class="add-form" id="form-books">
       <input type="text" id="book-title" placeholder="Buchtitel und Autor, z.B. Momo – Michael Ende" required>
-      <button type="submit">Hinzufügen</button>
+      <select id="book-cat">
+        <option value="Fantasy">Fantasy</option>
+        <option value="Roman">Roman</option>
+        <option value="Krimi & Thriller">Krimi &amp; Thriller</option>
+        <option value="Sachbuch">Sachbuch</option>
+        <option value="Finanzen">Finanzen</option>
+        <option value="Selbstentwicklung">Selbstentwicklung</option>
+        <option value="Wissenschaft">Wissenschaft</option>
+        <option value="Biografie">Biografie</option>
+        <option value="Sonstiges">Sonstiges</option>
+      </select>
+      <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-books"></ul>
     <div class="settings-row" style="margin-top:16px">
-      <button class="ask-btn" id="btn-book-tips">📚 Buchvorschläge holen</button>
+      <button class="ask-btn" id="btn-book-tips">📚 Book Tips</button>
     </div>
     <div id="book-tips-box"></div>
   </section>
 
-  <footer>
-    <details>
-      <summary>⚙️ Einstellungen</summary>
-      <div class="settings-body">
-        <div class="settings-row">
-          <input type="password" id="api-key" placeholder="Anthropic API-Schlüssel (sk-ant-...)">
-          <button class="small-btn" id="btn-save-key">Speichern</button>
-          <span id="key-status" class="note"></span>
-        </div>
-        <p class="note">Der Schlüssel wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin. Denk an dein Ausgabenlimit im Anthropic-Konto!</p>
-        <div class="settings-row">
-          <button class="small-btn" id="btn-export">Daten kopieren (Backup)</button>
-          <button class="small-btn" id="btn-import">Daten einfügen (Import)</button>
-        </div>
+  <div class="settings-page" id="settings-page" hidden>
+    <div class="settings-inner">
+      <h2>Settings</h2>
+
+      <h3>API-Schlüssel</h3>
+      <div class="settings-row">
+        <input type="password" id="api-key" placeholder="Anthropic API-Schlüssel (sk-ant-...)">
+        <button class="small-btn" id="btn-save-key">Save</button>
       </div>
-    </details>
-  </footer>
+      <span id="key-status" class="note"></span>
+      <p class="note">Der Schlüssel wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin. Denk an dein Ausgabenlimit im Anthropic-Konto!</p>
+
+      <h3>Tokens & Kosten</h3>
+      <p class="usage-badge">KI-Verbrauch insgesamt: <b id="usage-total">$0.0000</b></p>
+
+      <h3>Backup</h3>
+      <div class="settings-row">
+        <button class="small-btn" id="btn-export">Copy Data</button>
+        <button class="small-btn" id="btn-import">Import Data</button>
+      </div>
+
+      <div class="settings-row" style="margin-top:24px">
+        <button class="ask-btn" id="btn-settings-close">Done</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -327,19 +382,51 @@ function esc(s) {
   return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-/* ---------- Kopfzeile ---------- */
-document.getElementById("dateline").textContent =
-  new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-
 /* ---------- Tabs ---------- */
+let currentTab = "todo";
 document.querySelectorAll("nav button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("visible"));
     document.getElementById("tab-" + btn.dataset.tab).classList.add("visible");
+    currentTab = btn.dataset.tab;
+    closeAllForms();
   });
 });
+
+/* ---------- Plus-Knopf (öffnet das Formular des aktiven Tabs) ---------- */
+const FORM_BY_TAB = { todo: "form-todo", daily: "form-daily", avoid: "form-avoid", know: "form-know", books: "form-books" };
+const fab = document.getElementById("btn-add");
+
+function closeAllForms() {
+  document.querySelectorAll(".add-form").forEach(f => f.classList.remove("open"));
+  fab.textContent = "+";
+}
+
+fab.addEventListener("click", () => {
+  const form = document.getElementById(FORM_BY_TAB[currentTab]);
+  const willOpen = !form.classList.contains("open");
+  closeAllForms();
+  if (willOpen) {
+    form.classList.add("open");
+    fab.textContent = "✕";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    form.querySelector("input")?.focus();
+  }
+});
+
+document.querySelectorAll(".add-form").forEach(f => f.addEventListener("submit", () => closeAllForms()));
+
+/* ---------- Settings-Seite ---------- */
+const settingsPage = document.getElementById("settings-page");
+document.getElementById("btn-settings").addEventListener("click", () => {
+  document.getElementById("api-key").value = getApiKey();
+  renderKeyStatus();
+  renderUsage();
+  settingsPage.hidden = false;
+});
+document.getElementById("btn-settings-close").addEventListener("click", () => { settingsPage.hidden = true; });
 
 /* ---------- To-Do ---------- */
 document.getElementById("form-todo").addEventListener("submit", e => {
@@ -358,7 +445,7 @@ document.getElementById("form-todo").addEventListener("submit", e => {
 function renderTodos() {
   const ul = document.getElementById("list-todo");
   ul.innerHTML = "";
-  if (!data.todos.length) { ul.innerHTML = '<div class="empty-state">Noch keine Aufgaben – trag oben deine erste ein.</div>'; return; }
+  if (!data.todos.length) { ul.innerHTML = '<div class="empty-state">Noch keine Aufgaben – drücke auf +, um die erste einzutragen.</div>'; return; }
   const sorted = [...data.todos].sort((a, b) => (a.done - b.done) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
   for (const t of sorted) {
     const li = document.createElement("li");
@@ -467,7 +554,7 @@ function renderAvoids() {
           <span>seit ${new Date(a.since).toLocaleDateString("de-DE")}</span>
         </div>
       </div>
-      <button class="small-btn" title="Zähler zurücksetzen">Rückfall</button>
+      <button class="small-btn" title="Zähler zurücksetzen">Reset</button>
       <button class="small-btn danger" title="Löschen">✕</button>`;
     const [relapseBtn, delBtn] = li.querySelectorAll(".small-btn");
     relapseBtn.addEventListener("click", () => {
@@ -600,7 +687,7 @@ async function askClaude(k) {
 function openModal(k, opts = {}) {
   const askFn = opts.ask || askClaude;
   const rerender = opts.rerender || renderKnows;
-  const labels = opts.labels || { has: "Neu beantworten", none: "Claude fragen", empty: "Noch keine Antwort. Drücke „Claude fragen“." };
+  const labels = opts.labels || { has: "Re-Ask", none: "Ask Claude", empty: "Noch keine Antwort. Drücke „Ask Claude“." };
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   const modal = document.createElement("div");
@@ -611,8 +698,8 @@ function openModal(k, opts = {}) {
     <div class="modal-answer ${k.answer ? "" : "empty"}">${k.answer ? esc(k.answer) : labels.empty}</div>
     <div class="modal-actions">
       <button class="ask-btn" data-act="ask">${k.answer ? labels.has : labels.none}</button>
-      <button class="small-btn" data-act="edit">Selbst bearbeiten</button>
-      <button class="small-btn" data-act="close">Schließen</button>
+      <button class="small-btn" data-act="edit">Edit</button>
+      <button class="small-btn" data-act="close">Close</button>
     </div>`;
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
@@ -634,7 +721,7 @@ function openModal(k, opts = {}) {
     ta.value = k.answer;
     answerDiv.replaceWith(ta);
     const editBtn = modal.querySelector('[data-act="edit"]');
-    editBtn.textContent = "Speichern";
+    editBtn.textContent = "Save";
     editBtn.onclick = () => {
       k.answer = ta.value.trim();
       save(); rerender();
@@ -676,7 +763,7 @@ function renderKnows() {
           <div class="know-a ${k.answer && !k.loading ? "" : "empty"}">${esc(preview)}</div>
           ${k.cost ? '<div class="know-cost">Kosten: ' + fmtCost(k.cost) + "</div>" : ""}
         </div>
-        <button class="ask-btn" ${k.loading ? "disabled" : ""}>${k.loading ? "…" : (k.answer ? "Neu fragen" : "Fragen")}</button>
+        <button class="ask-btn" ${k.loading ? "disabled" : ""}>${k.loading ? "…" : (k.answer ? "Re-Ask" : "Ask")}</button>
         <button class="small-btn danger" title="Löschen">✕</button>
       </div>`;
     li.querySelector(".ask-btn").addEventListener("click", e => {
@@ -699,7 +786,7 @@ const BOOK_MODAL_OPTS = {
   purple: true,
   rerender: () => renderBooks(),
   ask: b => summarizeBook(b),
-  labels: { has: "Neu zusammenfassen", none: "Zusammenfassen", empty: "Noch keine Zusammenfassung. Drücke „Zusammenfassen“." }
+  labels: { has: "Redo Summary", none: "Summarize", empty: "Noch keine Zusammenfassung. Drücke „Summarize“." }
 };
 
 async function summarizeBook(b) {
@@ -728,6 +815,7 @@ document.getElementById("form-books").addEventListener("submit", e => {
   const b = {
     id: uid(),
     question: document.getElementById("book-title").value.trim(),
+    cat: document.getElementById("book-cat").value,
     answer: "",
     cost: 0
   };
@@ -740,35 +828,43 @@ function renderBooks() {
   const ul = document.getElementById("list-books");
   ul.innerHTML = "";
   if (!data.books.length) { ul.innerHTML = '<div class="empty-state">Noch keine Bücher eingetragen.</div>'; }
-  for (const b of data.books) {
-    const li = document.createElement("li");
-    li.className = "item";
-    li.style.cursor = "pointer";
-    const preview = b.loading
-      ? "Claude fasst zusammen…"
-      : (b.answer ? b.answer.slice(0, 140) + (b.answer.length > 140 ? "…" : "") : "Noch keine Zusammenfassung.");
-    li.innerHTML = `
-      <div class="know-head">
-        <div class="body">
-          <div class="know-q">${esc(b.question)}</div>
-          <div class="know-a ${b.answer && !b.loading ? "" : "empty"}">${esc(preview)}</div>
-          ${b.cost ? '<div class="know-cost">Kosten: ' + fmtCost(b.cost) + "</div>" : ""}
-        </div>
-        <button class="ask-btn" ${b.loading ? "disabled" : ""}>${b.loading ? "…" : (b.answer ? "Neu" : "Zusammenfassen")}</button>
-        <button class="small-btn danger" title="Löschen">✕</button>
-      </div>`;
-    li.querySelector(".ask-btn").addEventListener("click", e => {
-      e.stopPropagation();
-      summarizeBook(b);
-    });
-    li.querySelector(".small-btn.danger").addEventListener("click", e => {
-      e.stopPropagation();
-      if (confirm("„" + b.question + "“ wirklich löschen?")) {
-        data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks();
-      }
-    });
-    li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
-    ul.appendChild(li);
+  // Nach Kategorien gruppieren
+  const cats = [...new Set(data.books.map(b => b.cat || "Sonstiges"))].sort((a, b) => a.localeCompare(b, "de"));
+  for (const cat of cats) {
+    const head = document.createElement("div");
+    head.className = "cat-head";
+    head.textContent = cat;
+    ul.appendChild(head);
+    for (const b of data.books.filter(x => (x.cat || "Sonstiges") === cat)) {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.style.cursor = "pointer";
+      const preview = b.loading
+        ? "Claude fasst zusammen…"
+        : (b.answer ? b.answer.slice(0, 140) + (b.answer.length > 140 ? "…" : "") : "Noch keine Zusammenfassung.");
+      li.innerHTML = `
+        <div class="know-head">
+          <div class="body">
+            <div class="know-q">${esc(b.question)}</div>
+            <div class="know-a ${b.answer && !b.loading ? "" : "empty"}">${esc(preview)}</div>
+            ${b.cost ? '<div class="know-cost">Kosten: ' + fmtCost(b.cost) + "</div>" : ""}
+          </div>
+          <button class="ask-btn" ${b.loading ? "disabled" : ""}>${b.loading ? "…" : (b.answer ? "Redo" : "Summarize")}</button>
+          <button class="small-btn danger" title="Löschen">✕</button>
+        </div>`;
+      li.querySelector(".ask-btn").addEventListener("click", e => {
+        e.stopPropagation();
+        summarizeBook(b);
+      });
+      li.querySelector(".small-btn.danger").addEventListener("click", e => {
+        e.stopPropagation();
+        if (confirm("„" + b.question + "“ wirklich löschen?")) {
+          data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks();
+        }
+      });
+      li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
+      ul.appendChild(li);
+    }
   }
   renderBookTips();
 }
@@ -792,7 +888,7 @@ document.getElementById("btn-book-tips").addEventListener("click", async ev => {
   ev.target.disabled = true;
   ev.target.textContent = "Claude sucht Bücher…";
   try {
-    const titles = data.books.map(b => b.question).join("; ");
+    const titles = data.books.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
     const r = await callClaude({
       system: "Du empfiehlst Bücher. Antworte auf Deutsch und kompakt, ohne Vorwort.",
       userText: "Diese Bücher habe ich gelesen und mochte sie: " + titles + ". Empfiehl mir 5 Bücher, die dazu passen. Pro Buch genau eine Zeile: Titel – Autor – kurzer Grund (max. 10 Wörter). Keine Bücher, die ich schon gelesen habe.",
@@ -806,7 +902,7 @@ document.getElementById("btn-book-tips").addEventListener("click", async ev => {
     alert("Das hat nicht geklappt: " + err.message);
   } finally {
     ev.target.disabled = false;
-    ev.target.textContent = "📚 Buchvorschläge holen";
+    ev.target.textContent = "📚 Book Tips";
   }
 });
 
