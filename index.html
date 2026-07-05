@@ -99,27 +99,38 @@
     display: none; flex-direction: column; gap: 10px;
   }
   .add-form.open { display: flex; }
-  .add-form select {
+  .add-form input, .add-form select {
+    width: 100%;
     background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 10px 12px;
-    font-size: 14px; font-family: inherit;
+    color: var(--text); border-radius: 8px; padding: 12px 14px;
+    font-size: 16px; font-family: inherit;
   }
+  .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--muted); }
+  .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 5px; }
+  .add-form input[type="date"], .add-form input[type="time"] { color-scheme: dark; }
   .cat-head {
     font-size: 13px; font-weight: 700; color: var(--purple);
     text-transform: uppercase; letter-spacing: .5px;
-    margin: 18px 0 8px;
+    margin: 4px 0 8px;
   }
-  .cat-head:first-child { margin-top: 0; }
-  .add-form .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .add-form input {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 10px 12px;
-    font-size: 14px; font-family: inherit; flex: 1; min-width: 120px;
+
+  /* Kategorie-Ordner */
+  .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .folder {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--purple);
+    border-radius: 12px; padding: 18px 14px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    color: var(--text);
   }
-  .add-form input:focus { outline: none; border-color: var(--muted); }
-  .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
-  .add-form label input { width: 100%; }
-  .add-form input[type="date"], .add-form input[type="time"] { color-scheme: dark; }
+  .folder:hover { border-color: var(--purple); }
+  .folder-name { font-size: 15px; font-weight: 700; color: var(--purple); }
+  .folder-count { font-size: 12px; color: var(--muted); }
+  .back-btn {
+    background: transparent; border: none; color: var(--purple);
+    font-size: 15px; font-weight: 600; cursor: pointer; padding: 4px 0;
+    margin-bottom: 8px; text-align: left;
+  }
   .add-form button {
     border: none; border-radius: 8px; padding: 10px 18px;
     font-size: 14px; font-weight: 700; cursor: pointer; color: #000;
@@ -260,11 +271,9 @@
   <section class="tab visible" id="tab-todo">
     <form class="add-form" id="form-todo">
       <input type="text" id="todo-title" placeholder="Was willst du erledigen?" required>
-      <div class="row">
-        <label>Tag <input type="date" id="todo-day"></label>
-        <label>Uhrzeit <input type="time" id="todo-time"></label>
-        <label>Deadline <input type="date" id="todo-deadline"></label>
-      </div>
+      <label>Tag <input type="date" id="todo-day"></label>
+      <label>Uhrzeit <input type="time" id="todo-time"></label>
+      <label>Deadline <input type="date" id="todo-deadline"></label>
       <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-todo"></ul>
@@ -412,8 +421,6 @@ fab.addEventListener("click", () => {
   if (willOpen) {
     form.classList.add("open");
     fab.textContent = "✕";
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    form.querySelector("input")?.focus();
   }
 });
 
@@ -821,6 +828,8 @@ async function summarizeBook(b) {
   }
 }
 
+let booksView = null; // null = Ordner-Übersicht, sonst der geöffnete Kategoriename
+
 document.getElementById("form-books").addEventListener("submit", e => {
   e.preventDefault();
   const sel = document.getElementById("book-cat").value;
@@ -833,53 +842,82 @@ document.getElementById("form-books").addEventListener("submit", e => {
     cost: 0
   };
   data.books.push(b);
+  booksView = null; // zurück zur Ordner-Übersicht, damit das Buch einsortiert erscheint
   save(); e.target.reset(); renderBooks();
   summarizeBook(b);
 });
 
+function catOf(b) { return b.cat || "Sonstiges"; }
+
 function renderBooks() {
   const ul = document.getElementById("list-books");
   ul.innerHTML = "";
-  if (!data.books.length) { ul.innerHTML = '<div class="empty-state">Noch keine Bücher eingetragen.</div>'; }
-  // Nach Kategorien gruppieren
-  const cats = [...new Set(data.books.map(b => b.cat || "Sonstiges"))].sort((a, b) => a.localeCompare(b, "de"));
-  for (const cat of cats) {
-    const head = document.createElement("div");
-    head.className = "cat-head";
-    head.textContent = cat;
-    ul.appendChild(head);
-    for (const b of data.books.filter(x => (x.cat || "Sonstiges") === cat)) {
-      const li = document.createElement("li");
-      li.className = "item";
-      li.style.cursor = "pointer";
-      const preview = b.loading
-        ? "Claude fasst zusammen…"
-        : (b.answer ? b.answer.slice(0, 140) + (b.answer.length > 140 ? "…" : "") : "Noch keine Zusammenfassung.");
-      li.innerHTML = `
-        <div class="know-head">
-          <div class="body">
-            <div class="know-q">${esc(b.question)}</div>
-            <div class="know-a ${b.answer && !b.loading ? "" : "empty"}">${esc(preview)}</div>
-            ${b.cost ? '<div class="know-cost">Kosten: ' + fmtCost(b.cost) + "</div>" : ""}
-          </div>
-          <button class="ask-btn" ${b.loading ? "disabled" : ""}>${b.loading ? "…" : (b.answer ? "Redo" : "Summarize")}</button>
-          <button class="small-btn danger" title="Löschen">✕</button>
-        </div>`;
-      li.querySelector(".ask-btn").addEventListener("click", e => {
-        e.stopPropagation();
-        summarizeBook(b);
-      });
-      li.querySelector(".small-btn.danger").addEventListener("click", e => {
-        e.stopPropagation();
-        if (confirm("„" + b.question + "“ wirklich löschen?")) {
-          data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks();
-        }
-      });
-      li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
-      ul.appendChild(li);
-    }
+  const tipsRow = document.getElementById("btn-book-tips").parentElement;
+
+  if (!data.books.length) {
+    ul.innerHTML = '<div class="empty-state">Noch keine Bücher – drücke auf +.</div>';
+    tipsRow.style.display = "none";
+    booksView = null;
+    renderBookTips();
+    return;
   }
-  renderBookTips();
+
+  // ----- Ordner-Übersicht -----
+  if (booksView === null) {
+    tipsRow.style.display = "";
+    const cats = [...new Set(data.books.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
+    const grid = document.createElement("div");
+    grid.className = "folder-grid";
+    for (const cat of cats) {
+      const count = data.books.filter(b => catOf(b) === cat).length;
+      const folder = document.createElement("button");
+      folder.className = "folder";
+      folder.innerHTML = `<span class="folder-name">📁 ${esc(cat)}</span><span class="folder-count">${count} ${count === 1 ? "Buch" : "Bücher"}</span>`;
+      folder.addEventListener("click", () => { booksView = cat; renderBooks(); });
+      grid.appendChild(folder);
+    }
+    ul.appendChild(grid);
+    renderBookTips();
+    return;
+  }
+
+  // ----- Bücher innerhalb einer Kategorie -----
+  tipsRow.style.display = "none";
+  document.getElementById("book-tips-box").innerHTML = "";
+  const back = document.createElement("button");
+  back.className = "back-btn";
+  back.textContent = "← Kategorien";
+  back.addEventListener("click", () => { booksView = null; renderBooks(); });
+  ul.appendChild(back);
+
+  const head = document.createElement("div");
+  head.className = "cat-head";
+  head.textContent = booksView;
+  ul.appendChild(head);
+
+  for (const b of data.books.filter(x => catOf(x) === booksView)) {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.style.cursor = "pointer";
+    const status = b.loading ? "Claude fasst zusammen…" : (b.answer ? "" : "Zum Zusammenfassen tippen");
+    li.innerHTML = `
+      <div class="know-head">
+        <div class="body">
+          <div class="know-q">${esc(b.question)}</div>
+          ${status ? '<div class="know-a empty">' + esc(status) + "</div>" : ""}
+        </div>
+        <button class="small-btn danger" title="Löschen">✕</button>
+      </div>`;
+    li.querySelector(".small-btn.danger").addEventListener("click", e => {
+      e.stopPropagation();
+      if (confirm("„" + b.question + "“ wirklich löschen?")) {
+        data.books = data.books.filter(x => x.id !== b.id);
+        save(); renderBooks();
+      }
+    });
+    li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
+    ul.appendChild(li);
+  }
 }
 
 function renderBookTips() {
