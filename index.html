@@ -25,6 +25,19 @@
     --gold: #ffd60a;
     --purple: #bf5af2;
   }
+  body.light {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface2: #ececf0;
+    --border: #d6d6db;
+    --text: #111111;
+    --muted: #6a6a70;
+    --blue: #0a84ff;
+    --green: #248a3d;
+    --red: #d70015;
+    --gold: #a67c00;
+    --purple: #9b30d0;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: var(--bg);
@@ -64,6 +77,29 @@
     box-shadow: 0 4px 16px rgba(0,0,0,.6);
   }
   .fab:hover { border-color: var(--text); }
+
+  /* Fester Book-Tips-Knopf (nur im Bücher-Tab) */
+  .tips-fab {
+    position: fixed; left: 16px; bottom: calc(78px + env(safe-area-inset-bottom));
+    z-index: 80; padding: 12px 18px; border-radius: 24px;
+    background: var(--purple); border: none; color: #fff;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+  }
+
+  /* Toggle-Zeile in den Settings */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; font-size: 15px;
+  }
+  .toggle-row input { width: 20px; height: 20px; accent-color: var(--blue); }
+
+  /* Gesamt-Zähler gelesener Bücher */
+  .book-total {
+    font-size: 14px; color: var(--muted); margin-bottom: 14px;
+  }
+  .book-total b { color: var(--purple); font-weight: 700; }
 
   /* Zahnrad oben rechts */
   .gear {
@@ -124,8 +160,19 @@
     color: var(--text);
   }
   .folder:hover { border-color: var(--purple); }
+  .folder-icon { font-size: 26px; }
   .folder-name { font-size: 15px; font-weight: 700; color: var(--purple); }
   .folder-count { font-size: 12px; color: var(--muted); }
+
+  /* Aufgeräumte Buchvorschläge im Overlay */
+  .tip-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-left: 3px solid var(--purple);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+  }
+  .tip-card .tip-title { font-size: 15px; font-weight: 700; }
+  .tip-card .tip-author { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tip-card .tip-reason { font-size: 13px; margin-top: 6px; line-height: 1.45; }
   .back-btn {
     background: transparent; border: none; color: var(--purple);
     font-size: 15px; font-weight: 600; cursor: pointer; padding: 4px 0;
@@ -139,7 +186,6 @@
   #tab-todo .add-form button  { background: var(--green); }
   #tab-daily .add-form button { background: var(--blue); }
   #tab-avoid .add-form button { background: var(--red); }
-  #tab-know .add-form button  { background: var(--gold); }
 
   ul.items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
   li.item {
@@ -150,7 +196,6 @@
   #tab-todo  li.item { border-left: 3px solid var(--green); }
   #tab-daily li.item { border-left: 3px solid var(--blue); }
   #tab-avoid li.item { border-left: 3px solid var(--red); }
-  #tab-know  li.item { border-left: 3px solid var(--gold); flex-direction: column; }
   #tab-books li.item { border-left: 3px solid var(--purple); flex-direction: column; }
   #tab-books .know-q { color: var(--purple); }
   #tab-books .add-form button { background: var(--purple); }
@@ -207,6 +252,7 @@
   .tips-box .know-cost { margin-top: 8px; }
   .modal.purple { border-color: var(--purple); }
   .modal.purple h2 { color: var(--purple); }
+  .modal.purple .ask-btn { background: var(--purple); color: #fff; }
 
   .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .settings-page input[type="password"] {
@@ -263,7 +309,6 @@
     <button data-tab="todo" class="active">To-Do</button>
     <button data-tab="daily">Daily</button>
     <button data-tab="avoid">Avoid</button>
-    <button data-tab="know">Knowledge</button>
     <button data-tab="books">Books</button>
   </nav>
 
@@ -271,8 +316,6 @@
   <section class="tab visible" id="tab-todo">
     <form class="add-form" id="form-todo">
       <input type="text" id="todo-title" placeholder="Was willst du erledigen?" required>
-      <label>Tag <input type="date" id="todo-day"></label>
-      <label>Uhrzeit <input type="time" id="todo-time"></label>
       <label>Deadline <input type="date" id="todo-deadline"></label>
       <button type="submit">Add</button>
     </form>
@@ -297,15 +340,6 @@
     <ul class="items" id="list-avoid"></ul>
   </section>
 
-  <!-- WISSEN -->
-  <section class="tab" id="tab-know">
-    <form class="add-form" id="form-know">
-      <input type="text" id="know-title" placeholder="Frage oder Website-Link, z.B. https://..." required>
-      <button type="submit">Add</button>
-    </form>
-    <ul class="items" id="list-know"></ul>
-  </section>
-
   <!-- BÜCHER -->
   <section class="tab" id="tab-books">
     <form class="add-form" id="form-books">
@@ -325,11 +359,8 @@
       <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-books"></ul>
-    <div class="settings-row" style="margin-top:16px">
-      <button class="ask-btn" id="btn-book-tips">📚 Book Tips</button>
-    </div>
-    <div id="book-tips-box"></div>
   </section>
+  <button class="tips-fab" id="btn-book-tips" hidden>📚 Book Tips</button>
 
   <div class="settings-page" id="settings-page" hidden>
     <div class="settings-inner">
@@ -342,6 +373,12 @@
       </div>
       <span id="key-status" class="note"></span>
       <p class="note">Der Schlüssel wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin. Denk an dein Ausgabenlimit im Anthropic-Konto!</p>
+
+      <h3>Design</h3>
+      <label class="toggle-row">
+        <span>Dark Mode</span>
+        <input type="checkbox" id="toggle-dark" checked>
+      </label>
 
       <h3>Tokens & Kosten</h3>
       <p class="usage-badge">KI-Verbrauch insgesamt: <b id="usage-total">$0.0000</b></p>
@@ -394,6 +431,7 @@ function esc(s) {
 
 /* ---------- Tabs ---------- */
 let currentTab = "todo";
+const tipsFab = document.getElementById("btn-book-tips");
 document.querySelectorAll("nav button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
@@ -402,11 +440,12 @@ document.querySelectorAll("nav button").forEach(btn => {
     document.getElementById("tab-" + btn.dataset.tab).classList.add("visible");
     currentTab = btn.dataset.tab;
     closeAllForms();
+    updateTipsFab();
   });
 });
 
 /* ---------- Plus-Knopf (öffnet das Formular des aktiven Tabs) ---------- */
-const FORM_BY_TAB = { todo: "form-todo", daily: "form-daily", avoid: "form-avoid", know: "form-know", books: "form-books" };
+const FORM_BY_TAB = { todo: "form-todo", daily: "form-daily", avoid: "form-avoid", books: "form-books" };
 const fab = document.getElementById("btn-add");
 
 function closeAllForms() {
@@ -436,14 +475,27 @@ document.getElementById("btn-settings").addEventListener("click", () => {
 });
 document.getElementById("btn-settings-close").addEventListener("click", () => { settingsPage.hidden = true; });
 
+/* ---------- Dark / Light Mode ---------- */
+const THEME_KEY = "meinTagTheme";
+const darkToggle = document.getElementById("toggle-dark");
+function applyTheme() {
+  const light = localStorage.getItem(THEME_KEY) === "light";
+  document.body.classList.toggle("light", light);
+  darkToggle.checked = !light;
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", light ? "#f5f5f7" : "#000000");
+}
+darkToggle.addEventListener("change", () => {
+  localStorage.setItem(THEME_KEY, darkToggle.checked ? "dark" : "light");
+  applyTheme();
+});
+applyTheme();
+
 /* ---------- To-Do ---------- */
 document.getElementById("form-todo").addEventListener("submit", e => {
   e.preventDefault();
   data.todos.push({
     id: uid(),
     title: document.getElementById("todo-title").value.trim(),
-    day: document.getElementById("todo-day").value,
-    time: document.getElementById("todo-time").value,
     deadline: document.getElementById("todo-deadline").value,
     done: false
   });
@@ -463,11 +515,7 @@ function renderTodos() {
       <button class="check" title="Erledigt">${t.done ? "✓" : ""}</button>
       <div class="body">
         <div class="title">${esc(t.title)}</div>
-        <div class="meta">
-          ${t.day ? "<span>📅 " + fmtDate(t.day) + "</span>" : ""}
-          ${t.time ? "<span>🕐 " + t.time + " Uhr</span>" : ""}
-          ${t.deadline ? '<span class="' + (overdue ? "overdue" : "") + '">⏳ Deadline: ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span>" : ""}
-        </div>
+        ${t.deadline ? '<div class="meta"><span class="' + (overdue ? "overdue" : "") + '">⏳ ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span></div>" : ""}
       </div>
       <button class="small-btn danger" title="Löschen">✕</button>`;
     li.querySelector(".check").addEventListener("click", () => { t.done = !t.done; save(); renderTodos(); });
@@ -668,34 +716,11 @@ async function callClaude({ system, userText, maxTokens = 4096, tools = null }) 
   return { text, cost };
 }
 
-/* ---------- Wissens-Frage an Claude ---------- */
-async function askClaude(k) {
-  k.loading = true;
-  renderKnows();
-  try {
-    const r = await callClaude({
-      system: "Du bist der Wissens-Assistent in einer persönlichen Tagesplaner-App. Beantworte Fragen auf Deutsch: klar, korrekt und gut verständlich, gerne mit einem Beispiel. Wenn die Frage einen Website-Link enthält, rufe die Seite mit web_fetch ab und werte sie aus (Zusammenfassung, wichtigste Punkte). Halte dich angenehm kompakt.",
-      userText: k.question,
-      maxTokens: 4096,
-      tools: [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 5 }]
-    });
-    if (r) {
-      k.answer = r.text;
-      k.cost = (k.cost || 0) + r.cost;
-    }
-  } catch (err) {
-    alert("Das hat nicht geklappt: " + err.message);
-  } finally {
-    k.loading = false;
-    save(); renderKnows(); renderUsage();
-  }
-}
-
 /* ---------- Antwort-Overlay (Großansicht) ---------- */
 function openModal(k, opts = {}) {
-  const askFn = opts.ask || askClaude;
-  const rerender = opts.rerender || renderKnows;
-  const labels = opts.labels || { has: "Re-Ask", none: "Ask Claude", empty: "Noch keine Antwort. Drücke „Ask Claude“." };
+  const askFn = opts.ask;
+  const rerender = opts.rerender || renderBooks;
+  const labels = opts.labels;
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   const modal = document.createElement("div");
@@ -739,56 +764,6 @@ function openModal(k, opts = {}) {
   });
 }
 
-/* ---------- Wissen ---------- */
-document.getElementById("form-know").addEventListener("submit", e => {
-  e.preventDefault();
-  const k = {
-    id: uid(),
-    question: document.getElementById("know-title").value.trim(),
-    answer: "",
-    cost: 0
-  };
-  data.knows.push(k);
-  save(); e.target.reset(); renderKnows();
-  askClaude(k);
-});
-
-function renderKnows() {
-  const ul = document.getElementById("list-know");
-  ul.innerHTML = "";
-  if (!data.knows.length) { ul.innerHTML = '<div class="empty-state">Noch keine Fragen notiert.</div>'; return; }
-  for (const k of data.knows) {
-    const li = document.createElement("li");
-    li.className = "item";
-    li.style.cursor = "pointer";
-    const preview = k.loading
-      ? "Claude denkt nach…"
-      : (k.answer ? k.answer.slice(0, 140) + (k.answer.length > 140 ? "…" : "") : "Noch keine Antwort.");
-    li.innerHTML = `
-      <div class="know-head">
-        <div class="body">
-          <div class="know-q">${esc(k.question)}</div>
-          <div class="know-a ${k.answer && !k.loading ? "" : "empty"}">${esc(preview)}</div>
-          ${k.cost ? '<div class="know-cost">Kosten: ' + fmtCost(k.cost) + "</div>" : ""}
-        </div>
-        <button class="ask-btn" ${k.loading ? "disabled" : ""}>${k.loading ? "…" : (k.answer ? "Re-Ask" : "Ask")}</button>
-        <button class="small-btn danger" title="Löschen">✕</button>
-      </div>`;
-    li.querySelector(".ask-btn").addEventListener("click", e => {
-      e.stopPropagation();
-      askClaude(k);
-    });
-    li.querySelector(".small-btn.danger").addEventListener("click", e => {
-      e.stopPropagation();
-      if (confirm("Frage wirklich löschen?")) {
-        data.knows = data.knows.filter(x => x.id !== k.id); save(); renderKnows();
-      }
-    });
-    li.addEventListener("click", () => openModal(k));
-    ul.appendChild(li);
-  }
-}
-
 /* ---------- Bücher ---------- */
 const BOOK_MODAL_OPTS = {
   purple: true,
@@ -798,6 +773,11 @@ const BOOK_MODAL_OPTS = {
 };
 
 const BOOK_CATS = ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"];
+const CAT_ICON = {
+  "Fantasy": "🐉", "Roman": "📖", "Krimi & Thriller": "🕵️", "Sachbuch": "💡",
+  "Finanzen": "💰", "Selbstentwicklung": "🌱", "Wissenschaft": "🔬",
+  "Biografie": "👤", "Sonstiges": "📚"
+};
 
 async function summarizeBook(b) {
   b.loading = true;
@@ -848,23 +828,30 @@ document.getElementById("form-books").addEventListener("submit", e => {
 });
 
 function catOf(b) { return b.cat || "Sonstiges"; }
+function iconOf(cat) { return CAT_ICON[cat] || "📚"; }
+
+function updateTipsFab() {
+  tipsFab.hidden = !(currentTab === "books" && data.books.length > 0);
+}
 
 function renderBooks() {
   const ul = document.getElementById("list-books");
   ul.innerHTML = "";
-  const tipsRow = document.getElementById("btn-book-tips").parentElement;
+  updateTipsFab();
 
   if (!data.books.length) {
     ul.innerHTML = '<div class="empty-state">Noch keine Bücher – drücke auf +.</div>';
-    tipsRow.style.display = "none";
     booksView = null;
-    renderBookTips();
     return;
   }
 
   // ----- Ordner-Übersicht -----
   if (booksView === null) {
-    tipsRow.style.display = "";
+    const total = document.createElement("div");
+    total.className = "book-total";
+    total.innerHTML = "Insgesamt gelesen: <b>" + data.books.length + " " + (data.books.length === 1 ? "Buch" : "Bücher") + "</b>";
+    ul.appendChild(total);
+
     const cats = [...new Set(data.books.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
     const grid = document.createElement("div");
     grid.className = "folder-grid";
@@ -872,18 +859,15 @@ function renderBooks() {
       const count = data.books.filter(b => catOf(b) === cat).length;
       const folder = document.createElement("button");
       folder.className = "folder";
-      folder.innerHTML = `<span class="folder-name">📁 ${esc(cat)}</span><span class="folder-count">${count} ${count === 1 ? "Buch" : "Bücher"}</span>`;
+      folder.innerHTML = `<span class="folder-icon">${iconOf(cat)}</span><span class="folder-name">${esc(cat)}</span><span class="folder-count">${count} ${count === 1 ? "Buch" : "Bücher"}</span>`;
       folder.addEventListener("click", () => { booksView = cat; renderBooks(); });
       grid.appendChild(folder);
     }
     ul.appendChild(grid);
-    renderBookTips();
     return;
   }
 
   // ----- Bücher innerhalb einer Kategorie -----
-  tipsRow.style.display = "none";
-  document.getElementById("book-tips-box").innerHTML = "";
   const back = document.createElement("button");
   back.className = "back-btn";
   back.textContent = "← Kategorien";
@@ -892,7 +876,7 @@ function renderBooks() {
 
   const head = document.createElement("div");
   head.className = "cat-head";
-  head.textContent = booksView;
+  head.textContent = iconOf(booksView) + " " + booksView;
   ul.appendChild(head);
 
   for (const b of data.books.filter(x => catOf(x) === booksView)) {
@@ -920,41 +904,73 @@ function renderBooks() {
   }
 }
 
-function renderBookTips() {
-  const box = document.getElementById("book-tips-box");
-  if (!data.bookTips) { box.innerHTML = ""; return; }
-  box.innerHTML = `
-    <div class="tips-box">
-      <h3>📚 Buchvorschläge für dich (${esc(data.bookTips.date || "")})</h3>
-      <div class="tips-text">${esc(data.bookTips.text)}</div>
-      <div class="know-cost">Kosten: ${fmtCost(data.bookTips.cost || 0)}</div>
-    </div>`;
+/* ---------- Buchvorschläge (fester Knopf + aufgeräumtes Overlay) ---------- */
+async function fetchBookTips() {
+  const titles = data.books.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
+  const r = await callClaude({
+    system: "Du empfiehlst Bücher. Antworte auf Deutsch, ohne Vorwort und ohne Abschluss.",
+    userText: "Diese Bücher habe ich gelesen und mochte sie: " + titles + ". Empfiehl mir 5 Bücher, die dazu passen und die ich noch nicht gelesen habe. Gib pro Buch genau eine Zeile im Format: Titel | Autor | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
+    maxTokens: 500
+  });
+  if (r) {
+    data.bookTips = { text: r.text, cost: r.cost, date: fmtDate(todayStr()) };
+    save(); renderUsage();
+  }
 }
 
-document.getElementById("btn-book-tips").addEventListener("click", async ev => {
+function openTipsModal() {
+  if (!data.bookTips) return;
+  const lines = data.bookTips.text.split("\n").map(l => l.trim()).filter(Boolean);
+  const cards = lines.map((line, i) => {
+    const clean = line.replace(/^\s*\d+[.)]\s*/, "");        // evtl. Nummerierung entfernen
+    const parts = clean.split("|").map(s => s.trim());
+    const title = parts[0] || clean;
+    const author = parts[1] || "";
+    const reason = parts.slice(2).join(" – ");
+    return `<div class="tip-card">
+      <div class="tip-title">${i + 1}. ${esc(title)}</div>
+      ${author ? '<div class="tip-author">' + esc(author) + "</div>" : ""}
+      ${reason ? '<div class="tip-reason">' + esc(reason) + "</div>" : ""}
+    </div>`;
+  }).join("");
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  const modal = document.createElement("div");
+  modal.className = "modal purple";
+  modal.innerHTML = `
+    <h2>📚 Buchvorschläge</h2>
+    <div class="modal-meta">${esc(data.bookTips.date || "")} · Kosten: ${fmtCost(data.bookTips.cost || 0)}</div>
+    <div class="modal-answer" style="white-space:normal">${cards}</div>
+    <div class="modal-actions">
+      <button class="ask-btn" data-act="refresh">Neue Vorschläge</button>
+      <button class="small-btn" data-act="close">Close</button>
+    </div>`;
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  const close = () => backdrop.remove();
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  modal.querySelector('[data-act="close"]').addEventListener("click", close);
+  modal.querySelector('[data-act="refresh"]').addEventListener("click", async ev => {
+    ev.target.disabled = true;
+    ev.target.textContent = "Claude sucht…";
+    try { await fetchBookTips(); close(); openTipsModal(); }
+    catch (err) { alert("Das hat nicht geklappt: " + err.message); ev.target.disabled = false; ev.target.textContent = "Neue Vorschläge"; }
+  });
+}
+
+tipsFab.addEventListener("click", async () => {
   if (!data.books.length) {
-    alert("Trag zuerst mindestens ein Buch ein, das du gelesen hast – dann kann Claude passende Vorschläge machen.");
+    alert("Trag zuerst mindestens ein Buch ein – dann kann Claude passende Vorschläge machen.");
     return;
   }
-  ev.target.disabled = true;
-  ev.target.textContent = "Claude sucht Bücher…";
-  try {
-    const titles = data.books.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
-    const r = await callClaude({
-      system: "Du empfiehlst Bücher. Antworte auf Deutsch und kompakt, ohne Vorwort.",
-      userText: "Diese Bücher habe ich gelesen und mochte sie: " + titles + ". Empfiehl mir 5 Bücher, die dazu passen. Pro Buch genau eine Zeile: Titel – Autor – kurzer Grund (max. 10 Wörter). Keine Bücher, die ich schon gelesen habe.",
-      maxTokens: 500
-    });
-    if (r) {
-      data.bookTips = { text: r.text, cost: r.cost, date: fmtDate(todayStr()) };
-      save(); renderBookTips(); renderUsage();
-    }
-  } catch (err) {
-    alert("Das hat nicht geklappt: " + err.message);
-  } finally {
-    ev.target.disabled = false;
-    ev.target.textContent = "📚 Book Tips";
-  }
+  if (data.bookTips) { openTipsModal(); return; }
+  tipsFab.disabled = true;
+  tipsFab.textContent = "Claude sucht…";
+  try { await fetchBookTips(); openTipsModal(); }
+  catch (err) { alert("Das hat nicht geklappt: " + err.message); }
+  finally { tipsFab.disabled = false; tipsFab.textContent = "📚 Book Tips"; }
 });
 
 /* ---------- Export / Import ---------- */
@@ -977,19 +993,18 @@ document.getElementById("btn-import").addEventListener("click", () => {
     data.todos = imported.todos || [];
     data.dailies = imported.dailies || [];
     data.avoids = imported.avoids || [];
-    data.knows = imported.knows || [];
     data.books = imported.books || [];
     data.bookTips = imported.bookTips || null;
     data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
     save();
-    renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderBooks(); renderUsage();
+    renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderUsage();
     alert("Daten erfolgreich importiert!");
   } catch {
     alert("Das hat leider nicht geklappt – der Text war kein gültiger Export.");
   }
 });
 
-renderTodos(); renderDailies(); renderAvoids(); renderKnows(); renderBooks(); renderUsage();
+renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderUsage();
 
 /* ---------- Service Worker (macht die App installierbar & offline-fähig) ---------- */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
