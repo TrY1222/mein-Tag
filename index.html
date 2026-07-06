@@ -795,13 +795,17 @@ document.getElementById("btn-save-key").addEventListener("click", () => {
   alert(val ? "Schlüssel gespeichert!" : "Schlüssel entfernt.");
 });
 
-// Preise für claude-opus-4-8 in US-Dollar pro 1 Mio. Tokens
-const PRICE = { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 };
-function usdCost(u) {
-  return (u.input_tokens || 0) * PRICE.input / 1e6
-       + (u.output_tokens || 0) * PRICE.output / 1e6
-       + (u.cache_creation_input_tokens || 0) * PRICE.cacheWrite / 1e6
-       + (u.cache_read_input_tokens || 0) * PRICE.cacheRead / 1e6;
+// Preise in US-Dollar pro 1 Mio. Tokens (je Modell)
+const PRICES = {
+  "claude-opus-4-8":  { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
+  "claude-haiku-4-5": { input: 1, output: 5,  cacheWrite: 1.25, cacheRead: 0.1 }
+};
+function usdCost(u, model) {
+  const p = PRICES[model] || PRICES["claude-opus-4-8"];
+  return (u.input_tokens || 0) * p.input / 1e6
+       + (u.output_tokens || 0) * p.output / 1e6
+       + (u.cache_creation_input_tokens || 0) * p.cacheWrite / 1e6
+       + (u.cache_read_input_tokens || 0) * p.cacheRead / 1e6;
 }
 function fmtCost(c) { return "$" + c.toFixed(4); }
 function renderUsage() {
@@ -810,7 +814,7 @@ function renderUsage() {
 }
 
 /* ---------- Allgemeiner Claude-Aufruf ---------- */
-async function callClaude({ system, userText, maxTokens = 4096, tools = null }) {
+async function callClaude({ system, userText, maxTokens = 4096, tools = null, model = "claude-haiku-4-5" }) {
   const apiKey = getApiKey();
   if (!apiKey) {
     alert("Bitte trage zuerst unten in den Einstellungen deinen API-Schlüssel ein.");
@@ -821,7 +825,7 @@ async function callClaude({ system, userText, maxTokens = 4096, tools = null }) 
 
   // Schleife für pause_turn (Server-Tools wie web_fetch können pausieren)
   for (let i = 0; i < 6; i++) {
-    const reqBody = { model: "claude-opus-4-8", max_tokens: maxTokens, system, messages };
+    const reqBody = { model, max_tokens: maxTokens, system, messages };
     if (tools) reqBody.tools = tools;
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -838,7 +842,7 @@ async function callClaude({ system, userText, maxTokens = 4096, tools = null }) 
       if (res.status === 401) throw new Error("Der API-Schlüssel wurde nicht akzeptiert. Prüfe ihn in den Einstellungen.");
       throw new Error(body?.error?.message || res.statusText);
     }
-    cost += usdCost(body.usage || {});
+    cost += usdCost(body.usage || {}, model);
     tokIn += body.usage?.input_tokens || 0;
     tokOut += body.usage?.output_tokens || 0;
     response = body;
@@ -1207,8 +1211,8 @@ async function generateWorkout() {
   try {
     const level = data.sport.level;
     const r = await callClaude({
-      system: "Du bist ein Calisthenics-Coach (nur Körpergewicht, keine Geräte). Erstelle ein Workout passend zur Schwierigkeitsstufe. Antworte auf Deutsch, ohne Vorwort. Format: 4 bis 6 Übungen, je eine pro Zeile als 'Übung | Sätze x Wiederholungen' (bei Halteübungen 'Sätze x Sekunden'). Danach eine letzte Zeile, die mit 'MOTIVATION:' beginnt und einen kurzen, motivierenden Satz enthält.",
-      userText: "Meine Schwierigkeitsstufe ist " + level + " von 20 (1 = absoluter Anfänger, 20 = sehr fortgeschritten). Gib mir mein heutiges Calisthenics-Workout.",
+      system: "Du bist ein Calisthenics-Coach (nur Körpergewicht, keine Geräte). Konzentriere dich auf Oberkörper (Brust, Rücken, Schultern, Arme) und Rumpf/Bauch. Baue KEINE Bein-Übungen ein (keine Kniebeugen, Ausfallschritte, Wadenheben, Wall Sits o.Ä.) – die Beine werden separat trainiert. Erstelle ein Workout passend zur Schwierigkeitsstufe. Antworte auf Deutsch, ohne Vorwort. Format: 4 bis 6 Übungen, je eine pro Zeile als 'Übung | Sätze x Wiederholungen' (bei Halteübungen 'Sätze x Sekunden'). Danach eine letzte Zeile, die mit 'MOTIVATION:' beginnt und einen kurzen, motivierenden Satz enthält.",
+      userText: "Meine Schwierigkeitsstufe ist " + level + " von 20 (1 = absoluter Anfänger, 20 = sehr fortgeschritten). Gib mir mein heutiges Calisthenics-Workout für Oberkörper und Rumpf (keine Beine).",
       maxTokens: 400
     });
     if (r) openWorkoutModal(parseWorkout(r.text), level);
@@ -1265,8 +1269,8 @@ function openWorkoutModal(wo, levelAtGen) {
     ev.target.disabled = true; ev.target.textContent = "Claude baut…";
     try {
       const r = await callClaude({
-        system: "Du bist ein Calisthenics-Coach (nur Körpergewicht, keine Geräte). Erstelle ein anderes Workout passend zur Schwierigkeitsstufe. Antworte auf Deutsch, ohne Vorwort. Format: 4 bis 6 Übungen, je eine pro Zeile als 'Übung | Sätze x Wiederholungen'. Danach eine Zeile mit 'MOTIVATION:' und einem kurzen motivierenden Satz.",
-        userText: "Schwierigkeitsstufe " + data.sport.level + " von 20. Gib mir ein alternatives Calisthenics-Workout.",
+        system: "Du bist ein Calisthenics-Coach (nur Körpergewicht, keine Geräte). Konzentriere dich auf Oberkörper (Brust, Rücken, Schultern, Arme) und Rumpf/Bauch. Baue KEINE Bein-Übungen ein (keine Kniebeugen, Ausfallschritte, Wadenheben, Wall Sits o.Ä.) – die Beine werden separat trainiert. Erstelle ein anderes Workout passend zur Schwierigkeitsstufe. Antworte auf Deutsch, ohne Vorwort. Format: 4 bis 6 Übungen, je eine pro Zeile als 'Übung | Sätze x Wiederholungen'. Danach eine Zeile mit 'MOTIVATION:' und einem kurzen motivierenden Satz.",
+        userText: "Schwierigkeitsstufe " + data.sport.level + " von 20. Gib mir ein alternatives Calisthenics-Workout für Oberkörper und Rumpf (keine Beine).",
         maxTokens: 400
       });
       renderUsage();
