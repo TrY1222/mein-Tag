@@ -278,6 +278,7 @@
 
   /* Sport */
   #tab-sport .add-form button[type="submit"] { background: var(--orange); }
+  #tab-sport .ask-btn { background: var(--orange); color: #000; }
   .weekday-row { display: flex; gap: 6px; }
   .wd {
     flex: 1; padding: 12px 0; border-radius: 8px; min-height: 48px;
@@ -286,38 +287,77 @@
   }
   .wd.on { background: var(--orange); color: #000; border-color: var(--orange); }
 
-  .sport-level { display: flex; align-items: baseline; gap: 10px; }
-  .sport-level .lvl { font-size: 30px; font-weight: 800; color: var(--orange); }
-  .sport-level .rank { font-size: 15px; font-weight: 700; }
-  .sport-sub { font-size: 13px; color: var(--muted); margin-top: 6px; display: flex; gap: 16px; flex-wrap: wrap; }
-  .sport-progress { height: 8px; background: var(--surface2); border-radius: 6px; overflow: hidden; margin-top: 12px; }
-  .sport-progress > div { height: 100%; background: var(--orange); transition: width .3s; }
-  .train-btn {
-    display: block; width: 100%; margin: 18px 0; padding: 16px;
-    background: var(--orange); border: none; border-radius: 12px;
-    color: #000; font-size: 16px; font-weight: 800; cursor: pointer;
+  /* Umschalter Training / Skills */
+  .sport-seg { display: flex; gap: 6px; margin-bottom: 18px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+  .sport-seg button {
+    flex: 1; border: none; background: transparent; color: var(--muted);
+    padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
   }
-  .train-btn.rest { background: var(--surface); color: var(--muted); border: 1px solid var(--border); font-weight: 600; }
-  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-  .day-cell {
-    aspect-ratio: 1 / 1.25; border-radius: 10px; border: 1px solid var(--border);
-    background: var(--surface); display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 2px;
-  }
-  .day-cell .dow { font-size: 11px; color: var(--muted); }
-  .day-cell .dom { font-size: 15px; font-weight: 700; }
-  .day-cell.train { border-color: var(--orange); }
-  .day-cell.done { background: var(--orange); }
-  .day-cell.done .dow, .day-cell.done .dom { color: #000; }
-  .day-cell.today { box-shadow: 0 0 0 2px var(--orange) inset; }
+  .sport-seg button.on { background: var(--orange); color: #000; }
 
-  .ex-card { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
-  .ex-card .ex-name { font-size: 15px; font-weight: 700; }
-  .ex-card .ex-detail { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .motiv-line { font-size: 14px; font-style: italic; color: var(--orange); margin: 10px 0 4px; }
-  .fb-label { font-size: 13px; color: var(--muted); margin: 10px 0 6px; }
-  .fb-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .fb-btn { flex: 1; min-width: 88px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); border-radius: 10px; padding: 12px 6px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .sec-head { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 22px 0 10px; }
+  .sec-head:first-child { margin-top: 0; }
+
+  /* Heutige Übungen mit Eingabe */
+  .ex-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--orange); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .ex-row .ex-check {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #000;
+  }
+  .ex-row.done .ex-check { background: var(--orange); border-color: var(--orange); }
+  .ex-row .ex-name { flex: 1; font-size: 15px; font-weight: 700; }
+  .ex-row .ex-input {
+    width: 66px; text-align: center; background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text); border-radius: 8px;
+    padding: 10px 6px; font-size: 16px; font-family: inherit; min-height: 44px;
+  }
+  .ex-row .ex-unit { font-size: 12px; color: var(--muted); width: 30px; }
+
+  /* Fortschritt pro Übung */
+  .prog-row { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .prog-row .p-name { font-size: 14px; font-weight: 700; }
+  .prog-row .p-vals { font-size: 13px; color: var(--muted); }
+  .prog-row .p-delta { font-weight: 700; }
+  .p-up { color: var(--green); }
+  .p-down { color: var(--red); }
+
+  /* Monatskalender */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cal-head .cal-title { font-size: 16px; font-weight: 700; }
+  .cal-nav { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; font-size: 18px; cursor: pointer; }
+  .cal-dow { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
+  .cal-dow span { text-align: center; font-size: 11px; color: var(--muted); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-cell {
+    aspect-ratio: 1; border-radius: 8px; border: 1px solid transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+  }
+  .cal-cell.has { background: var(--surface); border-color: var(--border); color: var(--text); }
+  .cal-cell.train { border-color: var(--orange); }
+  .cal-cell.done { background: var(--orange); color: #000; cursor: pointer; }
+  .cal-cell.today { box-shadow: 0 0 0 2px var(--orange) inset; }
+  .cal-cell.empty { visibility: hidden; }
+
+  /* Skills */
+  .skill-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 12px; padding: 16px; }
+  .skill-card h3 { font-size: 18px; color: var(--orange); }
+  .skill-progress-txt { font-size: 13px; color: var(--muted); margin: 4px 0 14px; }
+  .step-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); cursor: pointer; }
+  .step-row .step-check {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+    border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #000;
+  }
+  .step-row.done .step-check { background: var(--orange); border-color: var(--orange); }
+  .step-row.done .step-text { color: var(--muted); text-decoration: line-through; }
+  .step-text { font-size: 14px; line-height: 1.4; }
+  .day-detail-ex { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .day-detail-ex span:last-child { color: var(--orange); font-weight: 700; }
 
   .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .settings-page input[type="password"] {
@@ -448,7 +488,7 @@
   <!-- SPORT -->
   <section class="tab" id="tab-sport">
     <form class="add-form" id="form-sport">
-      <div class="note">An welchen Tagen willst du Calisthenics machen?</div>
+      <div class="note">An welchen Tagen willst du trainieren?</div>
       <div class="weekday-row" id="weekday-row">
         <button type="button" class="wd" data-dow="1">Mo</button>
         <button type="button" class="wd" data-dow="2">Di</button>
@@ -460,7 +500,12 @@
       </div>
       <button type="submit">Save</button>
     </form>
-    <div id="sport-content"></div>
+    <div class="sport-seg">
+      <button data-sview="training" class="on">Training</button>
+      <button data-sview="skills">Skills</button>
+    </div>
+    <div id="sport-training"></div>
+    <div id="sport-skills" hidden></div>
   </section>
 
   <div class="settings-page" id="settings-page" hidden>
@@ -507,7 +552,12 @@ function load() {
 const data = Object.assign({ todos: [], dailies: [], avoids: [], knows: [], books: [], bookTips: null, sport: null, usage: { input: 0, output: 0, cost: 0 } }, load());
 if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
 if (!data.books) data.books = [];
-if (!data.sport) data.sport = { trainingDays: [1, 3, 5], level: 1, sessions: [] };
+if (!data.sport) data.sport = {};
+if (!Array.isArray(data.sport.trainingDays)) data.sport.trainingDays = [1, 2, 4, 5];
+if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
+if (!data.sport.skills) data.sport.skills = {};
+if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
+if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -1126,21 +1176,29 @@ tipsFab.addEventListener("click", async () => {
   finally { tipsFab.disabled = false; tipsFab.textContent = "📚 Book Tips"; }
 });
 
-/* ---------- Sport (Calisthenics-Plan) ---------- */
-const WD_NAMES = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+/* ---------- Sport (Training + Skills) ---------- */
+const SPORT_EX = [
+  { name: "Dips", unit: "Wdh" },
+  { name: "Liegestütze", unit: "Wdh" },
+  { name: "Klimmzüge", unit: "Wdh" },
+  { name: "Plank", unit: "Sek" }
+];
+const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+let sportView = "training";
+let calDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-function sportRank(l) {
-  if (l <= 2) return "Anfänger";
-  if (l <= 5) return "Aufsteiger";
-  if (l <= 9) return "Fortgeschritten";
-  if (l <= 14) return "Profi";
-  return "Meister";
+function mondayOf(d) { const x = new Date(d); const off = (x.getDay() + 6) % 7; x.setDate(x.getDate() - off); x.setHours(0, 0, 0, 0); return x; }
+function addD(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function weekTotal(exName, weeksAgo) {
+  const mon = mondayOf(new Date()); mon.setDate(mon.getDate() - 7 * weeksAgo);
+  let sum = 0;
+  for (let i = 0; i < 7; i++) { const day = data.sport.log[isoDate(addD(mon, i))]; if (day && day[exName]) sum += day[exName]; }
+  return sum;
 }
-function weekDates() {
-  const d = new Date();
-  const offset = (d.getDay() + 6) % 7;            // 0 = Montag
-  const mon = new Date(d); mon.setDate(d.getDate() - offset);
-  return Array.from({ length: 7 }, (_, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); return x; });
+function monthTotal(exName, y, m) {
+  let sum = 0;
+  for (const iso in data.sport.log) { const [yy, mm] = iso.split("-").map(Number); if (yy === y && mm === m + 1 && data.sport.log[iso][exName]) sum += data.sport.log[iso][exName]; }
+  return sum;
 }
 
 // Wochentag-Auswahl im Formular
@@ -1154,145 +1212,185 @@ function syncWeekdayButtons() {
 }
 document.getElementById("form-sport").addEventListener("submit", e => {
   e.preventDefault();
-  const days = [...document.querySelectorAll("#weekday-row .wd.on")].map(b => parseInt(b.dataset.dow, 10));
-  data.sport.trainingDays = days;
+  data.sport.trainingDays = [...document.querySelectorAll("#weekday-row .wd.on")].map(b => parseInt(b.dataset.dow, 10));
   save(); renderSport();
 });
 
+// Umschalter Training / Skills
+document.querySelectorAll(".sport-seg button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".sport-seg button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on"); sportView = b.dataset.sview; renderSport();
+  });
+});
+
 function renderSport() {
-  const box = document.getElementById("sport-content");
-  const s = data.sport;
-  const week = weekDates();
-  const todayIso = todayStr();
-  const doneDates = new Set(s.sessions.map(x => x.date));
-
-  // Diese Woche: geplant vs. erledigt
-  const plannedThisWeek = week.filter(d => s.trainingDays.includes(d.getDay())).length;
-  const doneThisWeek = week.filter(d => doneDates.has(isoDate(d))).length;
-  const doneToday = doneDates.has(todayIso);
-  const isTrainingToday = s.trainingDays.includes(new Date().getDay());
-  const pct = plannedThisWeek ? Math.min(100, Math.round(doneThisWeek / plannedThisWeek * 100)) : 0;
-
-  // Kalender
-  const cells = week.map(d => {
-    const iso = isoDate(d);
-    const cls = ["day-cell"];
-    if (s.trainingDays.includes(d.getDay())) cls.push("train");
-    if (doneDates.has(iso)) cls.push("done");
-    if (iso === todayIso) cls.push("today");
-    return `<div class="${cls.join(" ")}"><span class="dow">${WD_NAMES[d.getDay()]}</span><span class="dom">${d.getDate()}</span></div>`;
-  }).join("");
-
-  // Trainings-Knopf
-  let btn;
-  if (doneToday) btn = '<button class="train-btn rest" id="btn-train">Heute erledigt 💪 – nochmal?</button>';
-  else if (isTrainingToday) btn = '<button class="train-btn" id="btn-train">🔥 Workout starten</button>';
-  else btn = '<button class="train-btn rest" id="btn-train">Heute ist Ruhetag – trotzdem trainieren?</button>';
-
-  box.innerHTML = `
-    <div class="sport-level"><span class="lvl">Lvl ${s.level}</span><span class="rank">${sportRank(s.level)}</span></div>
-    <div class="sport-sub">
-      <span>📅 Diese Woche: ${doneThisWeek}/${plannedThisWeek || 0}</span>
-      <span>🏅 Gesamt: ${s.sessions.length}</span>
-    </div>
-    <div class="sport-progress"><div style="width:${pct}%"></div></div>
-    ${btn}
-    <div class="week-grid">${cells}</div>`;
-
-  document.getElementById("btn-train").addEventListener("click", generateWorkout);
+  document.getElementById("sport-training").hidden = sportView !== "training";
+  document.getElementById("sport-skills").hidden = sportView !== "skills";
+  document.querySelectorAll(".sport-seg button").forEach(b => b.classList.toggle("on", b.dataset.sview === sportView));
   syncWeekdayButtons();
+  if (sportView === "training") renderTraining(); else renderSkills();
 }
 
-/* Workout von Claude erzeugen */
-async function generateWorkout() {
-  const btn = document.getElementById("btn-train");
-  const oldText = btn.textContent;
-  btn.disabled = true; btn.textContent = "Claude baut dein Workout…";
-  try {
-    const level = data.sport.level;
-    const r = await callClaude({
-      system: "Du bist ein Calisthenics-Coach (nur Körpergewicht, keine Geräte). Konzentriere dich auf Oberkörper (Brust, Rücken, Schultern, Arme) und Rumpf/Bauch. Baue KEINE Bein-Übungen ein (keine Kniebeugen, Ausfallschritte, Wadenheben, Wall Sits o.Ä.) – die Beine werden separat trainiert. Erstelle ein Workout passend zur Schwierigkeitsstufe. Antworte auf Deutsch, ohne Vorwort. Format: 4 bis 6 Übungen, je eine pro Zeile als 'Übung | Sätze x Wiederholungen' (bei Halteübungen 'Sätze x Sekunden'). Danach eine letzte Zeile, die mit 'MOTIVATION:' beginnt und einen kurzen, motivierenden Satz enthält.",
-      userText: "Meine Schwierigkeitsstufe ist " + level + " von 20 (1 = absoluter Anfänger, 20 = sehr fortgeschritten). Gib mir mein heutiges Calisthenics-Workout für Oberkörper und Rumpf (keine Beine).",
-      maxTokens: 400
+function renderTraining() {
+  const box = document.getElementById("sport-training");
+  const todayIso = todayStr();
+  const todayLog = data.sport.log[todayIso] || {};
+  const isTrain = data.sport.trainingDays.includes(new Date().getDay());
+
+  const rows = SPORT_EX.map(ex => {
+    const val = todayLog[ex.name] || "";
+    const done = val !== "" && val > 0;
+    return `<div class="ex-row ${done ? "done" : ""}" data-ex="${esc(ex.name)}">
+      <span class="ex-check">${done ? "✓" : ""}</span>
+      <span class="ex-name">${esc(ex.name)}</span>
+      <input class="ex-input" type="number" inputmode="numeric" min="0" value="${val}" placeholder="0">
+      <span class="ex-unit">${ex.unit}</span>
+    </div>`;
+  }).join("");
+
+  const now = new Date();
+  const prog = SPORT_EX.map(ex => {
+    const tw = weekTotal(ex.name, 0), lw = weekTotal(ex.name, 1), delta = tw - lw;
+    const dcls = delta > 0 ? "p-up" : delta < 0 ? "p-down" : "";
+    const dtxt = delta === 0 ? "±0" : (delta > 0 ? "+" + delta : "" + delta);
+    const mt = monthTotal(ex.name, now.getFullYear(), now.getMonth());
+    return `<div class="prog-row">
+      <span class="p-name">${esc(ex.name)}</span>
+      <span class="p-vals">Woche: ${tw} <span class="p-delta ${dcls}">(${dtxt})</span> · Monat: ${mt}</span>
+    </div>`;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="sec-head">Heute${isTrain ? "" : " · Ruhetag"} – ${fmtDate(todayIso)}</div>
+    ${rows}
+    <div class="sec-head">Fortschritt (mehr als letzte Woche = gut!)</div>
+    ${prog}
+    <div class="sec-head">Kalender</div>
+    <div id="sport-cal"></div>`;
+
+  box.querySelectorAll(".ex-row .ex-input").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const name = inp.closest(".ex-row").dataset.ex;
+      const v = parseInt(inp.value, 10);
+      if (!data.sport.log[todayIso]) data.sport.log[todayIso] = {};
+      if (v > 0) data.sport.log[todayIso][name] = v; else delete data.sport.log[todayIso][name];
+      if (Object.keys(data.sport.log[todayIso]).length === 0) delete data.sport.log[todayIso];
+      save(); renderTraining();
     });
-    if (r) openWorkoutModal(parseWorkout(r.text), level);
+  });
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const el = document.getElementById("sport-cal");
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  const startOff = (new Date(y, m, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayIso = todayStr();
+
+  let cells = "";
+  for (let i = 0; i < startOff; i++) cells += '<div class="cal-cell empty"></div>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dt = new Date(y, m, day), iso = isoDate(dt);
+    const logged = data.sport.log[iso] && Object.keys(data.sport.log[iso]).length > 0;
+    const cls = ["cal-cell", logged ? "done" : "has"];
+    if (data.sport.trainingDays.includes(dt.getDay())) cls.push("train");
+    if (iso === todayIso) cls.push("today");
+    cells += `<div class="${cls.join(" ")}" data-iso="${iso}">${day}</div>`;
+  }
+
+  el.innerHTML = `
+    <div class="cal-head">
+      <button class="cal-nav" data-nav="-1">‹</button>
+      <span class="cal-title">${MONTHS[m]} ${y}</span>
+      <button class="cal-nav" data-nav="1">›</button>
+    </div>
+    <div class="cal-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+    <div class="cal-grid">${cells}</div>`;
+
+  el.querySelectorAll(".cal-nav").forEach(b => b.addEventListener("click", () => {
+    calDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1); renderCalendar();
+  }));
+  el.querySelectorAll(".cal-cell.done").forEach(c => c.addEventListener("click", () => openDayDetail(c.dataset.iso)));
+}
+
+function openDayDetail(iso) {
+  const day = data.sport.log[iso]; if (!day) return;
+  const rows = SPORT_EX.filter(ex => day[ex.name]).map(ex => `<div class="day-detail-ex"><span>${esc(ex.name)}</span><span>${day[ex.name]} ${ex.unit}</span></div>`).join("");
+  showTextModalHTML(fmtDate(iso), rows || '<div class="note">Nichts eingetragen.</div>');
+}
+
+/* ---------- Skills (Handstand) ---------- */
+const HANDSTAND_STEPS = [
+  "Handgelenke aufwärmen & Hollow-Body-Hold 3×20 Sek.",
+  "Pike Push-ups 3×8 – baut die Schulterkraft auf",
+  "Wall Walk: mit den Füßen die Wand hochlaufen, 3×3",
+  "Wandhandstand (Bauch zur Wand), 3×20 Sek. halten",
+  "Wandhandstand (Rücken zur Wand), Balance suchen, 3×30 Sek.",
+  "Kurz von der Wand lösen, frei halten 3–5 Sek.",
+  "Freier Handstand 15+ Sek."
+];
+
+function renderSkills() {
+  const box = document.getElementById("sport-skills");
+  const hs = data.sport.skills.handstand;
+  const doneCount = hs.done.filter(Boolean).length;
+  const steps = HANDSTAND_STEPS.map((s, i) => `
+    <div class="step-row ${hs.done[i] ? "done" : ""}" data-i="${i}">
+      <span class="step-check">${hs.done[i] ? "✓" : ""}</span>
+      <span class="step-text">${esc(s)}</span>
+    </div>`).join("");
+  box.innerHTML = `
+    <div class="skill-card">
+      <h3>🤸 Handstand</h3>
+      <div class="skill-progress-txt">${doneCount}/${HANDSTAND_STEPS.length} Etappen geschafft</div>
+      ${steps}
+      <button class="ask-btn" id="btn-skill-tip" style="margin-top:16px">💡 Claude-Tipp holen</button>
+    </div>`;
+  box.querySelectorAll(".step-row").forEach(r => r.addEventListener("click", () => {
+    const i = parseInt(r.dataset.i, 10);
+    hs.done[i] = !hs.done[i]; save(); renderSkills();
+  }));
+  document.getElementById("btn-skill-tip").addEventListener("click", handstandTip);
+}
+
+async function handstandTip() {
+  const btn = document.getElementById("btn-skill-tip");
+  const hs = data.sport.skills.handstand;
+  let nextIdx = -1;
+  for (let i = 0; i < HANDSTAND_STEPS.length; i++) { if (!hs.done[i]) { nextIdx = i; break; } }
+  const stufe = nextIdx === -1 ? "Ich kann schon frei im Handstand stehen." : "Meine aktuelle Etappe: " + HANDSTAND_STEPS[nextIdx];
+  btn.disabled = true; btn.textContent = "Claude denkt nach…";
+  try {
+    const r = await callClaude({
+      system: "Du bist ein Calisthenics-Coach für den Handstand. Gib einen kurzen, konkreten Tipp auf Deutsch (maximal 4 Sätze): eine passende Übung oder Technik, worauf man achten sollte, und ein häufiger Fehler. Kein Vorwort.",
+      userText: stufe + " Gib mir einen konkreten Tipp, wie ich weiterkomme.",
+      maxTokens: 300
+    });
+    renderUsage();
+    if (r) showTextModal("💡 Handstand-Tipp", r.text);
   } catch (err) {
     alert("Das hat nicht geklappt: " + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = oldText;
-    renderUsage();
+    btn.disabled = false; btn.textContent = "💡 Claude-Tipp holen";
   }
 }
 
-function parseWorkout(text) {
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  let motivation = "";
-  const ex = [];
-  for (const line of lines) {
-    if (/^MOTIVATION:/i.test(line)) { motivation = line.replace(/^MOTIVATION:\s*/i, "").trim(); continue; }
-    const clean = line.replace(/^\s*[-*\d.)]+\s*/, "");
-    const parts = clean.split("|").map(x => x.trim());
-    if (parts[0]) ex.push({ name: parts[0], detail: parts.slice(1).join(" · ") });
-  }
-  return { ex, motivation };
-}
-
-function openWorkoutModal(wo, levelAtGen) {
-  const cards = wo.ex.map(e => `<div class="ex-card"><div class="ex-name">${esc(e.name)}</div>${e.detail ? '<div class="ex-detail">' + esc(e.detail) + "</div>" : ""}</div>`).join("");
+/* Kleines Text-/HTML-Overlay (orange) */
+function showTextModalHTML(title, html) {
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   const modal = document.createElement("div");
   modal.className = "modal orange";
-  modal.innerHTML = `
-    <h2>🔥 Dein Workout (Level ${levelAtGen})</h2>
-    <div class="modal-answer" style="white-space:normal">
-      ${cards}
-      ${wo.motivation ? '<div class="motiv-line">„' + esc(wo.motivation) + '"</div>' : ""}
-    </div>
-    <div class="fb-label">Wie war's? Dein Feedback passt das nächste Workout an:</div>
-    <div class="fb-row">
-      <button class="fb-btn" data-fb="easy">😤 Zu leicht</button>
-      <button class="fb-btn" data-fb="right">👍 Passt</button>
-      <button class="fb-btn" data-fb="hard">😮‍💨 Zu schwer</button>
-    </div>
-    <div class="modal-actions">
-      <button class="ask-btn" data-act="regen">Anderes Workout</button>
-      <button class="small-btn" data-act="close">Abbrechen</button>
-    </div>`;
+  modal.innerHTML = `<h2>${esc(title)}</h2><div class="modal-answer" style="white-space:normal">${html}</div><div class="modal-actions"><button class="small-btn" data-act="close">Close</button></div>`;
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
-
   const close = () => backdrop.remove();
   backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
   modal.querySelector('[data-act="close"]').addEventListener("click", close);
-  modal.querySelector('[data-act="regen"]').addEventListener("click", async ev => {
-    ev.target.disabled = true; ev.target.textContent = "Claude baut…";
-    try {
-      const r = await callClaude({
-        system: "Du bist ein Calisthenics-Coach (nur Körpergewicht, keine Geräte). Konzentriere dich auf Oberkörper (Brust, Rücken, Schultern, Arme) und Rumpf/Bauch. Baue KEINE Bein-Übungen ein (keine Kniebeugen, Ausfallschritte, Wadenheben, Wall Sits o.Ä.) – die Beine werden separat trainiert. Erstelle ein anderes Workout passend zur Schwierigkeitsstufe. Antworte auf Deutsch, ohne Vorwort. Format: 4 bis 6 Übungen, je eine pro Zeile als 'Übung | Sätze x Wiederholungen'. Danach eine Zeile mit 'MOTIVATION:' und einem kurzen motivierenden Satz.",
-        userText: "Schwierigkeitsstufe " + data.sport.level + " von 20. Gib mir ein alternatives Calisthenics-Workout für Oberkörper und Rumpf (keine Beine).",
-        maxTokens: 400
-      });
-      renderUsage();
-      if (r) { close(); openWorkoutModal(parseWorkout(r.text), data.sport.level); }
-    } catch (err) { alert("Das hat nicht geklappt: " + err.message); ev.target.disabled = false; ev.target.textContent = "Anderes Workout"; }
-  });
-  modal.querySelectorAll(".fb-btn").forEach(b => {
-    b.addEventListener("click", () => {
-      const before = data.sport.level;
-      const fb = b.dataset.fb;
-      let after = before;
-      if (fb === "easy") after = Math.min(20, before + 2);
-      else if (fb === "right") after = Math.min(20, before + 1);
-      else after = Math.max(1, before - 2);
-      data.sport.level = after;
-      data.sport.sessions.push({ date: todayStr(), feedback: fb, level: before });
-      save(); renderSport(); close();
-      const up = after > before;
-      alert("Stark, geschafft! 💪\n" + (up ? "Level " + before + " → " + after + " (" + sportRank(after) + ")" : after < before ? "Nächstes Mal leichter (Level " + after + ")." : "Level " + after + "."));
-    });
-  });
 }
+function showTextModal(title, text) { showTextModalHTML(title, esc(text)); }
 
 /* ---------- Export / Import ---------- */
 document.getElementById("btn-export").addEventListener("click", async () => {
@@ -1316,7 +1414,12 @@ document.getElementById("btn-import").addEventListener("click", () => {
     data.avoids = imported.avoids || [];
     data.books = imported.books || [];
     data.bookTips = imported.bookTips || null;
-    data.sport = imported.sport || { trainingDays: [1, 3, 5], level: 1, sessions: [] };
+    data.sport = imported.sport || {};
+    if (!Array.isArray(data.sport.trainingDays)) data.sport.trainingDays = [1, 2, 4, 5];
+    if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
+    if (!data.sport.skills) data.sport.skills = {};
+    if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
+    if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
     data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
     save();
     renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderUsage();
