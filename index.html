@@ -23,8 +23,9 @@
     --green: #34c759;
     --red: #ff453a;
     --gold: #ffd60a;
-    --purple: #bf5af2;
-    --orange: #ff9f0a;
+    --purple: #ffffff;       /* Bücher = Weiß (Geist) */
+    --purple-ink: #000000;   /* Textfarbe auf weiß gefüllten Bücher-Knöpfen */
+    --orange: #d9b03a;       /* Sport = heiliges Gold (Körper = Tempel) */
   }
   body.light {
     --bg: #f5f5f7;
@@ -37,8 +38,9 @@
     --green: #248a3d;
     --red: #d70015;
     --gold: #a67c00;
-    --purple: #9b30d0;
-    --orange: #d97600;
+    --purple: #2a2a2e;       /* Bücher im hellen Modus: dunkel, damit lesbar */
+    --purple-ink: #ffffff;
+    --orange: #9a7a1e;       /* Sport-Gold im hellen Modus */
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -82,7 +84,7 @@
   .tips-fab {
     position: fixed; left: 16px; bottom: calc(78px + env(safe-area-inset-bottom));
     z-index: 80; padding: 12px 18px; border-radius: 24px;
-    background: var(--purple); border: none; color: #fff;
+    background: var(--purple); border: none; color: var(--purple-ink);
     font-size: 14px; font-weight: 700; cursor: pointer;
     box-shadow: 0 4px 16px rgba(0,0,0,.5);
   }
@@ -217,8 +219,8 @@
   #tab-avoid li.item { border-left: 3px solid var(--red); }
   #tab-books li.item { border-left: 3px solid var(--purple); flex-direction: column; }
   #tab-books .know-q { color: var(--purple); }
-  #tab-books .add-form button[type="submit"] { background: var(--purple); }
-  #tab-books .ask-btn { background: var(--purple); }
+  #tab-books .add-form button[type="submit"] { background: var(--purple); color: var(--purple-ink); }
+  #tab-books .ask-btn { background: var(--purple); color: var(--purple-ink); }
 
   .item .body { flex: 1; }
   .item .title { font-size: 15px; font-weight: 600; }
@@ -271,7 +273,7 @@
   .tips-box .know-cost { margin-top: 8px; }
   .modal.purple { border-color: var(--purple); }
   .modal.purple h2 { color: var(--purple); }
-  .modal.purple .ask-btn { background: var(--purple); color: #fff; }
+  .modal.purple .ask-btn { background: var(--purple); color: var(--purple-ink); }
   .modal.orange { border-color: var(--orange); }
   .modal.orange h2 { color: var(--orange); }
   .modal.orange .ask-btn { background: var(--orange); color: #000; }
@@ -298,11 +300,11 @@
   .sec-head { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 22px 0 10px; }
   .sec-head:first-child { margin-top: 0; }
 
-  /* Heutige Übungen mit Eingabe */
+  /* Heutige Übungen – antippen öffnet das Eintrag-Popup */
   .ex-row {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
     background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--orange); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+    border-left: 3px solid var(--orange); border-radius: 12px; padding: 14px; margin-bottom: 8px;
   }
   .ex-row .ex-check {
     width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
@@ -311,12 +313,18 @@
   }
   .ex-row.done .ex-check { background: var(--orange); border-color: var(--orange); }
   .ex-row .ex-name { flex: 1; font-size: 15px; font-weight: 700; }
-  .ex-row .ex-input {
-    width: 66px; text-align: center; background: var(--surface2);
-    border: 1px solid var(--border); color: var(--text); border-radius: 8px;
-    padding: 10px 6px; font-size: 16px; font-family: inherit; min-height: 44px;
+  .ex-row .ex-today { font-size: 14px; font-weight: 700; color: var(--muted); }
+  .ex-row.done .ex-today { color: var(--orange); }
+
+  /* Eintrag-Popup */
+  .entry-stats { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+  .entry-stats b { color: var(--text); }
+  .entry-input {
+    width: 100%; text-align: center; background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text); border-radius: 10px;
+    padding: 18px; font-size: 30px; font-weight: 800; font-family: inherit;
   }
-  .ex-row .ex-unit { font-size: 12px; color: var(--muted); width: 30px; }
+  .entry-unit { text-align: center; color: var(--muted); font-size: 14px; margin: 8px 0 4px; }
 
   /* Fortschritt pro Übung */
   .prog-row { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
@@ -1239,13 +1247,12 @@ function renderTraining() {
   const isTrain = data.sport.trainingDays.includes(new Date().getDay());
 
   const rows = SPORT_EX.map(ex => {
-    const val = todayLog[ex.name] || "";
-    const done = val !== "" && val > 0;
+    const val = todayLog[ex.name];
+    const done = val > 0;
     return `<div class="ex-row ${done ? "done" : ""}" data-ex="${esc(ex.name)}">
       <span class="ex-check">${done ? "✓" : ""}</span>
       <span class="ex-name">${esc(ex.name)}</span>
-      <input class="ex-input" type="number" inputmode="numeric" min="0" value="${val}" placeholder="0">
-      <span class="ex-unit">${ex.unit}</span>
+      <span class="ex-today">${done ? val + " " + ex.unit : "eintragen ›"}</span>
     </div>`;
   }).join("");
 
@@ -1269,17 +1276,62 @@ function renderTraining() {
     <div class="sec-head">Kalender</div>
     <div id="sport-cal"></div>`;
 
-  box.querySelectorAll(".ex-row .ex-input").forEach(inp => {
-    inp.addEventListener("change", () => {
-      const name = inp.closest(".ex-row").dataset.ex;
-      const v = parseInt(inp.value, 10);
-      if (!data.sport.log[todayIso]) data.sport.log[todayIso] = {};
-      if (v > 0) data.sport.log[todayIso][name] = v; else delete data.sport.log[todayIso][name];
-      if (Object.keys(data.sport.log[todayIso]).length === 0) delete data.sport.log[todayIso];
-      save(); renderTraining();
-    });
+  box.querySelectorAll(".ex-row").forEach(row => {
+    row.addEventListener("click", () => openExEntry(SPORT_EX.find(e => e.name === row.dataset.ex)));
   });
   renderCalendar();
+}
+
+// Letzter Wert (vor heute) + Bestwert einer Übung
+function statFor(exName) {
+  const today = todayStr();
+  let last = null, lastDate = "", best = 0;
+  for (const iso in data.sport.log) {
+    if (iso === today) continue;
+    const v = data.sport.log[iso][exName];
+    if (!v) continue;
+    if (v > best) best = v;
+    if (iso > lastDate) { lastDate = iso; last = v; }
+  }
+  return { last, best: best || null };
+}
+
+// Popup zum Eintragen einer Übung
+function openExEntry(ex) {
+  const today = todayStr();
+  const cur = (data.sport.log[today] || {})[ex.name];
+  const { last, best } = statFor(ex.name);
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  const modal = document.createElement("div");
+  modal.className = "modal orange";
+  modal.innerHTML = `
+    <h2>${esc(ex.name)}</h2>
+    <div class="entry-stats">Letztes Mal: <b>${last != null ? last + " " + ex.unit : "–"}</b> &nbsp;·&nbsp; Bestwert: <b>${best != null ? best + " " + ex.unit : "–"}</b></div>
+    <input class="entry-input" type="number" inputmode="numeric" min="0" value="${cur != null ? cur : ""}" placeholder="0">
+    <div class="entry-unit">${ex.unit}</div>
+    <div class="modal-actions">
+      <button class="ask-btn" data-act="save">Speichern</button>
+      ${cur != null ? '<button class="small-btn" data-act="del">Löschen</button>' : ""}
+      <button class="small-btn" data-act="close">Abbrechen</button>
+    </div>`;
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+  const input = modal.querySelector(".entry-input");
+  setTimeout(() => input.focus(), 60);
+  const close = () => backdrop.remove();
+  const storeVal = v => {
+    if (!data.sport.log[today]) data.sport.log[today] = {};
+    if (v > 0) data.sport.log[today][ex.name] = v; else delete data.sport.log[today][ex.name];
+    if (Object.keys(data.sport.log[today]).length === 0) delete data.sport.log[today];
+    save(); close(); renderTraining();
+  };
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  modal.querySelector('[data-act="close"]').addEventListener("click", close);
+  modal.querySelector('[data-act="save"]').addEventListener("click", () => storeVal(parseInt(input.value, 10)));
+  input.addEventListener("keydown", e => { if (e.key === "Enter") storeVal(parseInt(input.value, 10)); });
+  const delBtn = modal.querySelector('[data-act="del"]');
+  if (delBtn) delBtn.addEventListener("click", () => storeVal(0));
 }
 
 function renderCalendar() {
