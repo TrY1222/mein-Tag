@@ -25,7 +25,7 @@
     --gold: #ffd60a;
     --purple: #ffffff;       /* Bücher = Weiß (Geist) */
     --purple-ink: #000000;   /* Textfarbe auf weiß gefüllten Bücher-Knöpfen */
-    --orange: #d9b03a;       /* Sport = heiliges Gold (Körper = Tempel) */
+    --orange: #f4cc4e;       /* Sport = metallisches Gold (Elden-Ring-Gnade) */
   }
   body.light {
     --bg: #f5f5f7;
@@ -40,7 +40,7 @@
     --gold: #a67c00;
     --purple: #2a2a2e;       /* Bücher im hellen Modus: dunkel, damit lesbar */
     --purple-ink: #ffffff;
-    --orange: #9a7a1e;       /* Sport-Gold im hellen Modus */
+    --orange: #8f6e14;       /* Sport-Gold im hellen Modus */
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -277,6 +277,7 @@
   .modal.orange { border-color: var(--orange); }
   .modal.orange h2 { color: var(--orange); }
   .modal.orange .ask-btn { background: var(--orange); color: #000; }
+  .modal.orange .ask-btn { background: var(--orange); color: #000; }
 
   /* Sport */
   #tab-sport .add-form button[type="submit"] { background: var(--orange); }
@@ -295,44 +296,48 @@
     flex: 1; border: none; background: transparent; color: var(--muted);
     padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
   }
-  .sport-seg button.on { background: var(--orange); color: #000; }
+  .sport-seg button.on { background: var(--orange); color: #000; box-shadow: 0 0 16px rgba(244,204,78,.5); }
 
   .sec-head { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 22px 0 10px; }
   .sec-head:first-child { margin-top: 0; }
 
-  /* Heutige Übungen – antippen öffnet das Eintrag-Popup */
+  /* Fortschritt-Knopf + Kalender-Umschalter */
+  .prog-btn, .cal-toggle {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+    color: var(--text); font-size: 15px; font-weight: 700; cursor: pointer; padding: 15px 16px;
+    margin-bottom: 12px; text-align: left;
+  }
+  .cal-toggle .chev { transition: transform .2s; color: var(--muted); }
+  .cal-toggle.open .chev { transform: rotate(90deg); }
+  #sport-cal { margin-bottom: 12px; }
+
+  /* Heutige Übungen – Wiederholungen direkt eintragen */
   .ex-row {
-    display: flex; align-items: center; gap: 12px; cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
     background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--orange); border-radius: 12px; padding: 14px; margin-bottom: 8px;
+    border-left: 3px solid var(--orange); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
   }
   .ex-row .ex-check {
     width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
     border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center;
     font-size: 14px; color: #000;
   }
-  .ex-row.done .ex-check { background: var(--orange); border-color: var(--orange); }
+  .ex-row.done .ex-check { background: var(--orange); border-color: var(--orange); box-shadow: 0 0 10px rgba(244,204,78,.55); }
   .ex-row .ex-name { flex: 1; font-size: 15px; font-weight: 700; }
-  .ex-row .ex-today { font-size: 14px; font-weight: 700; color: var(--muted); }
-  .ex-row.done .ex-today { color: var(--orange); }
-
-  /* Eintrag-Popup */
-  .entry-stats { font-size: 14px; color: var(--muted); margin-bottom: 16px; }
-  .entry-stats b { color: var(--text); }
-  .entry-input {
-    width: 100%; text-align: center; background: var(--surface2);
-    border: 1px solid var(--border); color: var(--text); border-radius: 10px;
-    padding: 18px; font-size: 30px; font-weight: 800; font-family: inherit;
+  .ex-row .ex-input {
+    width: 66px; text-align: center; background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text); border-radius: 8px;
+    padding: 10px 6px; font-size: 16px; font-family: inherit; min-height: 44px;
   }
-  .entry-unit { text-align: center; color: var(--muted); font-size: 14px; margin: 8px 0 4px; }
+  .ex-row .ex-unit { font-size: 12px; color: var(--muted); width: 30px; }
 
-  /* Fortschritt pro Übung */
-  .prog-row { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .prog-row .p-name { font-size: 14px; font-weight: 700; }
-  .prog-row .p-vals { font-size: 13px; color: var(--muted); }
-  .prog-row .p-delta { font-weight: 700; }
-  .p-up { color: var(--green); }
-  .p-down { color: var(--red); }
+  /* Fortschritt-Popup */
+  .pp-card { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .pp-card .pp-name { font-size: 15px; font-weight: 700; }
+  .pp-card .pp-line { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .pp-up { color: var(--green); font-weight: 700; }
+  .pp-down { color: var(--red); font-weight: 700; }
 
   /* Monatskalender */
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -412,6 +417,47 @@
     color: var(--text); border-radius: 8px; padding: 12px; font-size: 16px;
     font-family: inherit; min-height: 200px; resize: vertical; flex: 1;
   }
+
+  /* ---------- Lebendigkeit & Animationen ---------- */
+  /* Druck-Feedback (iOS-Feel): kurz eindrücken beim Antippen */
+  nav button, .gear, .small-btn, .ask-btn, .folder, .prog-btn, .cal-toggle,
+  .sport-seg button, .wd, .add-form button, .dl-btn, .fb-btn, .cal-nav, .train-btn {
+    transition: transform .12s ease, background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+  }
+  nav button:active, .gear:active, .small-btn:active, .ask-btn:active, .folder:active,
+  .prog-btn:active, .cal-toggle:active, .sport-seg button:active, .wd:active,
+  .add-form button:active, .dl-btn:active, .fb-btn:active, .cal-nav:active,
+  .tips-fab:active, .train-btn:active, .step-row:active, .ex-row:active {
+    transform: scale(.96);
+  }
+  .item, .folder, .ex-row, .step-row { will-change: transform; }
+
+  /* Schwebender +-Knopf dreht sich beim Öffnen */
+  .fab { transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .18s, box-shadow .18s; }
+  .fab.open { transform: rotate(45deg); }
+  .fab:active { transform: scale(.92); }
+  .fab.open:active { transform: rotate(45deg) scale(.92); }
+
+  /* Häkchen ploppt beim Abhaken auf */
+  .check, .ex-check, .step-check { transition: background .2s, border-color .2s, box-shadow .2s; }
+  #tab-todo .item.done .check, #tab-daily .item.today .check,
+  .ex-row.done .ex-check, .step-row.done .step-check { animation: pop .32s ease; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tab.visible { animation: tabIn .3s ease; }
+    .modal-backdrop { animation: fadeIn .2s ease; }
+    .modal { animation: sheetUp .32s cubic-bezier(.2,.8,.2,1); }
+    li.item { animation: rowIn .28s ease backwards; }
+    .folder { animation: rowIn .28s ease backwards; }
+  }
+  @keyframes pop { 0% { transform: scale(.5); } 55% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  @keyframes tabIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheetUp { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Wisch-Hinweis */
+  .swipe-hint { font-size: 11px; color: var(--muted); margin: -6px 0 12px; opacity: .8; }
 </style>
 </head>
 <body>
@@ -443,6 +489,7 @@
       </div>
       <button type="submit">Add</button>
     </form>
+    <div class="swipe-hint" id="todo-swipe-hint" style="display:none">💡 Tipp: nach rechts wischen = abhaken, nach links = löschen</div>
     <ul class="items" id="list-todo"></ul>
   </section>
 
@@ -589,6 +636,41 @@ function esc(s) {
   return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+/* Wischgesten auf einer Listen-Kachel: rechts = onRight, links = onDelete */
+function enableSwipe(el, { onRight, onDelete }) {
+  let sx = 0, sy = 0, dx = 0, active = false, decided = false, horiz = false;
+  el.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; dx = 0;
+    active = true; decided = false; horiz = false;
+    el.style.transition = "none";
+  }, { passive: true });
+  el.addEventListener("touchmove", e => {
+    if (!active) return;
+    const t = e.touches[0], mx = t.clientX - sx, my = t.clientY - sy;
+    if (!decided && (Math.abs(mx) > 8 || Math.abs(my) > 8)) { decided = true; horiz = Math.abs(mx) > Math.abs(my); }
+    if (!horiz) return;
+    e.preventDefault();
+    dx = mx;
+    el.style.transform = "translateX(" + dx + "px)";
+    el.style.background = dx > 0 ? "rgba(52,199,89,.20)" : dx < 0 ? "rgba(255,69,58,.20)" : "";
+  }, { passive: false });
+  const end = () => {
+    if (!active) return; active = false;
+    el.style.transition = "transform .22s ease, background .22s ease, opacity .22s ease";
+    const TH = 70;
+    if (horiz && dx <= -TH && onDelete) {
+      el.style.transform = "translateX(-110%)"; el.style.opacity = "0";
+      setTimeout(onDelete, 200);
+    } else {
+      el.style.transform = ""; el.style.background = "";
+      if (horiz && dx >= TH && onRight) onRight();
+    }
+  };
+  el.addEventListener("touchend", end);
+  el.addEventListener("touchcancel", end);
+}
+
 /* ---------- Tabs ---------- */
 let currentTab = "todo";
 const tipsFab = document.getElementById("btn-book-tips");
@@ -610,7 +692,7 @@ const fab = document.getElementById("btn-add");
 
 function closeAllForms() {
   document.querySelectorAll(".add-form").forEach(f => f.classList.remove("open"));
-  fab.textContent = "+";
+  fab.classList.remove("open");
 }
 
 fab.addEventListener("click", () => {
@@ -619,7 +701,7 @@ fab.addEventListener("click", () => {
   closeAllForms();
   if (willOpen) {
     form.classList.add("open");
-    fab.textContent = "✕";
+    fab.classList.add("open");
   }
 });
 
@@ -682,11 +764,14 @@ document.getElementById("form-todo").addEventListener("submit", e => {
 function renderTodos() {
   const ul = document.getElementById("list-todo");
   ul.innerHTML = "";
+  const hint = document.getElementById("todo-swipe-hint");
+  if (hint) hint.style.display = data.todos.length ? "block" : "none";
   if (!data.todos.length) { ul.innerHTML = '<div class="empty-state">Noch keine Aufgaben – drücke auf +, um die erste einzutragen.</div>'; return; }
   const sorted = [...data.todos].sort((a, b) => (a.done - b.done) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
-  for (const t of sorted) {
+  sorted.forEach((t, i) => {
     const li = document.createElement("li");
     li.className = "item" + (t.done ? " done" : "");
+    li.style.animationDelay = (i * 0.03) + "s";
     const overdue = !t.done && t.deadline && t.deadline < todayStr();
     li.innerHTML = `
       <button class="check" title="Erledigt">${t.done ? "✓" : ""}</button>
@@ -702,8 +787,13 @@ function renderTodos() {
     li.querySelector(".small-btn").addEventListener("click", () => {
       data.todos = data.todos.filter(x => x.id !== t.id); save(); renderTodos();
     });
+    // Wischen: rechts = ab-/anhaken, links = löschen
+    enableSwipe(li, {
+      onRight: () => { t.done = !t.done; save(); renderTodos(); },
+      onDelete: () => { data.todos = data.todos.filter(x => x.id !== t.id); save(); renderTodos(); }
+    });
     ul.appendChild(li);
-  }
+  });
 }
 
 /* ---------- Regelmäßige Gewohnheiten ---------- */
@@ -1194,6 +1284,7 @@ const SPORT_EX = [
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 let sportView = "training";
 let calDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let calOpen = false;   // Kalender standardmäßig eingeklappt
 
 function mondayOf(d) { const x = new Date(d); const off = (x.getDay() + 6) % 7; x.setDate(x.getDate() - off); x.setHours(0, 0, 0, 0); return x; }
 function addD(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -1247,39 +1338,36 @@ function renderTraining() {
   const isTrain = data.sport.trainingDays.includes(new Date().getDay());
 
   const rows = SPORT_EX.map(ex => {
-    const val = todayLog[ex.name];
-    const done = val > 0;
+    const val = todayLog[ex.name] || "";
+    const done = val !== "" && val > 0;
     return `<div class="ex-row ${done ? "done" : ""}" data-ex="${esc(ex.name)}">
       <span class="ex-check">${done ? "✓" : ""}</span>
       <span class="ex-name">${esc(ex.name)}</span>
-      <span class="ex-today">${done ? val + " " + ex.unit : "eintragen ›"}</span>
-    </div>`;
-  }).join("");
-
-  const now = new Date();
-  const prog = SPORT_EX.map(ex => {
-    const tw = weekTotal(ex.name, 0), lw = weekTotal(ex.name, 1), delta = tw - lw;
-    const dcls = delta > 0 ? "p-up" : delta < 0 ? "p-down" : "";
-    const dtxt = delta === 0 ? "±0" : (delta > 0 ? "+" + delta : "" + delta);
-    const mt = monthTotal(ex.name, now.getFullYear(), now.getMonth());
-    return `<div class="prog-row">
-      <span class="p-name">${esc(ex.name)}</span>
-      <span class="p-vals">Woche: ${tw} <span class="p-delta ${dcls}">(${dtxt})</span> · Monat: ${mt}</span>
+      <input class="ex-input" type="number" inputmode="numeric" min="0" value="${val}" placeholder="0">
+      <span class="ex-unit">${ex.unit}</span>
     </div>`;
   }).join("");
 
   box.innerHTML = `
+    <button class="prog-btn" id="btn-progress"><span>📈 Fortschritt ansehen</span><span class="chev">›</span></button>
+    <button class="cal-toggle ${calOpen ? "open" : ""}" id="cal-toggle"><span>📅 Kalender</span><span class="chev">›</span></button>
+    <div id="sport-cal" ${calOpen ? "" : "hidden"}></div>
     <div class="sec-head">Heute${isTrain ? "" : " · Ruhetag"} – ${fmtDate(todayIso)}</div>
-    ${rows}
-    <div class="sec-head">Fortschritt (mehr als letzte Woche = gut!)</div>
-    ${prog}
-    <div class="sec-head">Kalender</div>
-    <div id="sport-cal"></div>`;
+    ${rows}`;
 
-  box.querySelectorAll(".ex-row").forEach(row => {
-    row.addEventListener("click", () => openExEntry(SPORT_EX.find(e => e.name === row.dataset.ex)));
+  box.querySelectorAll(".ex-row .ex-input").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const name = inp.closest(".ex-row").dataset.ex;
+      const v = parseInt(inp.value, 10);
+      if (!data.sport.log[todayIso]) data.sport.log[todayIso] = {};
+      if (v > 0) data.sport.log[todayIso][name] = v; else delete data.sport.log[todayIso][name];
+      if (Object.keys(data.sport.log[todayIso]).length === 0) delete data.sport.log[todayIso];
+      save(); renderTraining();
+    });
   });
-  renderCalendar();
+  document.getElementById("btn-progress").addEventListener("click", openProgress);
+  document.getElementById("cal-toggle").addEventListener("click", () => { calOpen = !calOpen; renderTraining(); });
+  if (calOpen) renderCalendar();
 }
 
 // Letzter Wert (vor heute) + Bestwert einer Übung
@@ -1296,42 +1384,22 @@ function statFor(exName) {
   return { last, best: best || null };
 }
 
-// Popup zum Eintragen einer Übung
-function openExEntry(ex) {
-  const today = todayStr();
-  const cur = (data.sport.log[today] || {})[ex.name];
-  const { last, best } = statFor(ex.name);
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const modal = document.createElement("div");
-  modal.className = "modal orange";
-  modal.innerHTML = `
-    <h2>${esc(ex.name)}</h2>
-    <div class="entry-stats">Letztes Mal: <b>${last != null ? last + " " + ex.unit : "–"}</b> &nbsp;·&nbsp; Bestwert: <b>${best != null ? best + " " + ex.unit : "–"}</b></div>
-    <input class="entry-input" type="number" inputmode="numeric" min="0" value="${cur != null ? cur : ""}" placeholder="0">
-    <div class="entry-unit">${ex.unit}</div>
-    <div class="modal-actions">
-      <button class="ask-btn" data-act="save">Speichern</button>
-      ${cur != null ? '<button class="small-btn" data-act="del">Löschen</button>' : ""}
-      <button class="small-btn" data-act="close">Abbrechen</button>
+// Fortschritts-Popup: pro Übung Woche/Monat + letztes Mal & Bestwert
+function openProgress() {
+  const now = new Date();
+  const cards = SPORT_EX.map(ex => {
+    const tw = weekTotal(ex.name, 0), lw = weekTotal(ex.name, 1), delta = tw - lw;
+    const dcls = delta > 0 ? "pp-up" : delta < 0 ? "pp-down" : "";
+    const dtxt = delta === 0 ? "±0" : (delta > 0 ? "+" + delta : "" + delta);
+    const mt = monthTotal(ex.name, now.getFullYear(), now.getMonth());
+    const { last, best } = statFor(ex.name);
+    return `<div class="pp-card">
+      <div class="pp-name">${esc(ex.name)}</div>
+      <div class="pp-line">Diese Woche: ${tw} <span class="${dcls}">(${dtxt} ggü. letzter)</span> · Monat: ${mt}</div>
+      <div class="pp-line">Letztes Mal: ${last != null ? last + " " + ex.unit : "–"} · Bestwert: ${best != null ? best + " " + ex.unit : "–"}</div>
     </div>`;
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
-  const input = modal.querySelector(".entry-input");
-  setTimeout(() => input.focus(), 60);
-  const close = () => backdrop.remove();
-  const storeVal = v => {
-    if (!data.sport.log[today]) data.sport.log[today] = {};
-    if (v > 0) data.sport.log[today][ex.name] = v; else delete data.sport.log[today][ex.name];
-    if (Object.keys(data.sport.log[today]).length === 0) delete data.sport.log[today];
-    save(); close(); renderTraining();
-  };
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
-  modal.querySelector('[data-act="close"]').addEventListener("click", close);
-  modal.querySelector('[data-act="save"]').addEventListener("click", () => storeVal(parseInt(input.value, 10)));
-  input.addEventListener("keydown", e => { if (e.key === "Enter") storeVal(parseInt(input.value, 10)); });
-  const delBtn = modal.querySelector('[data-act="del"]');
-  if (delBtn) delBtn.addEventListener("click", () => storeVal(0));
+  }).join("");
+  showTextModalHTML("📈 Fortschritt", cards);
 }
 
 function renderCalendar() {
