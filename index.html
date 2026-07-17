@@ -506,6 +506,7 @@
       </select>
       <button type="submit">Add</button>
     </form>
+    <div class="swipe-hint" id="daily-swipe-hint" style="display:none">💡 Wischen: rechts = abhaken, links = löschen</div>
     <ul class="items" id="list-daily"></ul>
   </section>
 
@@ -515,6 +516,7 @@
       <input type="text" id="avoid-title" placeholder="Was willst du dir abgewöhnen?" required>
       <button type="submit">Add</button>
     </form>
+    <div class="swipe-hint" id="avoid-swipe-hint" style="display:none">💡 Wischen: rechts = Rückfall, links = löschen</div>
     <ul class="items" id="list-avoid"></ul>
   </section>
 
@@ -636,27 +638,30 @@ function esc(s) {
   return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-/* Wischgesten auf einer Listen-Kachel: rechts = onRight, links = onDelete */
+/* Wischgesten auf einer Listen-Kachel: rechts = onRight, links = onDelete (Touch + Maus) */
 function enableSwipe(el, { onRight, onDelete }) {
-  let sx = 0, sy = 0, dx = 0, active = false, decided = false, horiz = false;
-  el.addEventListener("touchstart", e => {
-    if (e.touches.length !== 1) return;
-    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; dx = 0;
-    active = true; decided = false; horiz = false;
+  el.style.touchAction = "pan-y";
+  let sx = 0, sy = 0, dx = 0, active = false, decided = false, horiz = false, pid = null, swiped = false;
+  el.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    sx = e.clientX; sy = e.clientY; dx = 0; active = true; decided = false; horiz = false; pid = e.pointerId;
     el.style.transition = "none";
-  }, { passive: true });
-  el.addEventListener("touchmove", e => {
-    if (!active) return;
-    const t = e.touches[0], mx = t.clientX - sx, my = t.clientY - sy;
-    if (!decided && (Math.abs(mx) > 8 || Math.abs(my) > 8)) { decided = true; horiz = Math.abs(mx) > Math.abs(my); }
+  });
+  el.addEventListener("pointermove", e => {
+    if (!active || e.pointerId !== pid) return;
+    const mx = e.clientX - sx, my = e.clientY - sy;
+    if (!decided && (Math.abs(mx) > 8 || Math.abs(my) > 8)) {
+      decided = true; horiz = Math.abs(mx) > Math.abs(my);
+      if (horiz) { try { el.setPointerCapture(pid); } catch {} }
+    }
     if (!horiz) return;
-    e.preventDefault();
     dx = mx;
     el.style.transform = "translateX(" + dx + "px)";
     el.style.background = dx > 0 ? "rgba(52,199,89,.20)" : dx < 0 ? "rgba(255,69,58,.20)" : "";
-  }, { passive: false });
+  });
   const end = () => {
     if (!active) return; active = false;
+    swiped = horiz && Math.abs(dx) > 10;
     el.style.transition = "transform .22s ease, background .22s ease, opacity .22s ease";
     const TH = 70;
     if (horiz && dx <= -TH && onDelete) {
@@ -667,8 +672,10 @@ function enableSwipe(el, { onRight, onDelete }) {
       if (horiz && dx >= TH && onRight) onRight();
     }
   };
-  el.addEventListener("touchend", end);
-  el.addEventListener("touchcancel", end);
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+  // Klick direkt nach einem Wisch unterdrücken (sonst öffnet sich z.B. das Buch)
+  el.addEventListener("click", e => { if (swiped) { e.stopPropagation(); e.preventDefault(); swiped = false; } }, true);
 }
 
 /* ---------- Tabs ---------- */
@@ -781,12 +788,8 @@ function renderTodos() {
           + (t.deadline ? '<span class="' + (overdue ? "overdue" : "") + '">⏳ ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span>" : "")
           + (t.deadlineTime ? "<span>🕐 " + t.deadlineTime + " Uhr</span>" : "")
           + "</div>" : ""}
-      </div>
-      <button class="small-btn danger" title="Löschen">✕</button>`;
+      </div>`;
     li.querySelector(".check").addEventListener("click", () => { t.done = !t.done; save(); renderTodos(); });
-    li.querySelector(".small-btn").addEventListener("click", () => {
-      data.todos = data.todos.filter(x => x.id !== t.id); save(); renderTodos();
-    });
     // Wischen: rechts = ab-/anhaken, links = löschen
     enableSwipe(li, {
       onRight: () => { t.done = !t.done; save(); renderTodos(); },
@@ -828,6 +831,7 @@ document.getElementById("form-daily").addEventListener("submit", e => {
 function renderDailies() {
   const ul = document.getElementById("list-daily");
   ul.innerHTML = "";
+  document.getElementById("daily-swipe-hint").style.display = data.dailies.length ? "block" : "none";
   if (!data.dailies.length) { ul.innerHTML = '<div class="empty-state">Noch keine Gewohnheiten – drücke auf +.</div>'; return; }
   const today = todayStr();
   for (const h of data.dailies) {
@@ -855,9 +859,8 @@ function renderDailies() {
           <span>${freqLabel(interval)}</span>
           <span>${statusText}</span>
         </div>
-      </div>
-      <button class="small-btn danger" title="Löschen">✕</button>`;
-    li.querySelector(".check").addEventListener("click", () => {
+      </div>`;
+    const toggleDaily = () => {
       if (h.lastDone === today) {
         // Abhaken von heute rückgängig machen
         h.streak = h.prevStreak;
@@ -870,11 +873,12 @@ function renderDailies() {
         h.lastDone = today;
       }
       save(); renderDailies();
-    });
-    li.querySelector(".small-btn").addEventListener("click", () => {
-      if (confirm("„" + h.title + "“ wirklich löschen?")) {
-        data.dailies = data.dailies.filter(x => x.id !== h.id); save(); renderDailies();
-      }
+    };
+    li.querySelector(".check").addEventListener("click", toggleDaily);
+    // Wischen: rechts = ab-/anhaken, links = löschen
+    enableSwipe(li, {
+      onRight: toggleDaily,
+      onDelete: () => { data.dailies = data.dailies.filter(x => x.id !== h.id); save(); renderDailies(); }
     });
     ul.appendChild(li);
   }
@@ -894,6 +898,7 @@ document.getElementById("form-avoid").addEventListener("submit", e => {
 function renderAvoids() {
   const ul = document.getElementById("list-avoid");
   ul.innerHTML = "";
+  document.getElementById("avoid-swipe-hint").style.display = data.avoids.length ? "block" : "none";
   if (!data.avoids.length) { ul.innerHTML = '<div class="empty-state">Noch nichts eingetragen.</div>'; return; }
   for (const a of data.avoids) {
     const days = daysSince(a.since);
@@ -907,18 +912,17 @@ function renderAvoids() {
           <span>seit ${new Date(a.since).toLocaleDateString("de-DE")}</span>
         </div>
       </div>
-      <button class="small-btn" title="Zähler zurücksetzen">Reset</button>
-      <button class="small-btn danger" title="Löschen">✕</button>`;
-    const [relapseBtn, delBtn] = li.querySelectorAll(".small-btn");
-    relapseBtn.addEventListener("click", () => {
+      <button class="small-btn" title="Zähler zurücksetzen">Reset</button>`;
+    const reset = () => {
       if (confirm("Rückfall bei „" + a.title + "“? Der Zähler startet neu bei 0.")) {
         a.since = Date.now(); save(); renderAvoids();
       }
-    });
-    delBtn.addEventListener("click", () => {
-      if (confirm("„" + a.title + "“ wirklich löschen?")) {
-        data.avoids = data.avoids.filter(x => x.id !== a.id); save(); renderAvoids();
-      }
+    };
+    li.querySelector(".small-btn").addEventListener("click", reset);
+    // Wischen: rechts = Rückfall/Reset, links = löschen
+    enableSwipe(li, {
+      onRight: reset,
+      onDelete: () => { data.avoids = data.avoids.filter(x => x.id !== a.id); save(); renderAvoids(); }
     });
     ul.appendChild(li);
   }
@@ -1180,6 +1184,11 @@ function renderBooks() {
   head.textContent = iconOf(booksView) + " " + booksView;
   ul.appendChild(head);
 
+  const bHint = document.createElement("div");
+  bHint.className = "swipe-hint";
+  bHint.textContent = "💡 Nach links wischen = Buch löschen";
+  ul.appendChild(bHint);
+
   for (const b of data.books.filter(x => catOf(x) === booksView)) {
     const li = document.createElement("li");
     li.className = "item";
@@ -1191,16 +1200,12 @@ function renderBooks() {
           <div class="know-q">${esc(b.question)}</div>
           ${status ? '<div class="know-a empty">' + esc(status) + "</div>" : ""}
         </div>
-        <button class="small-btn danger" title="Löschen">✕</button>
       </div>`;
-    li.querySelector(".small-btn.danger").addEventListener("click", e => {
-      e.stopPropagation();
-      if (confirm("„" + b.question + "“ wirklich löschen?")) {
-        data.books = data.books.filter(x => x.id !== b.id);
-        save(); renderBooks();
-      }
-    });
     li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
+    // Wischen nach links = löschen (Wischen nach rechts hat hier keine Aktion)
+    enableSwipe(li, {
+      onDelete: () => { data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks(); }
+    });
     ul.appendChild(li);
   }
 }
