@@ -372,6 +372,14 @@
   .hab-seg button.on[data-hview="daily"] { background: var(--blue); color: #fff; }
   .hab-seg button.on[data-hview="avoid"] { background: var(--red); color: #fff; }
 
+  .media-seg { display: flex; gap: 4px; margin-bottom: 16px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+  .media-seg button {
+    flex: 1; border: none; background: transparent; color: var(--muted);
+    padding: 10px 2px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: color .2s, background .2s;
+  }
+  .media-seg button.on { background: var(--purple); color: var(--purple-ink); }
+
   .sec-head { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 22px 0 10px; }
   .sec-head:first-child { margin-top: 0; }
 
@@ -556,7 +564,7 @@
     </button>
     <button data-tab="books">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      <span>Bücher</span>
+      <span>Medien</span>
     </button>
     <button data-tab="sport">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -617,27 +625,23 @@
     </div>
   </section>
 
-  <!-- BÜCHER -->
+  <!-- MEDIEN -->
   <section class="tab" id="tab-books">
+    <div class="media-seg">
+      <button data-media="book" class="on">Bücher</button>
+      <button data-media="screen">Filme &amp; Serien</button>
+      <button data-media="game">Spiele</button>
+    </div>
     <form class="add-form" id="form-books">
       <input type="text" id="book-title" placeholder="Buchtitel und Autor, z.B. Momo – Michael Ende" required>
       <select id="book-cat">
         <option value="Auto" selected>Kategorie: Auto (Claude wählt)</option>
-        <option value="Fantasy">Fantasy</option>
-        <option value="Roman">Roman</option>
-        <option value="Krimi & Thriller">Krimi &amp; Thriller</option>
-        <option value="Sachbuch">Sachbuch</option>
-        <option value="Finanzen">Finanzen</option>
-        <option value="Selbstentwicklung">Selbstentwicklung</option>
-        <option value="Wissenschaft">Wissenschaft</option>
-        <option value="Biografie">Biografie</option>
-        <option value="Sonstiges">Sonstiges</option>
       </select>
       <button type="submit">Add</button>
     </form>
     <ul class="items" id="list-books"></ul>
   </section>
-  <button class="tips-fab" id="btn-book-tips" hidden>📚 Book Tips</button>
+  <button class="tips-fab" id="btn-book-tips" hidden>📚 Buch-Tipps</button>
 
   <!-- SPORT -->
   <section class="tab" id="tab-sport">
@@ -719,6 +723,10 @@ if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
 if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
 if (!Array.isArray(data.sport.runs)) data.sport.runs = [];
 if (!Array.isArray(data.sport.rides)) data.sport.rides = [];
+// Medien: bestehende Einträge sind Bücher; Tipps pro Medientyp
+data.books.forEach(b => { if (!b.media) b.media = "book"; });
+if (!data.mediaTips || typeof data.mediaTips !== "object") data.mediaTips = {};
+if (data.bookTips && !data.mediaTips.book) { data.mediaTips.book = data.bookTips; data.bookTips = null; }
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -1204,27 +1212,68 @@ function openModal(k, opts = {}) {
   });
 }
 
-/* ---------- Bücher ---------- */
-const BOOK_MODAL_OPTS = {
+/* ---------- Medien (Bücher / Filme & Serien / Spiele) ---------- */
+const MEDIA = {
+  book: {
+    label: "Bücher", one: "Buch", many: "Bücher", verb: "gelesen",
+    placeholder: "Buchtitel und Autor, z.B. Momo – Michael Ende",
+    thing: "des genannten Buchs", noun: "Buch",
+    tipsFabLabel: "📚 Buch-Tipps", tipsTitle: "📚 Buchvorschläge",
+    tipsIntro: "Diese Bücher habe ich gelesen und mochte sie",
+    tipsAsk: "Empfiehl mir 5 Bücher, die dazu passen und die ich noch nicht gelesen habe. Gib pro Buch genau eine Zeile im Format: Titel | Autor | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
+    summarize: "Zusammenfassen", redo: "Neue Zusammenfassung",
+    emptyHint: "Zum Zusammenfassen tippen", loadingHint: "Claude fasst zusammen…",
+    emptyModal: "Noch keine Zusammenfassung. Drücke „Zusammenfassen“.",
+    defaultIcon: "📚",
+    cats: ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"],
+    icons: { "Fantasy": "🐉", "Roman": "📖", "Krimi & Thriller": "🕵️", "Sachbuch": "💡", "Finanzen": "💰", "Selbstentwicklung": "🌱", "Wissenschaft": "🔬", "Biografie": "👤", "Sonstiges": "📚" }
+  },
+  screen: {
+    label: "Filme & Serien", one: "Titel", many: "Titel", verb: "gesehen",
+    placeholder: "Film oder Serie, z.B. Interstellar",
+    thing: "des genannten Films bzw. der genannten Serie", noun: "Film/Serie",
+    tipsFabLabel: "🎬 Film-Tipps", tipsTitle: "🎬 Film- & Serien-Tipps",
+    tipsIntro: "Diese Filme und Serien habe ich gesehen und mochte sie",
+    tipsAsk: "Empfiehl mir 5 Filme oder Serien, die dazu passen und die ich noch nicht gesehen habe. Gib pro Titel genau eine Zeile im Format: Titel | Jahr oder Regie | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
+    summarize: "Worum geht's?", redo: "Neu beschreiben",
+    emptyHint: "Für Beschreibung tippen", loadingHint: "Claude beschreibt…",
+    emptyModal: "Noch keine Beschreibung. Drücke „Worum geht's?“.",
+    defaultIcon: "🎬",
+    cats: ["Action", "Drama", "Komödie", "Sci-Fi & Fantasy", "Thriller & Horror", "Doku", "Anime", "Serie", "Sonstiges"],
+    icons: { "Action": "💥", "Drama": "🎭", "Komödie": "😂", "Sci-Fi & Fantasy": "🚀", "Thriller & Horror": "🔪", "Doku": "🎥", "Anime": "🌸", "Serie": "📺", "Sonstiges": "🎬" }
+  },
+  game: {
+    label: "Spiele", one: "Spiel", many: "Spiele", verb: "gespielt",
+    placeholder: "Videospiel, z.B. The Legend of Zelda: BotW",
+    thing: "des genannten Videospiels", noun: "Videospiel",
+    tipsFabLabel: "🎮 Spiel-Tipps", tipsTitle: "🎮 Spiele-Tipps",
+    tipsIntro: "Diese Spiele habe ich gespielt und mochte sie",
+    tipsAsk: "Empfiehl mir 5 Videospiele, die dazu passen und die ich noch nicht gespielt habe. Gib pro Spiel genau eine Zeile im Format: Titel | Plattform oder Studio | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
+    summarize: "Worum geht's?", redo: "Neu beschreiben",
+    emptyHint: "Für Beschreibung tippen", loadingHint: "Claude beschreibt…",
+    emptyModal: "Noch keine Beschreibung. Drücke „Worum geht's?“.",
+    defaultIcon: "🎮",
+    cats: ["Rollenspiel", "Action & Adventure", "Shooter", "Strategie", "Aufbau & Simulation", "Sport & Rennen", "Indie", "Sonstiges"],
+    icons: { "Rollenspiel": "⚔️", "Action & Adventure": "🗺️", "Shooter": "🎯", "Strategie": "♟️", "Aufbau & Simulation": "🏗️", "Sport & Rennen": "🏎️", "Indie": "🕹️", "Sonstiges": "🎮" }
+  }
+};
+
+let mediaView = "book";
+function M() { return MEDIA[mediaView]; }
+const BOOK_MODAL_OPTS = () => ({
   purple: true,
   rerender: () => renderBooks(),
   ask: b => summarizeBook(b),
-  labels: { has: "Redo Summary", none: "Summarize", empty: "Noch keine Zusammenfassung. Drücke „Summarize“." }
-};
-
-const BOOK_CATS = ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"];
-const CAT_ICON = {
-  "Fantasy": "🐉", "Roman": "📖", "Krimi & Thriller": "🕵️", "Sachbuch": "💡",
-  "Finanzen": "💰", "Selbstentwicklung": "🌱", "Wissenschaft": "🔬",
-  "Biografie": "👤", "Sonstiges": "📚"
-};
+  labels: { has: M().redo, none: M().summarize, empty: M().emptyModal }
+});
 
 async function summarizeBook(b) {
+  const cfg = MEDIA[b.media] || MEDIA.book;
   b.loading = true;
   renderBooks();
   try {
     const r = await callClaude({
-      system: "Antworte auf Deutsch in genau diesem Format: Erste Zeile 'KATEGORIE: X', wobei X genau eine dieser Kategorien ist: " + BOOK_CATS.join(", ") + ". Danach eine Zusammenfassung des genannten Buchs in maximal 4 kurzen Sätzen: Worum geht es, was ist die Kernaussage? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
+      system: "Antworte auf Deutsch in genau diesem Format: Erste Zeile 'KATEGORIE: X', wobei X genau eine dieser Kategorien ist: " + cfg.cats.join(", ") + ". Danach eine Zusammenfassung " + cfg.thing + " in maximal 4 kurzen Sätzen: Worum geht es, was macht es aus? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
       userText: b.question,
       maxTokens: 300
     });
@@ -1234,7 +1283,7 @@ async function summarizeBook(b) {
       if (m) {
         const cat = m[1].trim();
         // Automatische Einordnung nur, wenn keine Kategorie manuell gewählt wurde
-        if (BOOK_CATS.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
+        if (cfg.cats.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
         text = text.replace(/^KATEGORIE:.*\n?/m, "").trim();
       }
       b.answer = text;
@@ -1250,11 +1299,31 @@ async function summarizeBook(b) {
 
 let booksView = null; // null = Ordner-Übersicht, sonst der geöffnete Kategoriename
 
+// Medien-Umschalter + Formular an den gewählten Typ anpassen
+function applyMediaToForm() {
+  const cfg = M();
+  document.getElementById("book-title").placeholder = cfg.placeholder;
+  const sel = document.getElementById("book-cat");
+  sel.innerHTML = '<option value="Auto" selected>Kategorie: Auto (Claude wählt)</option>'
+    + cfg.cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+}
+document.querySelectorAll(".media-seg button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    mediaView = btn.dataset.media;
+    booksView = null;
+    document.querySelectorAll(".media-seg button").forEach(b => b.classList.toggle("on", b.dataset.media === mediaView));
+    applyMediaToForm();
+    renderBooks();
+  });
+});
+applyMediaToForm();
+
 document.getElementById("form-books").addEventListener("submit", e => {
   e.preventDefault();
   const sel = document.getElementById("book-cat").value;
   const b = {
     id: uid(),
+    media: mediaView,
     question: document.getElementById("book-title").value.trim(),
     cat: sel === "Auto" ? "" : sel,
     autoCat: sel === "Auto",
@@ -1262,25 +1331,30 @@ document.getElementById("form-books").addEventListener("submit", e => {
     cost: 0
   };
   data.books.push(b);
-  booksView = null; // zurück zur Ordner-Übersicht, damit das Buch einsortiert erscheint
+  booksView = null; // zurück zur Ordner-Übersicht, damit der Eintrag einsortiert erscheint
   save(); e.target.reset(); renderBooks();
   summarizeBook(b);
 });
 
 function catOf(b) { return b.cat || "Sonstiges"; }
-function iconOf(cat) { return CAT_ICON[cat] || "📚"; }
+function iconOf(cat, media = mediaView) { return (MEDIA[media].icons[cat]) || MEDIA[media].defaultIcon; }
+function itemsOfMedia() { return data.books.filter(b => (b.media || "book") === mediaView); }
 
 function updateTipsFab() {
-  tipsFab.hidden = !(currentTab === "books" && data.books.length > 0);
+  const show = currentTab === "books" && itemsOfMedia().length > 0;
+  tipsFab.hidden = !show;
+  if (show) tipsFab.textContent = M().tipsFabLabel;
 }
 
 function renderBooks() {
   const ul = document.getElementById("list-books");
+  const cfg = M();
   ul.innerHTML = "";
   updateTipsFab();
+  const items = itemsOfMedia();
 
-  if (!data.books.length) {
-    ul.innerHTML = '<div class="empty-state">Noch keine Bücher – drücke auf +.</div>';
+  if (!items.length) {
+    ul.innerHTML = `<div class="empty-state">Noch keine Einträge unter „${esc(cfg.label)}“ – drücke auf +.</div>`;
     booksView = null;
     return;
   }
@@ -1289,17 +1363,17 @@ function renderBooks() {
   if (booksView === null) {
     const total = document.createElement("div");
     total.className = "book-total";
-    total.innerHTML = "Insgesamt gelesen: <b>" + data.books.length + " " + (data.books.length === 1 ? "Buch" : "Bücher") + "</b>";
+    total.innerHTML = "Insgesamt " + cfg.verb + ": <b>" + items.length + " " + (items.length === 1 ? cfg.one : cfg.many) + "</b>";
     ul.appendChild(total);
 
-    const cats = [...new Set(data.books.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
+    const cats = [...new Set(items.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
     const grid = document.createElement("div");
     grid.className = "folder-grid";
     for (const cat of cats) {
-      const count = data.books.filter(b => catOf(b) === cat).length;
+      const count = items.filter(b => catOf(b) === cat).length;
       const folder = document.createElement("button");
       folder.className = "folder";
-      folder.innerHTML = `<span class="folder-icon">${iconOf(cat)}</span><span class="folder-name">${esc(cat)}</span><span class="folder-count">${count} ${count === 1 ? "Buch" : "Bücher"}</span>`;
+      folder.innerHTML = `<span class="folder-icon">${iconOf(cat)}</span><span class="folder-name">${esc(cat)}</span><span class="folder-count">${count} ${count === 1 ? cfg.one : cfg.many}</span>`;
       folder.addEventListener("click", () => { booksView = cat; renderBooks(); });
       grid.appendChild(folder);
     }
@@ -1307,7 +1381,7 @@ function renderBooks() {
     return;
   }
 
-  // ----- Bücher innerhalb einer Kategorie -----
+  // ----- Einträge innerhalb einer Kategorie -----
   const back = document.createElement("button");
   back.className = "back-btn";
   back.textContent = "← Kategorien";
@@ -1321,14 +1395,14 @@ function renderBooks() {
 
   const bHint = document.createElement("div");
   bHint.className = "swipe-hint";
-  bHint.textContent = "💡 Nach links wischen = Buch löschen";
+  bHint.textContent = "💡 Nach links wischen = löschen";
   ul.appendChild(bHint);
 
-  for (const b of data.books.filter(x => catOf(x) === booksView)) {
+  for (const b of items.filter(x => catOf(x) === booksView)) {
     const li = document.createElement("li");
     li.className = "item";
     li.style.cursor = "pointer";
-    const status = b.loading ? "Claude fasst zusammen…" : (b.answer ? "" : "Zum Zusammenfassen tippen");
+    const status = b.loading ? cfg.loadingHint : (b.answer ? "" : cfg.emptyHint);
     li.innerHTML = `
       <div class="know-head">
         <div class="body">
@@ -1336,7 +1410,7 @@ function renderBooks() {
           ${status ? '<div class="know-a empty">' + esc(status) + "</div>" : ""}
         </div>
       </div>`;
-    li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS));
+    li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS()));
     // Wischen nach links = löschen (Wischen nach rechts hat hier keine Aktion)
     enableSwipe(li, {
       onDelete: () => { data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks(); }
@@ -1345,23 +1419,25 @@ function renderBooks() {
   }
 }
 
-/* ---------- Buchvorschläge (fester Knopf + aufgeräumtes Overlay) ---------- */
+/* ---------- Vorschläge (fester Knopf + aufgeräumtes Overlay) ---------- */
 async function fetchBookTips() {
-  const titles = data.books.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
+  const cfg = M();
+  const titles = itemsOfMedia().map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
   const r = await callClaude({
-    system: "Du empfiehlst Bücher. Antworte auf Deutsch, ohne Vorwort und ohne Abschluss.",
-    userText: "Diese Bücher habe ich gelesen und mochte sie: " + titles + ". Empfiehl mir 5 Bücher, die dazu passen und die ich noch nicht gelesen habe. Gib pro Buch genau eine Zeile im Format: Titel | Autor | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
+    system: "Du gibst Empfehlungen für " + cfg.label + ". Antworte auf Deutsch, ohne Vorwort und ohne Abschluss.",
+    userText: cfg.tipsIntro + ": " + titles + ". " + cfg.tipsAsk,
     maxTokens: 500
   });
   if (r) {
-    data.bookTips = { text: r.text, cost: r.cost, date: fmtDate(todayStr()) };
+    data.mediaTips[mediaView] = { text: r.text, cost: r.cost, date: fmtDate(todayStr()) };
     save(); renderUsage();
   }
 }
 
 function openTipsModal() {
-  if (!data.bookTips) return;
-  const lines = data.bookTips.text.split("\n").map(l => l.trim()).filter(Boolean);
+  const tips = data.mediaTips[mediaView];
+  if (!tips) return;
+  const lines = tips.text.split("\n").map(l => l.trim()).filter(Boolean);
   const cards = lines.map((line, i) => {
     const clean = line.replace(/^\s*\d+[.)]\s*/, "");        // evtl. Nummerierung entfernen
     const parts = clean.split("|").map(s => s.trim());
@@ -1380,8 +1456,8 @@ function openTipsModal() {
   const modal = document.createElement("div");
   modal.className = "modal purple";
   modal.innerHTML = `
-    <h2>📚 Buchvorschläge</h2>
-    <div class="modal-meta">${esc(data.bookTips.date || "")} · Kosten: ${fmtCost(data.bookTips.cost || 0)}</div>
+    <h2>${esc(M().tipsTitle)}</h2>
+    <div class="modal-meta">${esc(tips.date || "")} · Kosten: ${fmtCost(tips.cost || 0)}</div>
     <div class="modal-answer" style="white-space:normal">${cards}</div>
     <div class="modal-actions">
       <button class="ask-btn" data-act="refresh">Neue Vorschläge</button>
@@ -1402,16 +1478,16 @@ function openTipsModal() {
 }
 
 tipsFab.addEventListener("click", async () => {
-  if (!data.books.length) {
-    alert("Trag zuerst mindestens ein Buch ein – dann kann Claude passende Vorschläge machen.");
+  if (!itemsOfMedia().length) {
+    alert("Trag zuerst mindestens einen Eintrag ein – dann kann Claude passende Vorschläge machen.");
     return;
   }
-  if (data.bookTips) { openTipsModal(); return; }
+  if (data.mediaTips[mediaView]) { openTipsModal(); return; }
   tipsFab.disabled = true;
   tipsFab.textContent = "Claude sucht…";
   try { await fetchBookTips(); openTipsModal(); }
   catch (err) { alert("Das hat nicht geklappt: " + err.message); }
-  finally { tipsFab.disabled = false; tipsFab.textContent = "📚 Book Tips"; }
+  finally { tipsFab.disabled = false; tipsFab.textContent = M().tipsFabLabel; }
 });
 
 /* ---------- Sport (Training + Skills) ---------- */
@@ -1985,7 +2061,9 @@ document.getElementById("btn-import").addEventListener("click", () => {
     data.dailies = imported.dailies || [];
     data.avoids = imported.avoids || [];
     data.books = imported.books || [];
-    data.bookTips = imported.bookTips || null;
+    data.books.forEach(b => { if (!b.media) b.media = "book"; });
+    data.mediaTips = imported.mediaTips || {};
+    if (imported.bookTips && !data.mediaTips.book) data.mediaTips.book = imported.bookTips;
     data.sport = imported.sport || {};
     if (!Array.isArray(data.sport.trainingDays)) data.sport.trainingDays = [1, 2, 4, 5];
     if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
