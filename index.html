@@ -234,6 +234,15 @@
   #tab-books .add-form button[type="submit"] { background: var(--purple); color: var(--purple-ink); }
   #tab-books .ask-btn { background: var(--purple); color: var(--purple-ink); }
 
+  /* Sterne-Bewertung */
+  .stars { display: inline-flex; gap: 3px; line-height: 1; }
+  .stars .star { color: var(--border); font-size: 16px; }
+  .stars .star.on { color: #ffc83d; }
+  .stars.interactive .star { cursor: pointer; font-size: 30px; padding: 2px; }
+  .item-stars { margin-top: 5px; }
+  .rate-row { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; flex-wrap: wrap; }
+  .rate-label { font-size: 13px; color: var(--muted); }
+
   .item .body { flex: 1; }
   .item .title { font-size: 15px; font-weight: 600; }
   .item .meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
@@ -1164,6 +1173,14 @@ async function callClaude({ system, userText, maxTokens = 4096, tools = null, mo
   return { text, cost };
 }
 
+/* ---------- Sterne-Bewertung ---------- */
+function starsHtml(rating, interactive) {
+  rating = rating || 0;
+  let s = "";
+  for (let i = 1; i <= 5; i++) s += `<span class="star ${i <= rating ? "on" : ""}"${interactive ? ` data-star="${i}"` : ""}>★</span>`;
+  return `<span class="stars${interactive ? " interactive" : ""}">${s}</span>`;
+}
+
 /* ---------- Antwort-Overlay (Großansicht) ---------- */
 function openModal(k, opts = {}) {
   const askFn = opts.ask;
@@ -1176,6 +1193,7 @@ function openModal(k, opts = {}) {
   modal.innerHTML = `
     <h2>${esc(k.question)}</h2>
     <div class="modal-meta">${k.cost ? "Kosten dieser Antwort: " + fmtCost(k.cost) : ""}</div>
+    ${opts.rating ? `<div class="rate-row"><span class="rate-label">Meine Bewertung:</span>${starsHtml(k.rating, true)}</div>` : ""}
     <div class="modal-answer ${k.answer ? "" : "empty"}">${k.answer ? esc(k.answer) : labels.empty}</div>
     <div class="modal-actions">
       <button class="ask-btn" data-act="ask">${k.answer ? labels.has : labels.none}</button>
@@ -1188,6 +1206,13 @@ function openModal(k, opts = {}) {
   const close = () => backdrop.remove();
   backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
   modal.querySelector('[data-act="close"]').addEventListener("click", close);
+  modal.querySelectorAll(".stars.interactive .star").forEach(st => st.addEventListener("click", () => {
+    const v = parseInt(st.dataset.star, 10);
+    k.rating = (k.rating === v) ? 0 : v;   // nochmal auf denselben Stern tippen = Bewertung entfernen
+    save();
+    modal.querySelectorAll(".stars.interactive .star").forEach(s2 => s2.classList.toggle("on", parseInt(s2.dataset.star, 10) <= (k.rating || 0)));
+    rerender();
+  }));
   modal.querySelector('[data-act="ask"]').addEventListener("click", async ev => {
     ev.target.disabled = true;
     ev.target.textContent = "Claude denkt nach…";
@@ -1219,6 +1244,7 @@ const MEDIA = {
     placeholder: "Buchtitel und Autor, z.B. Momo – Michael Ende",
     thing: "des genannten Buchs", noun: "Buch",
     tipsFabLabel: "📚 Buch-Tipps", tipsTitle: "📚 Buchvorschläge",
+    known: "Diese Bücher kenne ich",
     tipsIntro: "Diese Bücher habe ich gelesen und mochte sie",
     tipsAsk: "Empfiehl mir 5 Bücher, die dazu passen und die ich noch nicht gelesen habe. Gib pro Buch genau eine Zeile im Format: Titel | Autor | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
     summarize: "Zusammenfassen", redo: "Neue Zusammenfassung",
@@ -1233,6 +1259,7 @@ const MEDIA = {
     placeholder: "Film oder Serie, z.B. Interstellar",
     thing: "des genannten Films bzw. der genannten Serie", noun: "Film/Serie",
     tipsFabLabel: "🎬 Film-Tipps", tipsTitle: "🎬 Film- & Serien-Tipps",
+    known: "Diese Filme und Serien kenne ich",
     tipsIntro: "Diese Filme und Serien habe ich gesehen und mochte sie",
     tipsAsk: "Empfiehl mir 5 Filme oder Serien, die dazu passen und die ich noch nicht gesehen habe. Gib pro Titel genau eine Zeile im Format: Titel | Jahr oder Regie | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
     summarize: "Worum geht's?", redo: "Neu beschreiben",
@@ -1247,6 +1274,7 @@ const MEDIA = {
     placeholder: "Videospiel, z.B. The Legend of Zelda: BotW",
     thing: "des genannten Videospiels", noun: "Videospiel",
     tipsFabLabel: "🎮 Spiel-Tipps", tipsTitle: "🎮 Spiele-Tipps",
+    known: "Diese Spiele kenne ich",
     tipsIntro: "Diese Spiele habe ich gespielt und mochte sie",
     tipsAsk: "Empfiehl mir 5 Videospiele, die dazu passen und die ich noch nicht gespielt habe. Gib pro Spiel genau eine Zeile im Format: Titel | Plattform oder Studio | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
     summarize: "Worum geht's?", redo: "Neu beschreiben",
@@ -1262,6 +1290,7 @@ let mediaView = "book";
 function M() { return MEDIA[mediaView]; }
 const BOOK_MODAL_OPTS = () => ({
   purple: true,
+  rating: true,
   rerender: () => renderBooks(),
   ask: b => summarizeBook(b),
   labels: { has: M().redo, none: M().summarize, empty: M().emptyModal }
@@ -1398,7 +1427,8 @@ function renderBooks() {
   bHint.textContent = "💡 Nach links wischen = löschen";
   ul.appendChild(bHint);
 
-  for (const b of items.filter(x => catOf(x) === booksView)) {
+  const inCat = items.filter(x => catOf(x) === booksView).sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  for (const b of inCat) {
     const li = document.createElement("li");
     li.className = "item";
     li.style.cursor = "pointer";
@@ -1407,6 +1437,7 @@ function renderBooks() {
       <div class="know-head">
         <div class="body">
           <div class="know-q">${esc(b.question)}</div>
+          ${b.rating ? '<div class="item-stars">' + starsHtml(b.rating, false) + "</div>" : ""}
           ${status ? '<div class="know-a empty">' + esc(status) + "</div>" : ""}
         </div>
       </div>`;
@@ -1422,10 +1453,20 @@ function renderBooks() {
 /* ---------- Vorschläge (fester Knopf + aufgeräumtes Overlay) ---------- */
 async function fetchBookTips() {
   const cfg = M();
-  const titles = itemsOfMedia().map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
+  const items = itemsOfMedia();
+  const hasRatings = items.some(b => b.rating);
+  let userText;
+  if (hasRatings) {
+    const list = items.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "") + (b.rating ? " – " + b.rating + "/5 Sternen" : " – ohne Bewertung")).join("; ");
+    userText = cfg.known + " (mit meinen Sterne-Bewertungen 1–5): " + list
+      + ". Berücksichtige die Bewertungen stark: empfiehl vor allem Ähnliches zu den hoch bewerteten (4–5 Sterne) und meide Ähnliches zu den niedrig bewerteten (1–2 Sterne). " + cfg.tipsAsk;
+  } else {
+    const titles = items.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
+    userText = cfg.tipsIntro + ": " + titles + ". " + cfg.tipsAsk;
+  }
   const r = await callClaude({
     system: "Du gibst Empfehlungen für " + cfg.label + ". Antworte auf Deutsch, ohne Vorwort und ohne Abschluss.",
-    userText: cfg.tipsIntro + ": " + titles + ". " + cfg.tipsAsk,
+    userText,
     maxTokens: 500
   });
   if (r) {
