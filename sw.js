@@ -1,7 +1,7 @@
 // Service Worker für "Mein Tag"
 // Strategie: Netzwerk zuerst (damit Updates sofort ankommen),
 // bei Offline-Betrieb Rückgriff auf den Cache.
-const CACHE = "mein-tag-v22";
+const CACHE = "mein-tag-v26";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

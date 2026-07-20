@@ -26,6 +26,9 @@
     --purple: #9b7bff;
     --purple-ink: #ffffff;
     --orange: #f2b736;
+    --run: #2dd4bf;
+    --skill: #f472b6;
+    --bike: #818cf8;
     --shadow: 0 6px 20px rgba(0,0,0,.35);
   }
   body.light {
@@ -42,6 +45,9 @@
     --purple: #7a52e0;
     --purple-ink: #ffffff;
     --orange: #b07d10;
+    --run: #0d9488;
+    --skill: #c026a3;
+    --bike: #4f46e5;
     --shadow: 0 6px 20px rgba(20,24,40,.10);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -130,11 +136,10 @@
   .settings-page .settings-inner { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
   .settings-page h2 { font-size: 22px; }
   .settings-page h3 { font-size: 14px; color: var(--muted); margin-top: 16px; text-transform: uppercase; letter-spacing: .5px; }
-  nav button.active[data-tab="todo"]  { color: var(--green); }
-  nav button.active[data-tab="daily"] { color: var(--blue); }
-  nav button.active[data-tab="avoid"] { color: var(--red); }
-  nav button.active[data-tab="books"] { color: var(--purple); }
-  nav button.active[data-tab="sport"] { color: var(--orange); }
+  nav button.active[data-tab="todo"]   { color: var(--green); }
+  nav button.active[data-tab="habits"] { color: var(--blue); }
+  nav button.active[data-tab="books"]  { color: var(--purple); }
+  nav button.active[data-tab="sport"]  { color: var(--orange); }
 
   .tab { display: none; }
   .tab.visible { display: block; }
@@ -211,8 +216,8 @@
     align-self: flex-start;
   }
   #tab-todo .add-form button[type="submit"]  { background: var(--green); }
-  #tab-daily .add-form button[type="submit"] { background: var(--blue); }
-  #tab-avoid .add-form button[type="submit"] { background: var(--red); }
+  #habits-daily .add-form button[type="submit"] { background: var(--blue); }
+  #habits-avoid .add-form button[type="submit"] { background: var(--red); }
 
   ul.items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
   li.item {
@@ -222,8 +227,8 @@
     box-shadow: 0 1px 2px rgba(0,0,0,.14);
   }
   #tab-todo  li.item { border-left: 3px solid var(--green); }
-  #tab-daily li.item { border-left: 3px solid var(--blue); }
-  #tab-avoid li.item { border-left: 3px solid var(--red); }
+  #habits-daily li.item { border-left: 3px solid var(--blue); }
+  #habits-avoid li.item { border-left: 3px solid var(--red); }
   #tab-books li.item { border-left: 3px solid var(--purple); flex-direction: column; }
   #tab-books .know-q { color: var(--purple); }
   #tab-books .add-form button[type="submit"] { background: var(--purple); color: var(--purple-ink); }
@@ -242,11 +247,11 @@
     font-size: 13px; line-height: 1; color: #000;
   }
   #tab-todo .item.done .check   { background: var(--green); border-color: var(--green); }
-  #tab-daily .item.today .check { background: var(--blue); border-color: var(--blue); }
+  #habits-daily .item.today .check { background: var(--blue); border-color: var(--blue); }
 
   .streak { font-size: 13px; font-weight: 700; }
-  #tab-daily .streak { color: var(--blue); }
-  #tab-avoid .streak { color: var(--red); }
+  #habits-daily .streak { color: var(--blue); }
+  #habits-avoid .streak { color: var(--red); }
 
   .small-btn {
     background: var(--surface2); border: 1px solid var(--border);
@@ -255,6 +260,19 @@
   }
   .small-btn:hover { color: var(--text); }
   .small-btn.danger:hover { color: var(--red); border-color: var(--red); }
+  .small-btn.primary { background: var(--run); border-color: var(--run); color: #04241f; font-weight: 800; }
+  .small-btn.danger { color: var(--red); }
+
+  /* Lauf-Formular im Modal */
+  .run-form { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .run-form label { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .run-form input {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 12px; font-size: 16px; color-scheme: dark;
+  }
+  body.light .run-form input { color-scheme: light; }
+  .run-form input:focus { outline: none; border-color: var(--run); }
+  .rf-pace { margin-top: 12px; font-size: 15px; font-weight: 800; color: var(--run); min-height: 20px; }
 
   .know-q { font-size: 15px; font-weight: 600; color: var(--gold); }
   .know-a { font-size: 14px; line-height: 1.55; margin-top: 8px; white-space: pre-wrap; }
@@ -288,7 +306,7 @@
 
   /* Sport */
   #tab-sport .add-form button[type="submit"] { background: var(--orange); }
-  #tab-sport .ask-btn { background: var(--orange); color: #000; }
+  #tab-sport .ask-btn { background: var(--skill); color: #fff; }
   .weekday-row { display: flex; gap: 6px; }
   .wd {
     flex: 1; padding: 12px 0; border-radius: 8px; min-height: 48px;
@@ -304,6 +322,55 @@
     padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
   }
   .sport-seg button.on { background: var(--orange); color: #000; box-shadow: 0 0 16px rgba(242,183,54,.5); }
+  .sport-seg button.on[data-sview="runs"] { background: var(--run); color: #04241f; box-shadow: 0 0 16px rgba(45,212,191,.45); }
+  .sport-seg button.on[data-sview="skills"] { background: var(--skill); color: #fff; box-shadow: 0 0 16px rgba(244,114,182,.45); }
+  .sport-seg button.on[data-sview="bike"] { background: var(--bike); color: #fff; box-shadow: 0 0 16px rgba(129,140,248,.45); }
+  .sport-seg button { font-size: 13px; }
+
+  /* Laufen */
+  .run-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+  .run-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--run); border: none; color: #04241f; border-radius: 12px;
+    padding: 14px 8px; font-size: 15px; font-weight: 800; cursor: pointer; min-height: 50px;
+  }
+  .run-btn.ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .run-summary { display: flex; gap: 10px; margin-bottom: 16px; }
+  .run-stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+  .run-stat .rs-val { font-size: 20px; font-weight: 800; color: var(--run); }
+  .run-stat .rs-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
+  #tab-sport #sport-runs li.item { border-left: 3px solid var(--run); }
+  .run-item .run-date { font-size: 13px; color: var(--muted); }
+  .run-item .run-main { font-size: 16px; font-weight: 800; margin-top: 2px; }
+  .run-item .run-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .run-item .run-pace { color: var(--run); font-weight: 700; }
+
+  /* Biken (nutzt run-Styles, andere Farbe) */
+  #sport-bike .run-btn { background: var(--bike); color: #fff; }
+  #sport-bike .run-btn.ghost { background: var(--surface2); color: var(--text); }
+  #sport-bike .run-stat .rs-val { color: var(--bike); }
+  #tab-sport #sport-bike li.item { border-left: 3px solid var(--bike); }
+  .bike-item .run-trails { font-size: 13px; color: var(--bike); font-weight: 700; margin-top: 2px; }
+  .trail-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .trail-chip { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+  .trail-chip.on { background: var(--bike); color: #fff; border-color: var(--bike); }
+
+  /* Kalender: Aktivitäts-Punkte (Training=gold, Laufen=türkis, Biken=indigo) */
+  .cal-dots { display: flex; gap: 3px; height: 6px; margin-top: 2px; }
+  .cal-dots .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .cal-dots .dot.cali { background: var(--orange); }
+  .cal-dots .dot.run { background: var(--run); }
+  .cal-dots .dot.bike { background: var(--bike); }
+
+  /* Umschalter Dranbleiben / Vermeiden */
+  .hab-seg { display: flex; gap: 6px; margin-bottom: 18px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+  .hab-seg button {
+    flex: 1; border: none; background: transparent; color: var(--muted);
+    padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: color .2s, background .2s;
+  }
+  .hab-seg button.on[data-hview="daily"] { background: var(--blue); color: #fff; }
+  .hab-seg button.on[data-hview="avoid"] { background: var(--red); color: #fff; }
 
   .sec-head { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 22px 0 10px; }
   .sec-head:first-child { margin-top: 0; }
@@ -354,26 +421,25 @@
   .cal-dow span { text-align: center; font-size: 11px; color: var(--muted); }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
   .cal-cell {
-    aspect-ratio: 1; border-radius: 8px; border: 1px solid transparent;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; color: var(--muted);
+    aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    background: var(--surface); font-size: 13px; font-weight: 600; color: var(--text);
   }
-  .cal-cell.has { background: var(--surface); border-color: var(--border); color: var(--text); }
   .cal-cell.train { border-color: var(--orange); }
-  .cal-cell.done { background: var(--orange); color: #000; cursor: pointer; }
-  .cal-cell.today { box-shadow: 0 0 0 2px var(--orange) inset; }
+  .cal-cell.active { cursor: pointer; }
+  .cal-cell.today { box-shadow: 0 0 0 2px var(--text) inset; }
   .cal-cell.empty { visibility: hidden; }
 
   /* Skills */
-  .skill-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 12px; padding: 16px; }
-  .skill-card h3 { font-size: 18px; color: var(--orange); }
+  .skill-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--skill); border-radius: 12px; padding: 16px; }
+  .skill-card h3 { font-size: 18px; color: var(--skill); }
   .skill-progress-txt { font-size: 13px; color: var(--muted); margin: 4px 0 14px; }
   .step-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); cursor: pointer; }
   .step-row .step-check {
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
     border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #000;
   }
-  .step-row.done .step-check { background: var(--orange); border-color: var(--orange); }
+  .step-row.done .step-check { background: var(--skill); border-color: var(--skill); }
   .step-row.done .step-text { color: var(--muted); text-decoration: line-through; }
   .step-text { font-size: 14px; line-height: 1.4; }
   .day-detail-ex { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
@@ -447,7 +513,7 @@
 
   /* Häkchen ploppt beim Abhaken auf */
   .check, .ex-check, .step-check { transition: background .2s, border-color .2s, box-shadow .2s; }
-  #tab-todo .item.done .check, #tab-daily .item.today .check,
+  #tab-todo .item.done .check, #habits-daily .item.today .check,
   .ex-row.done .ex-check, .step-row.done .step-check { animation: pop .32s ease; }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -484,13 +550,9 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5l2.5 2.5L21 5"/><path d="M20.5 12v6.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2H15"/></svg>
       <span>To-Do</span>
     </button>
-    <button data-tab="daily">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 12V10a4 4 0 0 1 4-4h14"/><polyline points="7 22 3 18 7 14"/><path d="M21 12v2a4 4 0 0 1-4 4H3"/></svg>
-      <span>Täglich</span>
-    </button>
-    <button data-tab="avoid">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>
-      <span>Vermeiden</span>
+    <button data-tab="habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+      <span>Gewohnheiten</span>
     </button>
     <button data-tab="books">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
@@ -522,31 +584,37 @@
     <ul class="items" id="list-todo"></ul>
   </section>
 
-  <!-- TÄGLICH -->
-  <section class="tab" id="tab-daily">
-    <form class="add-form" id="form-daily">
-      <input type="text" id="daily-title" placeholder="Was willst du regelmäßig machen? (z.B. 20 Min lesen)" required>
-      <select id="daily-freq">
-        <option value="1">Täglich</option>
-        <option value="2">Alle 2 Tage</option>
-        <option value="3">Alle 3 Tage</option>
-        <option value="7">1x pro Woche</option>
-        <option value="14">Alle 2 Wochen</option>
-      </select>
-      <button type="submit">Add</button>
-    </form>
-    <div class="swipe-hint" id="daily-swipe-hint" style="display:none">💡 Wischen: rechts = abhaken, links = löschen</div>
-    <ul class="items" id="list-daily"></ul>
-  </section>
+  <!-- GEWOHNHEITEN (Dranbleiben + Vermeiden) -->
+  <section class="tab" id="tab-habits">
+    <div class="hab-seg">
+      <button data-hview="daily" class="on">Dranbleiben</button>
+      <button data-hview="avoid">Vermeiden</button>
+    </div>
 
-  <!-- VERMEIDEN -->
-  <section class="tab" id="tab-avoid">
-    <form class="add-form" id="form-avoid">
-      <input type="text" id="avoid-title" placeholder="Was willst du dir abgewöhnen?" required>
-      <button type="submit">Add</button>
-    </form>
-    <div class="swipe-hint" id="avoid-swipe-hint" style="display:none">💡 Wischen: rechts = Rückfall, links = löschen</div>
-    <ul class="items" id="list-avoid"></ul>
+    <div id="habits-daily">
+      <form class="add-form" id="form-daily">
+        <input type="text" id="daily-title" placeholder="Was willst du regelmäßig machen? (z.B. 20 Min lesen)" required>
+        <select id="daily-freq">
+          <option value="1">Täglich</option>
+          <option value="2">Alle 2 Tage</option>
+          <option value="3">Alle 3 Tage</option>
+          <option value="7">1x pro Woche</option>
+          <option value="14">Alle 2 Wochen</option>
+        </select>
+        <button type="submit">Add</button>
+      </form>
+      <div class="swipe-hint" id="daily-swipe-hint" style="display:none">💡 Wischen: rechts = abhaken, links = löschen</div>
+      <ul class="items" id="list-daily"></ul>
+    </div>
+
+    <div id="habits-avoid" hidden>
+      <form class="add-form" id="form-avoid">
+        <input type="text" id="avoid-title" placeholder="Was willst du dir abgewöhnen?" required>
+        <button type="submit">Add</button>
+      </form>
+      <div class="swipe-hint" id="avoid-swipe-hint" style="display:none">💡 Wischen: rechts = Rückfall, links = löschen</div>
+      <ul class="items" id="list-avoid"></ul>
+    </div>
   </section>
 
   <!-- BÜCHER -->
@@ -588,10 +656,15 @@
     </form>
     <div class="sport-seg">
       <button data-sview="training" class="on">Training</button>
+      <button data-sview="runs">Laufen</button>
+      <button data-sview="bike">Biken</button>
       <button data-sview="skills">Skills</button>
     </div>
     <div id="sport-training"></div>
+    <div id="sport-runs" hidden></div>
+    <div id="sport-bike" hidden></div>
     <div id="sport-skills" hidden></div>
+    <input type="file" id="run-photo" accept="image/*" hidden>
   </section>
 
   <div class="settings-page" id="settings-page" hidden>
@@ -644,6 +717,8 @@ if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
 if (!data.sport.skills) data.sport.skills = {};
 if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
 if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
+if (!Array.isArray(data.sport.runs)) data.sport.runs = [];
+if (!Array.isArray(data.sport.rides)) data.sport.rides = [];
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -729,9 +804,25 @@ document.querySelectorAll("nav button").forEach(btn => {
   });
 });
 
+/* ---------- Gewohnheiten: Umschalter Dranbleiben / Vermeiden ---------- */
+let habitView = "daily";
+function renderHabits() {
+  document.getElementById("habits-daily").hidden = habitView !== "daily";
+  document.getElementById("habits-avoid").hidden = habitView !== "avoid";
+  document.querySelectorAll(".hab-seg button").forEach(b => b.classList.toggle("on", b.dataset.hview === habitView));
+}
+document.querySelectorAll(".hab-seg button").forEach(b => {
+  b.addEventListener("click", () => { habitView = b.dataset.hview; closeAllForms(); renderHabits(); });
+});
+
 /* ---------- Plus-Knopf (öffnet das Formular des aktiven Tabs) ---------- */
-const FORM_BY_TAB = { todo: "form-todo", daily: "form-daily", avoid: "form-avoid", books: "form-books", sport: "form-sport" };
+const FORM_BY_TAB = { todo: "form-todo", books: "form-books", sport: "form-sport" };
 const fab = document.getElementById("btn-add");
+
+function currentFormId() {
+  if (currentTab === "habits") return "form-" + habitView;
+  return FORM_BY_TAB[currentTab];
+}
 
 function closeAllForms() {
   document.querySelectorAll(".add-form").forEach(f => f.classList.remove("open"));
@@ -739,7 +830,8 @@ function closeAllForms() {
 }
 
 fab.addEventListener("click", () => {
-  const form = document.getElementById(FORM_BY_TAB[currentTab]);
+  const form = document.getElementById(currentFormId());
+  if (!form) return;
   const willOpen = !form.classList.contains("open");
   closeAllForms();
   if (willOpen) {
@@ -1002,13 +1094,20 @@ function renderUsage() {
 }
 
 /* ---------- Allgemeiner Claude-Aufruf ---------- */
-async function callClaude({ system, userText, maxTokens = 4096, tools = null, model = "claude-haiku-4-5" }) {
+async function callClaude({ system, userText, maxTokens = 4096, tools = null, model = "claude-haiku-4-5", image = null }) {
   const apiKey = getApiKey();
   if (!apiKey) {
     alert("Bitte trage zuerst unten in den Einstellungen deinen API-Schlüssel ein.");
     return null;
   }
-  const messages = [{ role: "user", content: userText }];
+  let content = userText;
+  if (image) {
+    content = [
+      { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } },
+      { type: "text", text: userText }
+    ];
+  }
+  const messages = [{ role: "user", content }];
   let cost = 0, tokIn = 0, tokOut = 0, response = null;
 
   // Schleife für pause_turn (Server-Tools wie web_fetch können pausieren)
@@ -1366,10 +1465,15 @@ document.querySelectorAll(".sport-seg button").forEach(b => {
 
 function renderSport() {
   document.getElementById("sport-training").hidden = sportView !== "training";
+  document.getElementById("sport-runs").hidden = sportView !== "runs";
+  document.getElementById("sport-bike").hidden = sportView !== "bike";
   document.getElementById("sport-skills").hidden = sportView !== "skills";
   document.querySelectorAll(".sport-seg button").forEach(b => b.classList.toggle("on", b.dataset.sview === sportView));
   syncWeekdayButtons();
-  if (sportView === "training") renderTraining(); else renderSkills();
+  if (sportView === "training") renderTraining();
+  else if (sportView === "runs") renderRuns();
+  else if (sportView === "bike") renderRides();
+  else renderSkills();
 }
 
 function renderTraining() {
@@ -1455,10 +1559,16 @@ function renderCalendar() {
   for (let day = 1; day <= daysInMonth; day++) {
     const dt = new Date(y, m, day), iso = isoDate(dt);
     const logged = data.sport.log[iso] && Object.keys(data.sport.log[iso]).length > 0;
-    const cls = ["cal-cell", logged ? "done" : "has"];
+    const ran = data.sport.runs.some(r => r.date === iso);
+    const biked = data.sport.rides.some(r => r.date === iso);
+    const cls = ["cal-cell"];
     if (data.sport.trainingDays.includes(dt.getDay())) cls.push("train");
     if (iso === todayIso) cls.push("today");
-    cells += `<div class="${cls.join(" ")}" data-iso="${iso}">${day}</div>`;
+    if (logged || ran || biked) cls.push("active");
+    const dots = (logged ? '<span class="dot cali"></span>' : "")
+      + (ran ? '<span class="dot run"></span>' : "")
+      + (biked ? '<span class="dot bike"></span>' : "");
+    cells += `<div class="${cls.join(" ")}" data-iso="${iso}"><span>${day}</span><span class="cal-dots">${dots}</span></div>`;
   }
 
   el.innerHTML = `
@@ -1473,13 +1583,314 @@ function renderCalendar() {
   el.querySelectorAll(".cal-nav").forEach(b => b.addEventListener("click", () => {
     calDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1); renderCalendar();
   }));
-  el.querySelectorAll(".cal-cell.done").forEach(c => c.addEventListener("click", () => openDayDetail(c.dataset.iso)));
+  el.querySelectorAll(".cal-cell.active").forEach(c => c.addEventListener("click", () => openDayDetail(c.dataset.iso)));
 }
 
 function openDayDetail(iso) {
-  const day = data.sport.log[iso]; if (!day) return;
-  const rows = SPORT_EX.filter(ex => day[ex.name]).map(ex => `<div class="day-detail-ex"><span>${esc(ex.name)}</span><span>${day[ex.name]} ${ex.unit}</span></div>`).join("");
-  showTextModalHTML(fmtDate(iso), rows || '<div class="note">Nichts eingetragen.</div>');
+  const day = data.sport.log[iso] || {};
+  const runs = data.sport.runs.filter(r => r.date === iso);
+  const rides = data.sport.rides.filter(r => r.date === iso);
+  const exRows = SPORT_EX.filter(ex => day[ex.name]).map(ex => `<div class="day-detail-ex"><span>${esc(ex.name)}</span><span>${day[ex.name]} ${ex.unit}</span></div>`).join("");
+  const runRows = runs.map(r => `<div class="day-detail-ex"><span style="color:var(--run)">🏃 Lauf</span><span>${r.km.toFixed(2).replace(".", ",")} km · ${fmtDur(r.durSec)} · ${fmtPace(r.durSec, r.km)}</span></div>`).join("");
+  const rideRows = rides.map(r => `<div class="day-detail-ex"><span style="color:var(--bike)">🚵 Biken</span><span>${fmtDur(r.durSec)}${r.trails && r.trails.length ? " · " + esc(r.trails.join(", ")) : ""}</span></div>`).join("");
+  const html = (exRows + runRows + rideRows) || '<div class="note">Nichts eingetragen.</div>';
+  showTextModalHTML(fmtDate(iso), html);
+}
+
+/* ---------- Laufen ---------- */
+function fmtDur(sec) {
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  return m + ":" + String(s).padStart(2, "0");
+}
+function fmtPace(sec, km) {
+  if (!km || km <= 0 || !sec) return "–";
+  const p = sec / km, m = Math.floor(p / 60), s = Math.round(p % 60);
+  const mm = s === 60 ? m + 1 : m, ss = s === 60 ? 0 : s;
+  return mm + ":" + String(ss).padStart(2, "0") + " /km";
+}
+function parseDurInput(str) {
+  // akzeptiert "32:10", "1:05:30" oder Minuten als Zahl
+  str = (str || "").trim();
+  if (!str) return 0;
+  if (str.includes(":")) {
+    const parts = str.split(":").map(n => parseInt(n, 10) || 0);
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+  }
+  return Math.round((parseFloat(str.replace(",", ".")) || 0) * 60);
+}
+
+function renderRuns() {
+  const box = document.getElementById("sport-runs");
+  const runs = [...data.sport.runs].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const now = new Date();
+  const month = runs.filter(r => { const [yy, mm] = r.date.split("-").map(Number); return yy === now.getFullYear() && mm === now.getMonth() + 1; });
+  const mKm = month.reduce((s, r) => s + r.km, 0);
+  const mSec = month.reduce((s, r) => s + r.durSec, 0);
+
+  box.innerHTML = `
+    <div class="run-actions">
+      <button class="run-btn" id="run-add">＋ Lauf eintragen</button>
+      <button class="run-btn ghost" id="run-import">📷 Foto</button>
+    </div>
+    <div class="run-summary">
+      <div class="run-stat"><div class="rs-val">${month.length}</div><div class="rs-lbl">Läufe</div></div>
+      <div class="run-stat"><div class="rs-val">${mKm.toFixed(1).replace(".", ",")}</div><div class="rs-lbl">km / Monat</div></div>
+      <div class="run-stat"><div class="rs-val">${fmtPace(mSec, mKm)}</div><div class="rs-lbl">Ø Pace</div></div>
+    </div>
+    <ul class="items" id="run-list"></ul>`;
+
+  const ul = document.getElementById("run-list");
+  if (!runs.length) {
+    ul.innerHTML = '<div class="empty-state">Noch keine Läufe – trag einen ein oder importiere einen Adidas-Running-Screenshot.</div>';
+  } else {
+    runs.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.className = "item run-item";
+      li.style.animationDelay = (i * 0.03) + "s";
+      li.innerHTML = `<div class="body">
+        <div class="run-date">${fmtDate(r.date)}</div>
+        <div class="run-main">${r.km.toFixed(2).replace(".", ",")} km</div>
+        <div class="run-sub">${fmtDur(r.durSec)} · <span class="run-pace">${fmtPace(r.durSec, r.km)}</span></div>
+      </div>`;
+      li.addEventListener("click", () => openRunEntry(r));
+      enableSwipe(li, {
+        onRight: () => openRunEntry(r),
+        onDelete: () => { data.sport.runs = data.sport.runs.filter(x => x.id !== r.id); save(); renderRuns(); if (calOpen) renderCalendar(); }
+      });
+      ul.appendChild(li);
+    });
+  }
+
+  document.getElementById("run-add").addEventListener("click", () => openRunEntry(null));
+  document.getElementById("run-import").addEventListener("click", () => document.getElementById("run-photo").click());
+}
+
+function openRunEntry(run) {
+  const isEdit = !!run && run.id != null;
+  const cur = run || { date: todayStr(), km: "", durSec: 0 };
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  const modal = document.createElement("div");
+  modal.className = "modal orange";
+  modal.innerHTML = `
+    <h2>${isEdit ? "Lauf bearbeiten" : "Lauf eintragen"}</h2>
+    <div class="run-form">
+      <label>Datum</label>
+      <input type="date" id="rf-date" value="${cur.date}">
+      <label>Distanz (km)</label>
+      <input type="text" id="rf-km" inputmode="decimal" placeholder="z.B. 5,2" value="${cur.km !== "" && cur.km != null ? String(cur.km).replace(".", ",") : ""}">
+      <label>Dauer (mm:ss oder h:mm:ss)</label>
+      <input type="text" id="rf-dur" inputmode="numeric" placeholder="z.B. 28:45" value="${cur.durSec ? fmtDur(cur.durSec) : ""}">
+      <div class="rf-pace" id="rf-pace"></div>
+    </div>
+    <div class="modal-actions">
+      ${isEdit ? '<button class="small-btn danger" data-act="del">Löschen</button>' : ""}
+      <button class="small-btn" data-act="cancel">Abbrechen</button>
+      <button class="small-btn primary" data-act="save">Speichern</button>
+    </div>`;
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  const kmEl = modal.querySelector("#rf-km"), durEl = modal.querySelector("#rf-dur"), paceEl = modal.querySelector("#rf-pace");
+  const updatePace = () => {
+    const km = parseFloat((kmEl.value || "").replace(",", ".")) || 0;
+    const sec = parseDurInput(durEl.value);
+    paceEl.textContent = (km && sec) ? "Pace: " + fmtPace(sec, km) : "";
+  };
+  kmEl.addEventListener("input", updatePace);
+  durEl.addEventListener("input", updatePace);
+  updatePace();
+
+  const close = () => backdrop.remove();
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  modal.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  const delBtn = modal.querySelector('[data-act="del"]');
+  if (delBtn) delBtn.addEventListener("click", () => {
+    data.sport.runs = data.sport.runs.filter(x => x.id !== run.id);
+    save(); close(); renderRuns(); if (calOpen) renderCalendar();
+  });
+  modal.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const km = parseFloat((kmEl.value || "").replace(",", ".")) || 0;
+    const sec = parseDurInput(durEl.value);
+    const date = modal.querySelector("#rf-date").value || todayStr();
+    if (km <= 0) { alert("Bitte eine Distanz eintragen."); return; }
+    if (isEdit) {
+      run.date = date; run.km = km; run.durSec = sec;
+    } else {
+      data.sport.runs.push({ id: Date.now(), date, km, durSec: sec });
+    }
+    save(); close(); renderRuns(); if (calOpen) renderCalendar();
+  });
+}
+
+// Screenshot-Import via Claude Vision
+document.getElementById("run-photo").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  await importRunFromImage(file);
+});
+
+async function importRunFromImage(file) {
+  if (!getApiKey()) { alert("Bitte trage zuerst in den Einstellungen deinen API-Schlüssel ein."); return; }
+  let overlay;
+  try {
+    const dataUrl = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file);
+    });
+    const [, mediaType, base64] = /^data:(.+);base64,(.*)$/.exec(dataUrl) || [];
+    if (!base64) { alert("Das Bild konnte nicht gelesen werden."); return; }
+
+    overlay = document.createElement("div");
+    overlay.className = "modal-backdrop";
+    overlay.innerHTML = '<div class="modal orange"><h2>📷 Lauf wird gelesen…</h2><div class="note">Claude wertet den Screenshot aus.</div></div>';
+    document.body.appendChild(overlay);
+
+    const r = await callClaude({
+      system: 'Du liest Screenshots von Lauf-Apps (z.B. Adidas Running). Gib AUSSCHLIESSLICH ein JSON-Objekt zurück, kein Vorwort, keine Code-Fences. Format: {"km": <Zahl>, "durationSeconds": <Ganzzahl>, "date": "YYYY-MM-DD" | null}. km ist die Distanz in Kilometern (Dezimalpunkt). durationSeconds ist die gesamte Laufdauer in Sekunden. date nur wenn im Bild erkennbar, sonst null. Wenn ein Wert nicht erkennbar ist, setze ihn auf null.',
+      userText: "Lies Distanz, Dauer und Datum aus diesem Lauf-Screenshot.",
+      image: { mediaType, data: base64 },
+      maxTokens: 200
+    });
+    renderUsage();
+    overlay.remove(); overlay = null;
+    if (!r) return;
+    let parsed;
+    try { parsed = JSON.parse(r.text.replace(/```json|```/g, "").trim()); }
+    catch { alert("Konnte die Werte nicht auslesen. Antwort: " + r.text); return; }
+    const km = parseFloat(parsed.km) || "";
+    const durSec = parseInt(parsed.durationSeconds, 10) || 0;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(parsed.date || "") ? parsed.date : todayStr();
+    openRunEntry({ id: null, date, km, durSec, __new: true });
+  } catch (err) {
+    if (overlay) overlay.remove();
+    alert("Import fehlgeschlagen: " + err.message);
+  }
+}
+
+/* ---------- Biken (MTB): Dauer, Häufigkeit, Trails ---------- */
+function knownTrails() {
+  const set = new Map(); // Name (lowercase) -> Originalschreibweise, nach Häufigkeit
+  const count = {};
+  data.sport.rides.forEach(r => (r.trails || []).forEach(t => {
+    const k = t.toLowerCase();
+    if (!set.has(k)) set.set(k, t);
+    count[k] = (count[k] || 0) + 1;
+  }));
+  return [...set.entries()].sort((a, b) => count[b[0]] - count[a[0]]).map(e => e[1]);
+}
+
+function renderRides() {
+  const box = document.getElementById("sport-bike");
+  const rides = [...data.sport.rides].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const now = new Date();
+  const month = rides.filter(r => { const [yy, mm] = r.date.split("-").map(Number); return yy === now.getFullYear() && mm === now.getMonth() + 1; });
+  const mSec = month.reduce((s, r) => s + r.durSec, 0);
+
+  box.innerHTML = `
+    <div class="run-actions">
+      <button class="run-btn" id="ride-add">＋ Tour eintragen</button>
+    </div>
+    <div class="run-summary">
+      <div class="run-stat"><div class="rs-val">${month.length}</div><div class="rs-lbl">Touren</div></div>
+      <div class="run-stat"><div class="rs-val">${fmtDur(mSec)}</div><div class="rs-lbl">Zeit / Monat</div></div>
+    </div>
+    <ul class="items" id="ride-list"></ul>`;
+
+  const ul = document.getElementById("ride-list");
+  if (!rides.length) {
+    ul.innerHTML = '<div class="empty-state">Noch keine Touren – trag deine erste MTB-Runde ein.</div>';
+  } else {
+    rides.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.className = "item bike-item";
+      li.style.animationDelay = (i * 0.03) + "s";
+      li.innerHTML = `<div class="body">
+        <div class="run-date">${fmtDate(r.date)}</div>
+        <div class="run-main">${fmtDur(r.durSec)}</div>
+        ${r.trails && r.trails.length ? `<div class="run-trails">${esc(r.trails.join(" · "))}</div>` : ""}
+      </div>`;
+      li.addEventListener("click", () => openRideEntry(r));
+      enableSwipe(li, {
+        onRight: () => openRideEntry(r),
+        onDelete: () => { data.sport.rides = data.sport.rides.filter(x => x.id !== r.id); save(); renderRides(); if (calOpen) renderCalendar(); }
+      });
+      ul.appendChild(li);
+    });
+  }
+  document.getElementById("ride-add").addEventListener("click", () => openRideEntry(null));
+}
+
+function openRideEntry(ride) {
+  const isEdit = !!ride && ride.id != null;
+  const cur = ride || { date: todayStr(), durSec: 0, trails: [] };
+  let trails = [...(cur.trails || [])];
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop";
+  const modal = document.createElement("div");
+  modal.className = "modal orange";
+  modal.innerHTML = `
+    <h2>${isEdit ? "Tour bearbeiten" : "Tour eintragen"}</h2>
+    <div class="run-form">
+      <label>Datum</label>
+      <input type="date" id="rf-date" value="${cur.date}">
+      <label>Dauer (mm:ss oder h:mm:ss)</label>
+      <input type="text" id="rf-dur" inputmode="numeric" placeholder="z.B. 1:15:00" value="${cur.durSec ? fmtDur(cur.durSec) : ""}">
+      <label>Trails</label>
+      <input type="text" id="rf-trail" placeholder="Trail-Name + Enter">
+      <div class="trail-chips" id="rf-known"></div>
+      <div class="trail-chips" id="rf-selected"></div>
+    </div>
+    <div class="modal-actions">
+      ${isEdit ? '<button class="small-btn danger" data-act="del">Löschen</button>' : ""}
+      <button class="small-btn" data-act="cancel">Abbrechen</button>
+      <button class="small-btn primary" data-act="save">Speichern</button>
+    </div>`;
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+
+  const selBox = modal.querySelector("#rf-selected");
+  const knownBox = modal.querySelector("#rf-known");
+  const trailInput = modal.querySelector("#rf-trail");
+  const renderChips = () => {
+    selBox.innerHTML = trails.map((t, i) => `<span class="trail-chip on" data-i="${i}">${esc(t)} ✕</span>`).join("");
+    const avail = knownTrails().filter(t => !trails.some(x => x.toLowerCase() === t.toLowerCase()));
+    knownBox.innerHTML = avail.map(t => `<span class="trail-chip" data-add="${esc(t)}">${esc(t)}</span>`).join("");
+    selBox.querySelectorAll(".trail-chip").forEach(c => c.addEventListener("click", () => { trails.splice(parseInt(c.dataset.i, 10), 1); renderChips(); }));
+    knownBox.querySelectorAll(".trail-chip").forEach(c => c.addEventListener("click", () => { trails.push(c.dataset.add); renderChips(); }));
+  };
+  renderChips();
+  const addTrail = () => {
+    const v = trailInput.value.trim();
+    if (v && !trails.some(x => x.toLowerCase() === v.toLowerCase())) trails.push(v);
+    trailInput.value = ""; renderChips();
+  };
+  trailInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addTrail(); } });
+
+  const close = () => backdrop.remove();
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  modal.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  const delBtn = modal.querySelector('[data-act="del"]');
+  if (delBtn) delBtn.addEventListener("click", () => {
+    data.sport.rides = data.sport.rides.filter(x => x.id !== ride.id);
+    save(); close(); renderRides(); if (calOpen) renderCalendar();
+  });
+  modal.querySelector('[data-act="save"]').addEventListener("click", () => {
+    if (trailInput.value.trim()) addTrail();
+    const sec = parseDurInput(modal.querySelector("#rf-dur").value);
+    const date = modal.querySelector("#rf-date").value || todayStr();
+    if (sec <= 0) { alert("Bitte eine Dauer eintragen."); return; }
+    if (isEdit) {
+      ride.date = date; ride.durSec = sec; ride.trails = trails;
+    } else {
+      data.sport.rides.push({ id: Date.now(), date, durSec: sec, trails });
+    }
+    save(); close(); renderRides(); if (calOpen) renderCalendar();
+  });
 }
 
 /* ---------- Skills (Handstand) ---------- */
@@ -1581,16 +1992,18 @@ document.getElementById("btn-import").addEventListener("click", () => {
     if (!data.sport.skills) data.sport.skills = {};
     if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
     if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
+    if (!Array.isArray(data.sport.runs)) data.sport.runs = [];
+    if (!Array.isArray(data.sport.rides)) data.sport.rides = [];
     data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
     save();
-    renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderUsage();
+    renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderHabits(); renderUsage();
     alert("Daten erfolgreich importiert!");
   } catch {
     alert("Das hat leider nicht geklappt – der Text war kein gültiger Export.");
   }
 });
 
-renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderUsage();
+renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderHabits(); renderUsage();
 
 /* ---------- Service Worker (macht die App installierbar & offline-fähig) ---------- */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
