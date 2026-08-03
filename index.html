@@ -123,6 +123,7 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
 .row .grow { flex: 1; min-width: 0; }
 .row .t { font-size: 16px; font-weight: 600; overflow-wrap: break-word; }
 .row .s { font-size: 13px; color: var(--muted); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+.row .s .prev { display: block; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row.done .t { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--faint); }
 
 .ring-check {
@@ -1201,14 +1202,10 @@ const MEDIA = {
   book: {
     label: "Bücher", one: "Buch", many: "Bücher", verb: "gelesen",
     placeholder: "Buchtitel und Autor, z.B. Momo – Michael Ende",
-    thing: "des genannten Buchs",
-    tipsTitle: "Buchvorschläge", tipsBtn: "✨ Buch-Tipps für dich",
+    tipsTitle: "Buchvorschläge",
     known: "Diese Bücher kenne ich",
     tipsIntro: "Diese Bücher habe ich gelesen und mochte sie",
     tipsAsk: "Empfiehl mir 5 Bücher, die dazu passen und die ich noch nicht gelesen habe. Gib pro Buch genau eine Zeile im Format: Titel | Autor | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
-    summarize: "Zusammenfassen", redo: "Neue Zusammenfassung",
-    emptyHint: "Noch keine Zusammenfassung", loadingHint: "Claude fasst zusammen…",
-    emptyModal: "Noch keine Zusammenfassung. Drücke „Zusammenfassen“.",
     defaultIcon: "📚",
     cats: ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"],
     icons: { "Fantasy": "🐉", "Roman": "📖", "Krimi & Thriller": "🕵️", "Sachbuch": "💡", "Finanzen": "💰", "Selbstentwicklung": "🌱", "Wissenschaft": "🔬", "Biografie": "👤", "Sonstiges": "📚" }
@@ -1216,14 +1213,10 @@ const MEDIA = {
   screen: {
     label: "Filme & Serien", one: "Titel", many: "Titel", verb: "gesehen",
     placeholder: "Film oder Serie, z.B. Interstellar",
-    thing: "des genannten Films bzw. der genannten Serie",
-    tipsTitle: "Film- & Serien-Tipps", tipsBtn: "✨ Film-Tipps für dich",
+    tipsTitle: "Film- & Serien-Tipps",
     known: "Diese Filme und Serien kenne ich",
     tipsIntro: "Diese Filme und Serien habe ich gesehen und mochte sie",
     tipsAsk: "Empfiehl mir 5 Filme oder Serien, die dazu passen und die ich noch nicht gesehen habe. Gib pro Titel genau eine Zeile im Format: Titel | Jahr oder Regie | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
-    summarize: "Worum geht's?", redo: "Neu beschreiben",
-    emptyHint: "Noch keine Beschreibung", loadingHint: "Claude beschreibt…",
-    emptyModal: "Noch keine Beschreibung. Drücke „Worum geht's?“.",
     defaultIcon: "🎬",
     cats: ["Action", "Drama", "Komödie", "Sci-Fi & Fantasy", "Thriller & Horror", "Doku", "Anime", "Serie", "Sonstiges"],
     icons: { "Action": "💥", "Drama": "🎭", "Komödie": "😂", "Sci-Fi & Fantasy": "🚀", "Thriller & Horror": "🔪", "Doku": "🎥", "Anime": "🌸", "Serie": "📺", "Sonstiges": "🎬" }
@@ -1231,14 +1224,10 @@ const MEDIA = {
   game: {
     label: "Spiele", one: "Spiel", many: "Spiele", verb: "gespielt",
     placeholder: "Videospiel, z.B. The Legend of Zelda: BotW",
-    thing: "des genannten Videospiels",
-    tipsTitle: "Spiele-Tipps", tipsBtn: "✨ Spiel-Tipps für dich",
+    tipsTitle: "Spiele-Tipps",
     known: "Diese Spiele kenne ich",
     tipsIntro: "Diese Spiele habe ich gespielt und mochte sie",
     tipsAsk: "Empfiehl mir 5 Videospiele, die dazu passen und die ich noch nicht gespielt habe. Gib pro Spiel genau eine Zeile im Format: Titel | Plattform oder Studio | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
-    summarize: "Worum geht's?", redo: "Neu beschreiben",
-    emptyHint: "Noch keine Beschreibung", loadingHint: "Claude beschreibt…",
-    emptyModal: "Noch keine Beschreibung. Drücke „Worum geht's?“.",
     defaultIcon: "🎮",
     cats: ["Fantasy", "Sci-Fi", "Action & Abenteuer", "Horror & Thriller", "Mystery & Krimi", "Drama & Story", "Open World", "Sonstiges"],
     icons: { "Fantasy": "🐉", "Sci-Fi": "🚀", "Action & Abenteuer": "🗺️", "Horror & Thriller": "🔪", "Mystery & Krimi": "🕵️", "Drama & Story": "🎭", "Open World": "🌍", "Sonstiges": "🎮" }
@@ -1320,16 +1309,15 @@ function renderMedia() {
 
   const inCat = items.filter(x => catOf(x) === booksView).sort((a, b) => tierRank(a.tier) - tierRank(b.tier));
   inCat.forEach((b, i) => {
-    const cfg2 = MEDIA[b.media] || MEDIA.book;
     const row = document.createElement("div");
     row.className = "row";
     row.style.cursor = "pointer";
     row.style.animationDelay = (i * .03) + "s";
-    const status = b.loading ? cfg2.loadingHint : (b.answer ? "" : cfg2.emptyHint);
+    const preview = (b.answer || "").split("\n")[0].trim();
     row.innerHTML = `
       <div class="grow">
         <div class="t">${esc(b.question)}</div>
-        ${status ? '<div class="s"><span>' + esc(status) + "</span></div>" : ""}
+        ${preview ? '<div class="s"><span class="prev">' + esc(preview) + "</span></div>" : ""}
       </div>${tierBadge(b.tier)}<span style="color:var(--faint)">›</span>`;
     row.addEventListener("click", () => openMediaDetail(b));
     enableSwipe(row, {
@@ -1427,32 +1415,25 @@ function makeTierChip(b, sheet, rebuild) {
   return chip;
 }
 
-async function summarizeMedia(b) {
+// Nur die Genre-Einsortierung läuft noch über Claude (winziger Aufruf).
+// Ohne API-Schlüssel oder bei Fehlern bleibt der Eintrag einfach unter "Sonstiges".
+async function categorizeMedia(b) {
   const cfg = MEDIA[b.media] || MEDIA.book;
-  b.loading = true;
-  renderMedia();
+  if (!getApiKey()) return;
   try {
     const r = await callClaude({
-      system: "Antworte auf Deutsch in genau diesem Format: Erste Zeile 'KATEGORIE: X', wobei X genau eine dieser Kategorien ist: " + cfg.cats.join(", ") + ". Danach eine Zusammenfassung " + cfg.thing + " in maximal 4 kurzen Sätzen: Worum geht es, was macht es aus? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
+      system: "Ordne den genannten Titel (" + cfg.label + ") genau einer dieser Kategorien zu: " + cfg.cats.join(", ") + ". Antworte NUR mit dem Kategorienamen, sonst nichts.",
       userText: b.question,
-      maxTokens: 300
+      maxTokens: 20
     });
     if (r) {
-      let text = r.text;
-      const m = text.match(/^KATEGORIE:\s*(.+)$/m);
-      if (m) {
-        const cat = m[1].trim();
-        if (cfg.cats.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
-        text = text.replace(/^KATEGORIE:.*\n?/m, "").trim();
-      }
-      b.answer = text;
+      const cat = r.text.trim();
+      if (cfg.cats.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
       b.cost = (b.cost || 0) + r.cost;
+      save(); renderMedia();
     }
-  } catch (err) {
-    alert("Das hat nicht geklappt: " + err.message);
-  } finally {
-    b.loading = false;
-    save(); renderMedia();
+  } catch {
+    // still bleiben – Einsortieren ist nur Komfort
   }
 }
 
@@ -1470,6 +1451,8 @@ function openMediaSheet() {
     </select>
     <label>Meine Wertung (optional)</label>
     <div class="tier-row" id="sh-add-tier">${tierBtns}</div>
+    <label>Meine Notizen (optional)</label>
+    <textarea id="sh-add-notes" placeholder="Was du dazu festhalten willst …"></textarea>
     <div class="sheet-actions">
       <button class="quiet" data-act="cancel">Abbrechen</button>
       <button class="primary" data-act="save">Hinzufügen</button>
@@ -1490,31 +1473,35 @@ function openMediaSheet() {
     const title = sheet.querySelector("#sh-media-title").value.trim();
     if (!title) return;
     const sel = sheet.querySelector("#sh-media-cat").value;
-    const b = { id: uid(), media: mediaView, question: title, cat: sel === "Auto" ? "" : sel, autoCat: sel === "Auto", answer: "", cost: 0, tier: chosenTier };
+    const b = {
+      id: uid(), media: mediaView, question: title,
+      cat: sel === "Auto" ? "" : sel, autoCat: sel === "Auto",
+      answer: sheet.querySelector("#sh-add-notes").value.trim(),
+      cost: 0, tier: chosenTier
+    };
     data.books.push(b);
     booksView = null;
     save(); close(); renderMedia();
-    summarizeMedia(b);
+    if (b.autoCat) categorizeMedia(b);
   });
   setTimeout(() => sheet.querySelector("#sh-media-title").focus(), 350);
 }
 
 function openMediaDetail(b) {
-  const cfg = MEDIA[b.media] || MEDIA.book;
   const tierBtns = TIERS.map(t =>
     `<button data-tier="${t}" class="${b.tier === t ? "on" : ""}" style="${b.tier === t ? "background:" + TIER_COLOR[t] : ""}">${t}</button>`).join("");
   const { sheet, close } = openSheet(`
     <h3>${esc(b.question)}</h3>
-    <div class="sub">${esc(catOf(b))}${b.cost ? " · KI-Kosten: " + fmtCost(b.cost) : ""}</div>
+    <div class="sub">${esc(catOf(b))}</div>
     <label>Meine Wertung</label>
     <div class="tier-row" id="sh-tier">${tierBtns}</div>
     <div class="hint" style="margin-top:8px">S = Highlight · D = gefällt mir nicht · nochmal tippen = entfernen</div>
-    <label>${b.media === "book" ? "Zusammenfassung" : "Beschreibung"}</label>
-    <div class="answer ${b.answer ? "" : "blank"}" id="sh-answer">${b.answer ? esc(b.answer) : esc(cfg.emptyModal)}</div>
+    <label>Meine Notizen</label>
+    <textarea id="sh-notes" placeholder="Was du dazu festhalten willst …">${esc(b.answer || "")}</textarea>
+    <div class="hint" style="margin-top:8px">Wird automatisch gespeichert.</div>
     <div class="sheet-actions">
-      <button class="primary" data-act="ask">${b.answer ? cfg.redo : cfg.summarize}</button>
-      <button class="quiet" data-act="edit">Edit</button>
       <button class="danger" data-act="del">🗑</button>
+      <button class="primary" data-act="done">Fertig</button>
     </div>`, { accent: "var(--media)" });
 
   sheet.querySelectorAll("#sh-tier button").forEach(bt => bt.addEventListener("click", () => {
@@ -1529,19 +1516,15 @@ function openMediaDetail(b) {
     renderMedia();
   }));
 
-  sheet.querySelector('[data-act="ask"]').addEventListener("click", async ev => {
-    ev.target.disabled = true; ev.target.textContent = "Claude denkt nach…";
-    await summarizeMedia(b);
-    close(); openMediaDetail(b);
+  // Notizen: direkt tippen, automatisch speichern
+  sheet.querySelector("#sh-notes").addEventListener("input", e => {
+    b.answer = e.target.value;
+    save();
   });
-  sheet.querySelector('[data-act="edit"]').addEventListener("click", ev => {
-    const div = sheet.querySelector("#sh-answer");
-    const ta = document.createElement("textarea");
-    ta.value = b.answer || "";
-    div.replaceWith(ta);
-    ev.target.textContent = "Save";
-    ev.target.onclick = () => { b.answer = ta.value.trim(); save(); renderMedia(); close(); openMediaDetail(b); };
-    ta.focus();
+
+  sheet.querySelector('[data-act="done"]').addEventListener("click", () => {
+    b.answer = (b.answer || "").trim();
+    save(); renderMedia(); close();
   });
   sheet.querySelector('[data-act="del"]').addEventListener("click", () => {
     if (!confirm("„" + b.question + "“ löschen?")) return;
