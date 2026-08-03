@@ -2,764 +2,666 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#000000">
-<title>Mein Tag</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#131210">
+<title>Tagwerk</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Mein Tag">
+<meta name="apple-mobile-web-app-title" content="Tagwerk">
 <style>
-  :root {
-    --bg: #0e1013;
-    --surface: #181b21;
-    --surface2: #22262e;
-    --border: #2c313a;
-    --text: #eef1f5;
-    --muted: #8990a0;
-    --blue: #5b9dff;
-    --green: #46cf7d;
-    --red: #ff6b62;
-    --gold: #ffd166;
-    --purple: #9b7bff;
-    --purple-ink: #ffffff;
-    --orange: #f2b736;
-    --run: #2dd4bf;
-    --skill: #f472b6;
-    --bike: #818cf8;
-    --shadow: 0 6px 20px rgba(0,0,0,.35);
-  }
-  body.light {
-    --bg: #f3f5f8;
-    --surface: #ffffff;
-    --surface2: #eef1f5;
-    --border: #e3e6ec;
-    --text: #191c22;
-    --muted: #6b7280;
-    --blue: #2f7fe0;
-    --green: #1f9e57;
-    --red: #e0453c;
-    --gold: #9a7415;
-    --purple: #7a52e0;
-    --purple-ink: #ffffff;
-    --orange: #b07d10;
-    --run: #0d9488;
-    --skill: #c026a3;
-    --bike: #4f46e5;
-    --shadow: 0 6px 20px rgba(20,24,40,.10);
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-    min-height: 100vh;
-    color-scheme: dark;
-  }
-  body.light { color-scheme: light; }
-  .app { max-width: 640px; margin: 0 auto; padding: 14px 18px 130px; }
+/* ============================================================
+   MEIN TAG — Paper & Ink
+   Warmes Tinten-Dunkel / Papier-Hell, Serifen-Akzente,
+   Bottom-Sheets, Tages-Dashboard.
+   ============================================================ */
+:root {
+  --bg: #131210;
+  --surface: #1c1a17;
+  --surface2: #262320;
+  --border: #34302a;
+  --hairline: #2b2823;
+  --text: #f1eee6;
+  --muted: #98917f;
+  --faint: #6b6558;
 
-  /* Kopfbereich mit Begrüßung */
-  .app-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 6px 2px 20px; }
-  .app-header .hello { font-size: 25px; font-weight: 800; letter-spacing: -.6px; }
-  .app-header .today { font-size: 14px; color: var(--muted); margin-top: 3px; }
+  --todo: #8fc178;      /* Moos */
+  --habit: #7aa5f0;     /* Kobalt */
+  --avoid: #e8796a;     /* Ziegel */
+  --sport: #e0a458;     /* Bernstein */
+  --run: #52bfae;       /* Jade */
+  --skill: #de8fbb;     /* Magenta */
+  --media: #b394dd;     /* Flieder */
 
-  /* Feste Tab-Leiste unten (iOS-Stil mit Icons) */
-  nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 80;
-    display: flex;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
-    border-top: 1px solid var(--border);
-    padding: 8px 6px calc(6px + env(safe-area-inset-bottom));
-  }
-  nav button {
-    flex: 1 1 0; min-width: 0;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    background: transparent; border: none; color: var(--muted);
-    padding: 5px 2px; border-radius: 12px; cursor: pointer;
-    font-size: 10.5px; font-weight: 600; letter-spacing: -.1px;
-    transition: color .2s, transform .12s;
-  }
-  nav button svg { width: 23px; height: 23px; stroke-width: 1.9; transition: transform .2s; }
-  nav button.active svg { transform: translateY(-1px) scale(1.06); }
+  --ink-on-accent: #16130d;
+  --shadow: 0 10px 30px rgba(0,0,0,.4);
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+body.light {
+  --bg: #f5f3ed;
+  --surface: #fdfcf8;
+  --surface2: #edeae1;
+  --border: #ddd7c9;
+  --hairline: #e6e1d5;
+  --text: #23211b;
+  --muted: #7d7666;
+  --faint: #a9a291;
 
-  /* Schwebender Plus-Knopf */
-  .fab {
-    position: fixed; right: 18px; bottom: calc(74px + env(safe-area-inset-bottom));
-    width: 54px; height: 54px; border-radius: 50%; z-index: 80;
-    background: var(--text); border: none;
-    color: var(--bg); font-size: 28px; line-height: 1; cursor: pointer;
-    box-shadow: var(--shadow);
-    display: flex; align-items: center; justify-content: center;
-  }
+  --todo: #4c8040;
+  --habit: #3061c9;
+  --avoid: #bc4433;
+  --sport: #a8721f;
+  --run: #178272;
+  --skill: #b04f8b;
+  --media: #7752b3;
 
-  /* Fester Book-Tips-Knopf (nur im Bücher-Tab) */
-  .tips-fab {
-    position: fixed; left: 16px; bottom: calc(78px + env(safe-area-inset-bottom));
-    z-index: 80; padding: 12px 18px; border-radius: 24px;
-    background: var(--purple); border: none; color: var(--purple-ink);
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,0,0,.5);
-  }
+  --ink-on-accent: #fffdf6;
+  --shadow: 0 10px 26px rgba(60,50,30,.12);
+}
 
-  /* Toggle-Zeile in den Settings */
-  .toggle-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px; font-size: 15px;
-  }
-  .toggle-row input { width: 20px; height: 20px; accent-color: var(--blue); }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { color-scheme: dark; }
+body.light { color-scheme: light; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 16px; line-height: 1.45;
+  min-height: 100dvh;
+  padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  transition: background .3s, color .3s;
+}
 
-  /* Gesamt-Zähler gelesener Bücher */
-  .book-total {
-    font-size: 14px; color: var(--muted); margin-bottom: 14px;
-  }
-  .book-total b { color: var(--purple); font-weight: 700; }
+/* ---------- Kopf ---------- */
+header.top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: max(22px, env(safe-area-inset-top)) 20px 4px;
+}
+.overline { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1.date {
+  font-family: var(--serif); font-weight: 600; font-size: 34px; line-height: 1.12;
+  letter-spacing: -.01em; margin-top: 2px;
+}
+h1.date em { font-style: normal; color: var(--muted); font-weight: 400; }
+.gear {
+  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+  display: grid; place-items: center; cursor: pointer;
+}
+.gear svg { width: 19px; height: 19px; }
 
-  /* Zahnrad im Kopfbereich */
-  .gear {
-    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--muted); font-size: 18px; cursor: pointer;
-  }
-  .gear:hover { color: var(--text); }
+main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
 
-  /* Settings als eigene Seite */
-  .settings-page {
-    position: fixed; inset: 0; z-index: 95;
-    background: var(--bg); overflow-y: auto;
-    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
-  }
-  .settings-page .settings-inner { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-  .settings-page h2 { font-size: 22px; }
-  .settings-page h3 { font-size: 14px; color: var(--muted); margin-top: 16px; text-transform: uppercase; letter-spacing: .5px; }
-  nav button.active[data-tab="todo"]   { color: var(--green); }
-  nav button.active[data-tab="habits"] { color: var(--blue); }
-  nav button.active[data-tab="books"]  { color: var(--purple); }
-  nav button.active[data-tab="sport"]  { color: var(--orange); }
+.view { display: none; }
+.view.visible { display: block; animation: viewIn .3s ease; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  .tab { display: none; }
-  .tab.visible { display: block; }
+/* ---------- Abschnitts-Titel ---------- */
+.sect { display: flex; align-items: baseline; gap: 10px; margin: 26px 2px 12px; }
+.sect:first-child { margin-top: 10px; }
+.sect .tick { width: 7px; height: 7px; border-radius: 2px; transform: translateY(-1px); }
+.sect h2 { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); flex: 1; }
+.sect .sect-act {
+  border: none; background: none; color: var(--muted); font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: var(--sans);
+}
 
-  .add-form {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px; margin-bottom: 20px;
-    display: none; flex-direction: column; gap: 14px;
-  }
-  .add-form.open { display: flex; }
-  .add-form input, .add-form select {
-    width: 100%; display: block; min-height: 48px;
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 12px 14px;
-    font-size: 16px; font-family: inherit;
-  }
-  .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--muted); }
-  .add-form label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+/* ---------- Karten & Zeilen ---------- */
+.card {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 18px; padding: 16px; margin-bottom: 10px;
+}
+.row {
+  display: flex; align-items: center; gap: 13px;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 16px; padding: 13px 15px; margin-bottom: 8px;
+  position: relative; touch-action: pan-y;
+  animation: rowIn .3s ease backwards;
+}
+@keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.row .grow { flex: 1; min-width: 0; }
+.row .t { font-size: 16px; font-weight: 600; overflow-wrap: break-word; }
+.row .s { font-size: 13px; color: var(--muted); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+.row.done .t { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--faint); }
 
-  /* Deadline: zwei Tap-Flächen (Datum + Uhrzeit); der native Picker liegt transparent darüber */
-  .deadline-row { display: flex; gap: 10px; }
-  .dl-wrap { position: relative; flex: 1; }
-  .dl-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--muted); border-radius: 8px; padding: 12px 10px; min-height: 48px;
-    font-size: 15px; font-weight: 600;
-  }
-  .dl-wrap.set .dl-btn { border-color: var(--green); color: var(--green); }
-  .dl-icon { font-size: 18px; }
-  .dl-input {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    opacity: 0; margin: 0; padding: 0; border: 0;
-    cursor: pointer; -webkit-appearance: none; appearance: none;
-  }
-  .cat-head {
-    font-size: 13px; font-weight: 700; color: var(--purple);
-    text-transform: uppercase; letter-spacing: .5px;
-    margin: 4px 0 8px;
-  }
+.ring-check {
+  width: 27px; height: 27px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border); background: transparent; color: var(--ink-on-accent);
+  font-size: 15px; font-weight: 800; line-height: 1; cursor: pointer;
+  display: grid; place-items: center; transition: background .18s, border-color .18s, transform .18s;
+}
+.ring-check.on { animation: pop .3s ease; }
+@keyframes pop { 45% { transform: scale(1.22); } }
 
-  /* Kategorie-Ordner */
-  .folder-grid { display: flex; flex-direction: column; gap: 10px; }
-  .folder {
-    width: 100%;
-    background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--purple);
-    border-radius: 12px; padding: 14px; cursor: pointer;
-    display: flex; flex-direction: row; align-items: center; gap: 14px; text-align: left;
-    color: var(--text);
-  }
-  .folder:hover { border-color: var(--purple); }
-  .folder-icon { font-size: 26px; flex-shrink: 0; }
-  .folder-name { font-size: 15px; font-weight: 700; color: var(--purple); flex: 1; }
-  .folder-count { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.overdue { color: var(--avoid); font-weight: 700; }
+.chip-badge {
+  font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px;
+  background: var(--surface2); color: var(--muted);
+}
 
-  /* Aufgeräumte Buchvorschläge im Overlay */
-  .tip-card {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-left: 3px solid var(--purple);
-    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
-  }
-  .tip-card .tip-title { font-size: 15px; font-weight: 700; }
-  .tip-card .tip-author { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .tip-card .tip-reason { font-size: 13px; margin-top: 6px; line-height: 1.45; }
-  .back-btn {
-    background: transparent; border: none; color: var(--purple);
-    font-size: 15px; font-weight: 600; cursor: pointer; padding: 4px 0;
-    margin-bottom: 8px; text-align: left;
-  }
-  .add-form button[type="submit"] {
-    border: none; border-radius: 8px; padding: 10px 18px;
-    font-size: 14px; font-weight: 700; cursor: pointer; color: #000;
-    align-self: flex-start;
-  }
-  #tab-todo .add-form button[type="submit"]  { background: var(--green); }
-  #habits-daily .add-form button[type="submit"] { background: var(--blue); }
-  #habits-avoid .add-form button[type="submit"] { background: var(--red); }
+.empty-state {
+  text-align: center; color: var(--faint); font-size: 14.5px; line-height: 1.6;
+  padding: 34px 20px; border: 1px dashed var(--border); border-radius: 18px; margin-bottom: 10px;
+}
+.hint { font-size: 12.5px; color: var(--faint); margin: 2px 4px 12px; }
 
-  ul.items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-  li.item {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 15px; padding: 15px 16px; display: flex;
-    align-items: flex-start; gap: 12px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.14);
-  }
-  #tab-todo  li.item { border-left: 3px solid var(--green); }
-  #habits-daily li.item { border-left: 3px solid var(--blue); }
-  #habits-avoid li.item { border-left: 3px solid var(--red); }
-  #tab-books li.item { border-left: 3px solid var(--purple); flex-direction: column; }
-  #tab-books .know-q { color: var(--purple); }
-  #tab-books .add-form button[type="submit"] { background: var(--purple); color: var(--purple-ink); }
-  #tab-books .ask-btn { background: var(--purple); color: var(--purple-ink); }
+/* ---------- Segmente ---------- */
+.seg { display: flex; gap: 4px; background: var(--surface2); border-radius: 12px; padding: 4px; margin: 6px 0 16px; }
+.seg button {
+  flex: 1; border: none; background: transparent; color: var(--muted);
+  padding: 9px 2px; border-radius: 9px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  font-family: var(--sans); transition: background .2s, color .2s;
+}
+.seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.seg button.on::after {
+  content: ""; display: block; width: 16px; height: 3px; border-radius: 2px;
+  margin: 3px auto 0; background: var(--seg-accent, var(--text));
+}
 
-  /* Sterne-Bewertung */
-  .stars { display: inline-flex; gap: 3px; line-height: 1; }
-  .stars .star { color: var(--border); font-size: 16px; }
-  .stars .star.on { color: #ffc83d; }
-  .stars.interactive .star { cursor: pointer; font-size: 30px; padding: 2px; }
-  .item-stars { margin-top: 5px; }
-  .rate-row { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; flex-wrap: wrap; }
-  .rate-label { font-size: 13px; color: var(--muted); }
+/* ---------- Heute: Ring ---------- */
+.today-hero { display: flex; align-items: center; gap: 20px; padding: 20px 18px; }
+.ringwrap { position: relative; width: 108px; height: 108px; flex-shrink: 0; }
+.ringwrap svg { width: 108px; height: 108px; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--surface2); stroke-width: 9; }
+.ring-fg {
+  fill: none; stroke: var(--todo); stroke-width: 9; stroke-linecap: round;
+  transition: stroke-dashoffset .7s cubic-bezier(.3,.9,.3,1), stroke .3s;
+}
+.ring-label {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--serif); font-size: 27px; font-weight: 600;
+}
+.ring-label small { display: block; font-family: var(--sans); font-size: 11px; color: var(--muted); text-align: center; font-weight: 600; }
+.today-hero .msg { flex: 1; }
+.today-hero .msg .m1 { font-family: var(--serif); font-size: 20px; font-weight: 600; line-height: 1.25; }
+.today-hero .msg .m2 { font-size: 13.5px; color: var(--muted); margin-top: 5px; }
 
-  .item .body { flex: 1; }
-  .item .title { font-size: 15px; font-weight: 600; }
-  .item .meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
-  .item.done .title { text-decoration: line-through; color: var(--muted); }
-  .item .meta .overdue { color: var(--red); font-weight: 700; }
+.shield-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+.shield-strip::-webkit-scrollbar { display: none; }
+.shield {
+  flex-shrink: 0; display: flex; align-items: baseline; gap: 7px;
+  border: 1px solid var(--hairline); background: var(--surface);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer;
+}
+.shield b { font-family: var(--serif); font-size: 17px; color: var(--avoid); }
+.shield span { font-size: 13px; color: var(--muted); max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .check {
-    width: 24px; height: 24px; border-radius: 50%;
-    border: 2px solid var(--muted); background: transparent;
-    cursor: pointer; flex-shrink: 0; margin-top: 2px;
-    font-size: 13px; line-height: 1; color: #000;
-  }
-  #tab-todo .item.done .check   { background: var(--green); border-color: var(--green); }
-  #habits-daily .item.today .check { background: var(--blue); border-color: var(--blue); }
+.mini-ex { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.mini-ex .me {
+  font-size: 12.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  background: var(--surface2); color: var(--muted);
+}
+.mini-ex .me.on { background: color-mix(in srgb, var(--sport) 22%, transparent); color: var(--sport); }
+.linklike { border: none; background: none; color: var(--muted); font-size: 13.5px; font-weight: 600; cursor: pointer; padding: 8px 2px; font-family: var(--sans); }
+.linklike b { color: var(--text); }
 
-  .streak { font-size: 13px; font-weight: 700; }
-  #habits-daily .streak { color: var(--blue); }
-  #habits-avoid .streak { color: var(--red); }
+/* ---------- Medien: Ordner-Kacheln ---------- */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile {
+  border: 1px solid var(--hairline); background: var(--surface); border-radius: 18px;
+  padding: 16px 14px; text-align: left; cursor: pointer; font-family: var(--sans);
+  animation: rowIn .3s ease backwards;
+}
+.tile .ic { font-size: 26px; }
+.tile .n { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 8px; }
+.tile .c { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.media-total { font-family: var(--serif); font-size: 17px; margin: 4px 2px 14px; color: var(--muted); }
+.media-total b { color: var(--media); font-weight: 600; }
+.tips-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--hairline); background: var(--surface); color: var(--media);
+  border-radius: 14px; padding: 13px; font-size: 14.5px; font-weight: 700; cursor: pointer;
+  font-family: var(--sans); margin-bottom: 14px;
+}
+.back-row { border: none; background: none; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; padding: 2px 2px 12px; font-family: var(--sans); }
+.cat-title { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 0 2px 12px; }
 
-  .small-btn {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--muted); border-radius: 8px; padding: 6px 10px;
-    font-size: 12px; cursor: pointer; flex-shrink: 0;
-  }
-  .small-btn:hover { color: var(--text); }
-  .small-btn.danger:hover { color: var(--red); border-color: var(--red); }
-  .small-btn.primary { background: var(--run); border-color: var(--run); color: #04241f; font-weight: 800; }
-  .small-btn.danger { color: var(--red); }
+/* Tier-Wertung (S–D) */
+.tier-badge {
+  min-width: 26px; height: 26px; padding: 0 7px; border-radius: 8px; flex-shrink: 0;
+  display: inline-grid; place-items: center;
+  font-size: 14px; font-weight: 800; color: #16130d; font-family: var(--sans);
+}
+.tier-row { display: flex; gap: 8px; }
+.tier-row button {
+  flex: 1; height: 48px; border-radius: 12px; border: 1px solid var(--hairline);
+  background: var(--surface2); color: var(--muted);
+  font-size: 17px; font-weight: 800; cursor: pointer; font-family: var(--sans);
+  transition: background .15s, color .15s;
+}
+.tier-row button.on { color: #16130d; border-color: transparent; }
+.tl-row { display: flex; gap: 12px; align-items: flex-start; padding: 11px 6px; border-bottom: 1px solid var(--hairline); border-radius: 12px; }
+.tl-row:last-of-type { border-bottom: none; }
+.tl-items { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; min-height: 27px; }
+.tl-item {
+  font-size: 13.5px; background: var(--surface2); border-radius: 8px; padding: 5px 11px;
+  cursor: grab; user-select: none; -webkit-user-select: none;
+}
+.tl-empty { color: var(--faint); font-size: 13.5px; font-style: italic; padding-top: 4px; }
+.tl-pool {
+  display: flex; flex-wrap: wrap; gap: 6px; min-height: 42px; padding: 9px;
+  border: 1px dashed var(--border); border-radius: 12px;
+}
+.tl-over { background: color-mix(in srgb, var(--media) 14%, transparent); }
+.tl-dragging { opacity: .35; }
+.tl-ghost {
+  position: fixed; z-index: 300; pointer-events: none;
+  transform: translate(-50%, -130%) rotate(2deg); box-shadow: var(--shadow);
+}
 
-  /* Lauf-Formular im Modal */
-  .run-form { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
-  .run-form label { font-size: 12px; color: var(--muted); margin-top: 10px; }
-  .run-form input {
-    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 10px; padding: 12px; font-size: 16px; color-scheme: dark;
-  }
-  body.light .run-form input { color-scheme: light; }
-  .run-form input:focus { outline: none; border-color: var(--run); }
-  .rf-pace { margin-top: 12px; font-size: 15px; font-weight: 800; color: var(--run); min-height: 20px; }
+/* Einklappbare Skills */
+.skill-head { cursor: pointer; }
+.skill-head .skill-chev { color: var(--faint); font-size: 18px; line-height: 1; transition: transform .25s; }
+.skill-head.open .skill-chev { transform: rotate(90deg); }
 
-  .know-q { font-size: 15px; font-weight: 600; color: var(--gold); }
-  .know-a { font-size: 14px; line-height: 1.55; margin-top: 8px; white-space: pre-wrap; }
-  .know-a.empty { color: var(--muted); font-style: italic; }
-  .know-head { display: flex; align-items: flex-start; gap: 12px; width: 100%; }
-  .know-head .body { flex: 1; }
-  .know-edit {
-    width: 100%; margin-top: 8px; background: var(--surface2);
-    border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px; padding: 10px; font-size: 14px;
-    font-family: inherit; min-height: 80px; resize: vertical;
-  }
-  .empty-state { color: var(--muted); font-size: 14px; text-align: center; padding: 30px 0; }
-  .hint { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+/* ---------- Sport ---------- */
+.ex-row .val {
+  width: 74px; text-align: center; font-family: var(--serif); font-size: 19px; font-weight: 600;
+  background: var(--surface2); border: 1px solid transparent; color: var(--text);
+  border-radius: 11px; padding: 8px 4px; outline: none;
+}
+.ex-row .val:focus { border-color: var(--sport); }
+.ex-row .unit { font-size: 12px; color: var(--faint); width: 32px; }
+.ex-row .ring-check { pointer-events: none; }
+.ex-row.done-ex .ring-check { background: var(--sport); border-color: var(--sport); }
 
-  .tips-box {
-    background: var(--surface); border: 1px solid var(--purple);
-    border-radius: 12px; padding: 14px; margin-top: 16px;
-    font-size: 14px; line-height: 1.6;
-  }
-  .tips-box .tips-text { white-space: pre-wrap; }
-  .tips-box h3 { color: var(--purple); font-size: 14px; margin-bottom: 8px; }
-  .tips-box .know-cost { margin-top: 8px; }
-  .modal.purple { border-color: var(--purple); }
-  .modal.purple h2 { color: var(--purple); }
-  .modal.purple .ask-btn { background: var(--purple); color: var(--purple-ink); }
-  .modal.orange { border-color: var(--orange); }
-  .modal.orange h2 { color: var(--orange); }
-  .modal.orange .ask-btn { background: var(--orange); color: #000; }
-  .modal.orange .ask-btn { background: var(--orange); color: #000; }
+.stat-grid { display: flex; gap: 9px; margin-bottom: 12px; }
+.stat {
+  flex: 1; background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px;
+  padding: 13px 8px; text-align: center;
+}
+.stat .v { font-family: var(--serif); font-size: 21px; font-weight: 600; }
+.stat .l { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
 
-  /* Sport */
-  #tab-sport .add-form button[type="submit"] { background: var(--orange); }
-  #tab-sport .ask-btn { background: var(--skill); color: #fff; }
-  .weekday-row { display: flex; gap: 6px; }
-  .wd {
-    flex: 1; padding: 12px 0; border-radius: 8px; min-height: 48px;
-    border: 1px solid var(--border); background: var(--surface2);
-    color: var(--muted); font-weight: 700; font-size: 13px; cursor: pointer;
-  }
-  .wd.on { background: var(--orange); color: #000; border-color: var(--orange); }
+.duo { display: flex; gap: 9px; margin-bottom: 12px; }
+.duo button {
+  flex: 1; border: none; border-radius: 14px; padding: 13px 6px;
+  font-size: 14.5px; font-weight: 700; cursor: pointer; font-family: var(--sans);
+}
+.duo .solid { background: var(--duo-accent, var(--sport)); color: var(--ink-on-accent); }
+.duo .ghost { background: var(--surface); border: 1px solid var(--hairline); color: var(--text); }
 
-  /* Umschalter Training / Skills */
-  .sport-seg { display: flex; gap: 6px; margin-bottom: 18px; background: var(--surface2); border-radius: 10px; padding: 4px; }
-  .sport-seg button {
-    flex: 1; border: none; background: transparent; color: var(--muted);
-    padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
-  }
-  .sport-seg button.on { background: var(--orange); color: #000; box-shadow: 0 0 16px rgba(242,183,54,.5); }
-  .sport-seg button.on[data-sview="runs"] { background: var(--run); color: #04241f; box-shadow: 0 0 16px rgba(45,212,191,.45); }
-  .sport-seg button.on[data-sview="skills"] { background: var(--skill); color: #fff; box-shadow: 0 0 16px rgba(244,114,182,.45); }
-  .sport-seg button.on[data-sview="bike"] { background: var(--bike); color: #fff; box-shadow: 0 0 16px rgba(129,140,248,.45); }
-  .sport-seg button { font-size: 13px; }
+/* Kalender */
+.cal-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  border: 1px solid var(--hairline); background: var(--surface); color: var(--text);
+  border-radius: 14px; padding: 13px 15px; font-size: 14.5px; font-weight: 700;
+  cursor: pointer; font-family: var(--sans); margin-bottom: 10px;
+}
+.cal-toggle .chev { color: var(--faint); transition: transform .25s; }
+.cal-toggle.open .chev { transform: rotate(90deg); }
+.cal { margin-bottom: 12px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 10px; }
+.cal-title { font-family: var(--serif); font-size: 18px; font-weight: 600; }
+.cal-nav {
+  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--hairline);
+  background: var(--surface); color: var(--muted); font-size: 17px; cursor: pointer;
+}
+.cal-dow { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; margin-bottom: 4px; }
+.cal-dow span { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--faint); text-transform: uppercase; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+.cal-cell {
+  height: 46px; min-width: 0;
+  border-radius: 10px; border: 1px solid var(--hairline); background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-size: 13px; font-weight: 600; color: var(--muted); font-family: var(--serif);
+}
+.cal-cell.train { border-color: color-mix(in srgb, var(--sport) 55%, transparent); }
+.cal-cell.today { color: var(--text); box-shadow: 0 0 0 2px var(--text) inset; }
+.cal-cell.active { cursor: pointer; color: var(--text); }
+.cal-cell.empty { visibility: hidden; }
+.cal-dots { display: flex; gap: 3px; height: 5px; }
+.cal-dots .dot { width: 5px; height: 5px; border-radius: 50%; }
+.dot.cali { background: var(--sport); } .dot.run { background: var(--run); }
 
-  /* Laufen */
-  .run-actions { display: flex; gap: 10px; margin-bottom: 16px; }
-  .run-btn {
-    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--run); border: none; color: #04241f; border-radius: 12px;
-    padding: 14px 8px; font-size: 15px; font-weight: 800; cursor: pointer; min-height: 50px;
-  }
-  .run-btn.ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .run-summary { display: flex; gap: 10px; margin-bottom: 16px; }
-  .run-stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
-  .run-stat .rs-val { font-size: 20px; font-weight: 800; color: var(--run); }
-  .run-stat .rs-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
-  #tab-sport #sport-runs li.item { border-left: 3px solid var(--run); }
-  .run-item .run-date { font-size: 13px; color: var(--muted); }
-  .run-item .run-main { font-size: 16px; font-weight: 800; margin-top: 2px; }
-  .run-item .run-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .run-item .run-pace { color: var(--run); font-weight: 700; }
+.step-row { cursor: pointer; }
+.step-row .ring-check { pointer-events: none; }
+.step-row.done .ring-check { background: var(--skill); border-color: var(--skill); }
+.step-row.done .t { color: var(--faint); text-decoration: line-through; }
 
-  /* Biken (nutzt run-Styles, andere Farbe) */
-  #sport-bike .run-btn { background: var(--bike); color: #fff; }
-  #sport-bike .run-btn.ghost { background: var(--surface2); color: var(--text); }
-  #sport-bike .run-stat .rs-val { color: var(--bike); }
-  #tab-sport #sport-bike li.item { border-left: 3px solid var(--bike); }
-  .bike-item .run-trails { font-size: 13px; color: var(--bike); font-weight: 700; margin-top: 2px; }
-  .trail-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-  .trail-chip { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
-  .trail-chip.on { background: var(--bike); color: #fff; border-color: var(--bike); }
+/* ---------- FAB & Tabbar ---------- */
+#fab {
+  position: fixed; right: 18px; bottom: calc(86px + env(safe-area-inset-bottom));
+  width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--text); color: var(--bg); font-size: 26px; line-height: 1;
+  box-shadow: var(--shadow); display: grid; place-items: center; z-index: 40;
+  transition: transform .2s, opacity .2s;
+}
+#fab:active { transform: scale(.92); }
+#fab.hide { opacity: 0; pointer-events: none; transform: scale(.6); }
 
-  /* Kalender: Aktivitäts-Punkte (Training=gold, Laufen=türkis, Biken=indigo) */
-  .cal-dots { display: flex; gap: 3px; height: 6px; margin-top: 2px; }
-  .cal-dots .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .cal-dots .dot.cali { background: var(--orange); }
-  .cal-dots .dot.run { background: var(--run); }
-  .cal-dots .dot.bike { background: var(--bike); }
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  display: flex; justify-content: space-around;
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  border-top: 1px solid var(--hairline);
+}
+nav.tabs button {
+  flex: 1; border: none; background: none; cursor: pointer; color: var(--faint);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 700; font-family: var(--sans); padding: 4px 0;
+  transition: color .2s;
+}
+nav.tabs button svg { width: 23px; height: 23px; stroke-width: 1.9; }
+nav.tabs button.on[data-tab="heute"]  { color: var(--text); }
+nav.tabs button.on[data-tab="todo"]   { color: var(--todo); }
+nav.tabs button.on[data-tab="habits"] { color: var(--habit); }
+nav.tabs button.on[data-tab="media"]  { color: var(--media); }
+nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 
-  /* Umschalter Dranbleiben / Vermeiden */
-  .hab-seg { display: flex; gap: 6px; margin-bottom: 18px; background: var(--surface2); border-radius: 10px; padding: 4px; }
-  .hab-seg button {
-    flex: 1; border: none; background: transparent; color: var(--muted);
-    padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
-    transition: color .2s, background .2s;
-  }
-  .hab-seg button.on[data-hview="daily"] { background: var(--blue); color: #fff; }
-  .hab-seg button.on[data-hview="avoid"] { background: var(--red); color: #fff; }
+/* ---------- Bottom-Sheet ---------- */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end;
+  background: rgba(8,7,5,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  opacity: 0; transition: opacity .25s;
+}
+.sheet-backdrop.open { opacity: 1; }
+.sheet {
+  width: 100%; max-width: 640px; margin: 0 auto; max-height: 88dvh; overflow-y: auto;
+  background: var(--surface); border-radius: 24px 24px 0 0;
+  padding: 10px 20px calc(26px + env(safe-area-inset-bottom));
+  transform: translateY(100%); transition: transform .32s cubic-bezier(.25,.9,.3,1);
+}
+.sheet-backdrop.open .sheet { transform: none; }
+.grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 4px auto 16px; }
+.sheet h3 { font-family: var(--serif); font-size: 23px; font-weight: 600; margin-bottom: 4px; }
+.sheet .sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.sheet label { display: block; font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 14px 2px 6px; letter-spacing: .04em; text-transform: uppercase; }
+.sheet input[type=text], .sheet input[type=password], .sheet select, .sheet textarea {
+  width: 100%; background: var(--surface2); border: 1px solid transparent; color: var(--text);
+  border-radius: 13px; padding: 13px 14px; font-size: 16px; font-family: var(--sans); outline: none;
+  -webkit-appearance: none; appearance: none;
+}
+.sheet input:focus, .sheet select:focus, .sheet textarea:focus { border-color: var(--sheet-accent, var(--text)); }
+.sheet textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+.sheet-actions { display: flex; gap: 9px; margin-top: 22px; }
+.sheet-actions button {
+  border: none; border-radius: 13px; padding: 14px 16px; font-size: 15.5px; font-weight: 700;
+  cursor: pointer; font-family: var(--sans);
+}
+.sheet-actions .primary { flex: 1; background: var(--sheet-accent, var(--text)); color: var(--ink-on-accent); }
+.sheet-actions .quiet { background: var(--surface2); color: var(--muted); }
+.sheet-actions .danger { background: none; border: 1px solid var(--border); color: var(--avoid); }
+.sheet-actions button:disabled { opacity: .5; }
 
-  .media-seg { display: flex; gap: 4px; margin-bottom: 16px; background: var(--surface2); border-radius: 10px; padding: 4px; }
-  .media-seg button {
-    flex: 1; border: none; background: transparent; color: var(--muted);
-    padding: 10px 2px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
-    transition: color .2s, background .2s;
-  }
-  .media-seg button.on { background: var(--purple); color: var(--purple-ink); }
+.pickers { display: flex; gap: 9px; }
+.pick {
+  position: relative; flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  background: var(--surface2); border-radius: 13px; padding: 13px 8px;
+  font-size: 14.5px; font-weight: 600; color: var(--muted);
+}
+.pick.set { color: var(--text); box-shadow: 0 0 0 1.5px var(--sheet-accent, var(--text)) inset; }
+.pick input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; }
+.pick input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-  .sec-head { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 22px 0 10px; }
-  .sec-head:first-child { margin-top: 0; }
+.answer { font-size: 15.5px; line-height: 1.65; white-space: pre-wrap; }
+.answer.blank { color: var(--faint); font-style: italic; }
+.meta-line { font-size: 12px; color: var(--faint); margin-top: 10px; }
 
-  /* Fortschritt-Knopf + Kalender-Umschalter */
-  .prog-btn, .cal-toggle {
-    display: flex; align-items: center; justify-content: space-between; width: 100%;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
-    color: var(--text); font-size: 15px; font-weight: 700; cursor: pointer; padding: 15px 16px;
-    margin-bottom: 12px; text-align: left;
-  }
-  .cal-toggle .chev { transition: transform .2s; color: var(--muted); }
-  .cal-toggle.open .chev { transform: rotate(90deg); }
-  #sport-cal { margin-bottom: 12px; }
+.tip-card { border-left: 3px solid var(--media); background: var(--surface2); border-radius: 12px; padding: 12px 14px; margin-bottom: 9px; }
+.tip-card .tt { font-size: 15px; font-weight: 700; }
+.tip-card .ta { font-size: 13px; color: var(--muted); margin-top: 1px; }
+.tip-card .tr { font-size: 13.5px; margin-top: 5px; color: var(--text); opacity: .85; }
 
-  /* Heutige Übungen – Wiederholungen direkt eintragen */
-  .ex-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-left: 3px solid var(--orange); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-  }
-  .ex-row .ex-check {
-    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-    border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: #000;
-  }
-  .ex-row.done .ex-check { background: var(--orange); border-color: var(--orange); box-shadow: 0 0 10px rgba(242,183,54,.55); }
-  .ex-row .ex-name { flex: 1; font-size: 15px; font-weight: 700; }
-  .ex-row .ex-input {
-    width: 66px; text-align: center; background: var(--surface2);
-    border: 1px solid var(--border); color: var(--text); border-radius: 8px;
-    padding: 10px 6px; font-size: 16px; font-family: inherit; min-height: 44px;
-  }
-  .ex-row .ex-unit { font-size: 12px; color: var(--muted); width: 30px; }
+.pp-card { border-left: 3px solid var(--sport); background: var(--surface2); border-radius: 12px; padding: 12px 14px; margin-bottom: 9px; }
+.pp-card .pn { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.pp-card .pl { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+.pp-up { color: var(--todo); font-weight: 700; } .pp-down { color: var(--avoid); font-weight: 700; }
 
-  /* Fortschritt-Popup */
-  .pp-card { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
-  .pp-card .pp-name { font-size: 15px; font-weight: 700; }
-  .pp-card .pp-line { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .pp-up { color: var(--green); font-weight: 700; }
-  .pp-down { color: var(--red); font-weight: 700; }
+.wd-row { display: flex; gap: 7px; }
+.wd-row .wd {
+  flex: 1; aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted); font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: var(--sans);
+}
+.wd-row .wd.on { background: var(--sport); border-color: var(--sport); color: var(--ink-on-accent); }
 
-  /* Monatskalender */
-  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .cal-head .cal-title { font-size: 16px; font-weight: 700; }
-  .cal-nav { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; font-size: 18px; cursor: pointer; }
-  .cal-dow { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
-  .cal-dow span { text-align: center; font-size: 11px; color: var(--muted); }
-  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-  .cal-cell {
-    aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-    background: var(--surface); font-size: 13px; font-weight: 600; color: var(--text);
-  }
-  .cal-cell.train { border-color: var(--orange); }
-  .cal-cell.active { cursor: pointer; }
-  .cal-cell.today { box-shadow: 0 0 0 2px var(--text) inset; }
-  .cal-cell.empty { visibility: hidden; }
+.pace-live { font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--run); margin-top: 14px; min-height: 24px; }
 
-  /* Skills */
-  .skill-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--skill); border-radius: 12px; padding: 16px; }
-  .skill-card h3 { font-size: 18px; color: var(--skill); }
-  .skill-progress-txt { font-size: 13px; color: var(--muted); margin: 4px 0 14px; }
-  .step-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); cursor: pointer; }
-  .step-row .step-check {
-    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
-    border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #000;
-  }
-  .step-row.done .step-check { background: var(--skill); border-color: var(--skill); }
-  .step-row.done .step-text { color: var(--muted); text-decoration: line-through; }
-  .step-text { font-size: 14px; line-height: 1.4; }
-  .day-detail-ex { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
-  .day-detail-ex span:last-child { color: var(--orange); font-weight: 700; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hairline); font-size: 15px; }
+.kv:last-child { border-bottom: none; }
+.kv .k { color: var(--muted); }
+.kv .v { font-weight: 700; text-align: right; }
 
-  .settings-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .settings-page input[type="password"] {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 8px 12px;
-    font-size: 13px; flex: 1; min-width: 200px; font-family: inherit;
-  }
-  .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; font-size: 15.5px; font-weight: 600; }
+.switch { position: relative; width: 50px; height: 30px; }
+.switch input { opacity: 0; width: 100%; height: 100%; position: absolute; z-index: 2; cursor: pointer; margin: 0; }
+.switch .knob {
+  position: absolute; inset: 0; border-radius: 999px; background: var(--surface2); transition: background .25s;
+  border: 1px solid var(--border);
+}
+.switch .knob::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--text); transition: transform .25s;
+}
+.switch input:checked + .knob { background: var(--todo); border-color: var(--todo); }
+.switch input:checked + .knob::after { transform: translateX(20px); background: var(--ink-on-accent); }
 
-  .usage-badge { font-size: 14px; color: var(--muted); }
-  .usage-badge b { color: #e5342a; font-weight: 700; }
-  #btn-settings-close { background: #e5342a; color: #fff; }
-
-  .know-cost { font-size: 11px; color: var(--muted); }
-  .ask-btn {
-    background: var(--gold); border: none; color: #000;
-    border-radius: 8px; padding: 6px 12px; font-size: 12px;
-    font-weight: 700; cursor: pointer; flex-shrink: 0;
-  }
-  .ask-btn:disabled { opacity: .5; cursor: wait; }
-
-  /* Antwort-Overlay (großansicht) */
-  .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,.85);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px; z-index: 100;
-  }
-  .modal {
-    background: var(--surface); border: 1px solid var(--gold);
-    border-radius: 16px; max-width: 760px; width: 100%;
-    max-height: 85vh; display: flex; flex-direction: column;
-    padding: 24px;
-  }
-  .modal h2 { font-size: 20px; color: var(--gold); margin-bottom: 4px; }
-  .modal .modal-meta { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-  .modal .modal-answer {
-    font-size: 17px; line-height: 1.7; overflow-y: auto;
-    white-space: pre-wrap; flex: 1; padding-right: 6px;
-  }
-  .modal .modal-answer.empty { color: var(--muted); font-style: italic; }
-  .modal .modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
-  .modal textarea {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 12px; font-size: 16px;
-    font-family: inherit; min-height: 200px; resize: vertical; flex: 1;
-  }
-
-  /* ---------- Lebendigkeit & Animationen ---------- */
-  /* Druck-Feedback (iOS-Feel): kurz eindrücken beim Antippen */
-  nav button, .gear, .small-btn, .ask-btn, .folder, .prog-btn, .cal-toggle,
-  .sport-seg button, .wd, .add-form button, .dl-btn, .fb-btn, .cal-nav, .train-btn {
-    transition: transform .12s ease, background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
-  }
-  nav button:active, .gear:active, .small-btn:active, .ask-btn:active, .folder:active,
-  .prog-btn:active, .cal-toggle:active, .sport-seg button:active, .wd:active,
-  .add-form button:active, .dl-btn:active, .fb-btn:active, .cal-nav:active,
-  .tips-fab:active, .train-btn:active, .step-row:active, .ex-row:active {
-    transform: scale(.96);
-  }
-  .item, .folder, .ex-row, .step-row { will-change: transform; }
-
-  /* Schwebender +-Knopf dreht sich beim Öffnen */
-  .fab { transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .18s, box-shadow .18s; }
-  .fab.open { transform: rotate(45deg); }
-  .fab:active { transform: scale(.92); }
-  .fab.open:active { transform: rotate(45deg) scale(.92); }
-
-  /* Häkchen ploppt beim Abhaken auf */
-  .check, .ex-check, .step-check { transition: background .2s, border-color .2s, box-shadow .2s; }
-  #tab-todo .item.done .check, #habits-daily .item.today .check,
-  .ex-row.done .ex-check, .step-row.done .step-check { animation: pop .32s ease; }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .tab.visible { animation: tabIn .3s ease; }
-    .modal-backdrop { animation: fadeIn .2s ease; }
-    .modal { animation: sheetUp .32s cubic-bezier(.2,.8,.2,1); }
-    li.item { animation: rowIn .28s ease backwards; }
-    .folder { animation: rowIn .28s ease backwards; }
-  }
-  @keyframes pop { 0% { transform: scale(.5); } 55% { transform: scale(1.2); } 100% { transform: scale(1); } }
-  @keyframes tabIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes sheetUp { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
-  @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-
-  /* Wisch-Hinweis */
-  .swipe-hint { font-size: 11px; color: var(--muted); margin: -6px 0 12px; opacity: .8; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
 </style>
 </head>
 <body>
-<button class="fab" id="btn-add" title="Add">+</button>
 
-<div class="app">
-  <header class="app-header">
-    <div class="head-text">
-      <div class="hello" id="hello">Mein Tag</div>
-      <div class="today" id="today-date"></div>
+<header class="top">
+  <div>
+    <div class="overline" id="greet"></div>
+    <h1 class="date" id="big-date"></h1>
+  </div>
+  <button class="gear" id="btn-settings" title="Einstellungen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+</header>
+
+<main>
+  <!-- ============ HEUTE ============ -->
+  <section class="view visible" id="view-heute"></section>
+
+  <!-- ============ AUFGABEN ============ -->
+  <section class="view" id="view-todo"></section>
+
+  <!-- ============ GEWOHNHEITEN ============ -->
+  <section class="view" id="view-habits">
+    <div class="seg" id="habit-seg">
+      <button data-hview="daily" class="on" style="--seg-accent: var(--habit)">Dranbleiben</button>
+      <button data-hview="avoid" style="--seg-accent: var(--avoid)">Vermeiden</button>
     </div>
-    <button class="gear" id="btn-settings" title="Settings">⚙️</button>
-  </header>
-
-  <nav>
-    <button data-tab="todo" class="active">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5l2.5 2.5L21 5"/><path d="M20.5 12v6.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2H15"/></svg>
-      <span>To-Do</span>
-    </button>
-    <button data-tab="habits">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
-      <span>Gewohnheiten</span>
-    </button>
-    <button data-tab="books">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      <span>Medien</span>
-    </button>
-    <button data-tab="sport">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Sport</span>
-    </button>
-  </nav>
-
-  <!-- TO-DO -->
-  <section class="tab visible" id="tab-todo">
-    <form class="add-form" id="form-todo">
-      <input type="text" id="todo-title" placeholder="Was willst du erledigen?" required>
-      <div class="deadline-row">
-        <div class="dl-wrap">
-          <span class="dl-btn"><span class="dl-icon">📅</span><span id="todo-date-label">Datum</span></span>
-          <input type="date" id="todo-deadline" class="dl-input">
-        </div>
-        <div class="dl-wrap">
-          <span class="dl-btn"><span class="dl-icon">🕐</span><span id="todo-time-label">Uhrzeit</span></span>
-          <input type="time" id="todo-time" class="dl-input">
-        </div>
-      </div>
-      <button type="submit">Add</button>
-    </form>
-    <div class="swipe-hint" id="todo-swipe-hint" style="display:none">💡 Tipp: nach rechts wischen = abhaken, nach links = löschen</div>
-    <ul class="items" id="list-todo"></ul>
+    <div id="habits-body"></div>
   </section>
 
-  <!-- GEWOHNHEITEN (Dranbleiben + Vermeiden) -->
-  <section class="tab" id="tab-habits">
-    <div class="hab-seg">
-      <button data-hview="daily" class="on">Dranbleiben</button>
-      <button data-hview="avoid">Vermeiden</button>
-    </div>
-
-    <div id="habits-daily">
-      <form class="add-form" id="form-daily">
-        <input type="text" id="daily-title" placeholder="Was willst du regelmäßig machen? (z.B. 20 Min lesen)" required>
-        <select id="daily-freq">
-          <option value="1">Täglich</option>
-          <option value="2">Alle 2 Tage</option>
-          <option value="3">Alle 3 Tage</option>
-          <option value="7">1x pro Woche</option>
-          <option value="14">Alle 2 Wochen</option>
-        </select>
-        <button type="submit">Add</button>
-      </form>
-      <div class="swipe-hint" id="daily-swipe-hint" style="display:none">💡 Wischen: rechts = abhaken, links = löschen</div>
-      <ul class="items" id="list-daily"></ul>
-    </div>
-
-    <div id="habits-avoid" hidden>
-      <form class="add-form" id="form-avoid">
-        <input type="text" id="avoid-title" placeholder="Was willst du dir abgewöhnen?" required>
-        <button type="submit">Add</button>
-      </form>
-      <div class="swipe-hint" id="avoid-swipe-hint" style="display:none">💡 Wischen: rechts = Rückfall, links = löschen</div>
-      <ul class="items" id="list-avoid"></ul>
-    </div>
-  </section>
-
-  <!-- MEDIEN -->
-  <section class="tab" id="tab-books">
-    <div class="media-seg">
+  <!-- ============ MEDIEN ============ -->
+  <section class="view" id="view-media">
+    <div class="seg" id="media-seg" style="--seg-accent: var(--media)">
       <button data-media="book" class="on">Bücher</button>
       <button data-media="screen">Filme &amp; Serien</button>
       <button data-media="game">Spiele</button>
     </div>
-    <form class="add-form" id="form-books">
-      <input type="text" id="book-title" placeholder="Buchtitel und Autor, z.B. Momo – Michael Ende" required>
-      <select id="book-cat">
-        <option value="Auto" selected>Kategorie: Auto (Claude wählt)</option>
-      </select>
-      <button type="submit">Add</button>
-    </form>
-    <ul class="items" id="list-books"></ul>
+    <div id="media-body"></div>
   </section>
-  <button class="tips-fab" id="btn-book-tips" hidden>📚 Buch-Tipps</button>
 
-  <!-- SPORT -->
-  <section class="tab" id="tab-sport">
-    <form class="add-form" id="form-sport">
-      <div class="note">An welchen Tagen willst du trainieren?</div>
-      <div class="weekday-row" id="weekday-row">
-        <button type="button" class="wd" data-dow="1">Mo</button>
-        <button type="button" class="wd" data-dow="2">Di</button>
-        <button type="button" class="wd" data-dow="3">Mi</button>
-        <button type="button" class="wd" data-dow="4">Do</button>
-        <button type="button" class="wd" data-dow="5">Fr</button>
-        <button type="button" class="wd" data-dow="6">Sa</button>
-        <button type="button" class="wd" data-dow="0">So</button>
-      </div>
-      <button type="submit">Save</button>
-    </form>
-    <div class="sport-seg">
-      <button data-sview="training" class="on">Training</button>
-      <button data-sview="runs">Laufen</button>
-      <button data-sview="bike">Biken</button>
-      <button data-sview="skills">Skills</button>
+  <!-- ============ SPORT ============ -->
+  <section class="view" id="view-sport">
+    <div class="seg" id="sport-seg">
+      <button data-sview="training" class="on" style="--seg-accent: var(--sport)">Training</button>
+      <button data-sview="runs" style="--seg-accent: var(--run)">Laufen</button>
+      <button data-sview="skills" style="--seg-accent: var(--skill)">Skills</button>
     </div>
-    <div id="sport-training"></div>
-    <div id="sport-runs" hidden></div>
-    <div id="sport-bike" hidden></div>
-    <div id="sport-skills" hidden></div>
+    <div id="sport-body"></div>
     <input type="file" id="run-photo" accept="image/*" hidden>
   </section>
+</main>
 
-  <div class="settings-page" id="settings-page" hidden>
-    <div class="settings-inner">
-      <h2>Settings</h2>
+<button id="fab" title="Hinzufügen">＋</button>
 
-      <h3>API-Schlüssel</h3>
-      <div class="settings-row">
-        <input type="password" id="api-key" placeholder="Anthropic API-Schlüssel (sk-ant-...)">
-        <button class="small-btn" id="btn-save-key">Save</button>
-      </div>
-      <span id="key-status" class="note"></span>
-      <p class="note">Der Schlüssel wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin. Denk an dein Ausgabenlimit im Anthropic-Konto!</p>
-
-      <h3>Design</h3>
-      <label class="toggle-row">
-        <span>Dark Mode</span>
-        <input type="checkbox" id="toggle-dark" checked>
-      </label>
-
-      <h3>Tokens & Kosten</h3>
-      <p class="usage-badge">KI-Verbrauch insgesamt: <b id="usage-total">$0.0000</b></p>
-
-      <h3>Backup</h3>
-      <div class="settings-row">
-        <button class="small-btn" id="btn-export">Copy Data</button>
-        <button class="small-btn" id="btn-import">Import Data</button>
-      </div>
-
-      <div class="settings-row" style="margin-top:24px">
-        <button class="ask-btn" id="btn-settings-close">Done</button>
-      </div>
-    </div>
-  </div>
-</div>
+<nav class="tabs">
+  <button data-tab="heute" class="on">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg>
+    <span>Heute</span>
+  </button>
+  <button data-tab="todo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5l2 2 4.5-4.5"/><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/></svg>
+    <span>Aufgaben</span>
+  </button>
+  <button data-tab="habits">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.7"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>
+    <span>Gewohnheiten</span>
+  </button>
+  <button data-tab="sport">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Körper</span>
+  </button>
+  <button data-tab="media">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span>Geist</span>
+  </button>
+</nav>
 
 <script>
-const STORE_KEY = "meinTagData";
-
-function load() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
-  catch { return {}; }
-}
-const data = Object.assign({ todos: [], dailies: [], avoids: [], knows: [], books: [], bookTips: null, sport: null, usage: { input: 0, output: 0, cost: 0 } }, load());
-if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
-if (!data.books) data.books = [];
-if (!data.sport) data.sport = {};
-if (!Array.isArray(data.sport.trainingDays)) data.sport.trainingDays = [1, 2, 4, 5];
-if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
-if (!data.sport.skills) data.sport.skills = {};
-if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
-if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
-if (!Array.isArray(data.sport.runs)) data.sport.runs = [];
-if (!Array.isArray(data.sport.rides)) data.sport.rides = [];
-// Medien: bestehende Einträge sind Bücher; Tipps pro Medientyp
-data.books.forEach(b => { if (!b.media) b.media = "book"; });
-if (!data.mediaTips || typeof data.mediaTips !== "object") data.mediaTips = {};
-if (data.bookTips && !data.mediaTips.book) { data.mediaTips.book = data.bookTips; data.bookTips = null; }
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-
+/* ================================================================
+   Helfer
+   ================================================================ */
+const $ = id => document.getElementById(id);
 function isoDate(d) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 function todayStr() { return isoDate(new Date()); }
-function yesterdayStr() {
-  const d = new Date(); d.setDate(d.getDate() - 1);
-  return isoDate(d);
-}
 function fmtDate(iso) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
   return d + "." + m + "." + y;
 }
-function daysSince(ts) {
-  return Math.max(0, Math.floor((Date.now() - ts) / 86400000));
+const WD_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const MONTHS_SHORT = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."];
+function fmtNice(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return WD_SHORT[d.getDay()] + ", " + d.getDate() + ". " + MONTHS_SHORT[d.getMonth()];
+}
+function daysSince(ts) { return Math.floor((Date.now() - ts) / 86400000); }
+function daysBetweenIso(a, b) {
+  return Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 86400000);
+}
+function addDaysIso(iso, n) {
+  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoDate(d);
 }
 function esc(s) {
-  return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ================================================================
+   Daten (voll kompatibel mit der bisherigen App)
+   ================================================================ */
+const STORE_KEY = "meinTagData";
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch { return {}; }
+}
+const data = Object.assign(
+  { todos: [], dailies: [], avoids: [], knows: [], books: [], mediaTips: {}, bookTips: null, sport: null, usage: { input: 0, output: 0, cost: 0 } },
+  load()
+);
+
+// Handstand-Etappen (Standard-Skill, wird beim ersten Start in die Skill-Liste übernommen)
+const DEFAULT_HANDSTAND_STEPS = [
+  "Handgelenke aufwärmen & Hollow-Body-Hold 3×20 Sek.",
+  "Pike Push-ups 3×8 – baut die Schulterkraft auf",
+  "Wall Walk: mit den Füßen die Wand hochlaufen, 3×3",
+  "Wandhandstand (Bauch zur Wand), 3×20 Sek. halten",
+  "Wandhandstand (Rücken zur Wand), Balance suchen, 3×30 Sek.",
+  "Kurz von der Wand lösen, frei halten 3–5 Sek.",
+  "Freier Handstand 15+ Sek."
+];
+
+function normalizeData() {
+  if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
+  if (!Array.isArray(data.todos)) data.todos = [];
+  if (!Array.isArray(data.dailies)) data.dailies = [];
+  if (!Array.isArray(data.avoids)) data.avoids = [];
+  if (!Array.isArray(data.books)) data.books = [];
+  if (!data.sport) data.sport = {};
+  if (!Array.isArray(data.sport.trainingDays)) data.sport.trainingDays = [1, 2, 4, 5];
+  if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
+  if (!Array.isArray(data.sport.runs)) data.sport.runs = [];
+  if (!Array.isArray(data.sport.customEx)) data.sport.customEx = [];
+  data.sport.customEx = data.sport.customEx.filter(e => e && e.name);
+  if (!Array.isArray(data.sport.removedEx)) data.sport.removedEx = [];
+  // Skills: alte Handstand-Struktur in die neue Skill-Liste überführen
+  if (!Array.isArray(data.sport.skillList)) {
+    const hs = (data.sport.skills && data.sport.skills.handstand) || { done: [] };
+    data.sport.skillList = [{
+      id: "handstand", name: "Handstand", emoji: "🤸",
+      steps: DEFAULT_HANDSTAND_STEPS.slice(),
+      done: Array.isArray(hs.done) ? hs.done.slice() : []
+    }];
+  }
+  data.sport.skillList.forEach(sk => {
+    if (!Array.isArray(sk.steps)) sk.steps = [];
+    if (!Array.isArray(sk.done)) sk.done = [];
+  });
+  // Medien: Typ-Kennung + Sterne (1–5) in Tiers (S–D) überführen
+  data.books.forEach(b => { if (!b.media) b.media = "book"; });
+  const R2T = { 5: "S", 4: "A", 3: "B", 2: "C", 1: "D" };
+  data.books.forEach(b => {
+    if (!b.tier && b.rating) b.tier = R2T[b.rating] || "";
+    delete b.rating;
+  });
+  if (!data.mediaTips || typeof data.mediaTips !== "object") data.mediaTips = {};
+  if (data.bookTips && !data.mediaTips.book) { data.mediaTips.book = data.bookTips; data.bookTips = null; }
+}
+normalizeData();
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+
+/* ================================================================
+   Theme
+   ================================================================ */
+const THEME_KEY = "meinTagTheme";
+function applyTheme() {
+  const light = localStorage.getItem(THEME_KEY) === "light";
+  document.body.classList.toggle("light", light);
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", light ? "#f5f3ed" : "#131210");
+}
+applyTheme();
+
+/* ================================================================
+   Kopf: Begrüßung + Datum
+   ================================================================ */
+(() => {
+  const now = new Date();
+  const h = now.getHours();
+  $("greet").textContent = h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend";
+  const wd = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"][now.getDay()];
+  $("big-date").innerHTML = esc(wd) + ",<br><em>" + now.getDate() + ". " + MONTHS[now.getMonth()] + "</em>";
+})();
+
+/* ================================================================
+   Bottom-Sheet
+   ================================================================ */
+function openSheet(html, { accent } = {}) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "sheet-backdrop";
+  const sheet = document.createElement("div");
+  sheet.className = "sheet";
+  if (accent) sheet.style.setProperty("--sheet-accent", accent);
+  sheet.innerHTML = '<div class="grab"></div>' + html;
+  backdrop.appendChild(sheet);
+  document.body.appendChild(backdrop);
+  requestAnimationFrame(() => backdrop.classList.add("open"));
+  const close = () => {
+    backdrop.classList.remove("open");
+    setTimeout(() => backdrop.remove(), 280);
+  };
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  return { sheet, close };
 }
 
-/* Wischgesten auf einer Listen-Kachel: rechts = onRight, links = onDelete (Touch + Maus) */
+/* ================================================================
+   Wischgesten (rechts = Aktion, links = löschen)
+   ================================================================ */
 function enableSwipe(el, { onRight, onDelete }) {
   el.style.touchAction = "pan-y";
   let sx = 0, sy = 0, dx = 0, active = false, decided = false, horiz = false, pid = null, swiped = false;
@@ -778,7 +680,7 @@ function enableSwipe(el, { onRight, onDelete }) {
     if (!horiz) return;
     dx = mx;
     el.style.transform = "translateX(" + dx + "px)";
-    el.style.background = dx > 0 ? "rgba(52,199,89,.20)" : dx < 0 ? "rgba(255,69,58,.20)" : "";
+    el.style.background = dx > 0 ? "rgba(143,193,120,.16)" : dx < 0 ? "rgba(232,121,106,.16)" : "";
   });
   const end = () => {
     if (!active) return; active = false;
@@ -795,326 +697,32 @@ function enableSwipe(el, { onRight, onDelete }) {
   };
   el.addEventListener("pointerup", end);
   el.addEventListener("pointercancel", end);
-  // Klick direkt nach einem Wisch unterdrücken (sonst öffnet sich z.B. das Buch)
   el.addEventListener("click", e => { if (swiped) { e.stopPropagation(); e.preventDefault(); swiped = false; } }, true);
 }
 
-/* ---------- Kopfbereich: Begrüßung + Datum ---------- */
-(() => {
-  const h = new Date().getHours();
-  document.getElementById("hello").textContent = h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend";
-  document.getElementById("today-date").textContent = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
-})();
-
-/* ---------- Tabs ---------- */
-let currentTab = "todo";
-const tipsFab = document.getElementById("btn-book-tips");
-document.querySelectorAll("nav button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("visible"));
-    document.getElementById("tab-" + btn.dataset.tab).classList.add("visible");
-    currentTab = btn.dataset.tab;
-    closeAllForms();
-    updateTipsFab();
-  });
-});
-
-/* ---------- Gewohnheiten: Umschalter Dranbleiben / Vermeiden ---------- */
-let habitView = "daily";
-function renderHabits() {
-  document.getElementById("habits-daily").hidden = habitView !== "daily";
-  document.getElementById("habits-avoid").hidden = habitView !== "avoid";
-  document.querySelectorAll(".hab-seg button").forEach(b => b.classList.toggle("on", b.dataset.hview === habitView));
-}
-document.querySelectorAll(".hab-seg button").forEach(b => {
-  b.addEventListener("click", () => { habitView = b.dataset.hview; closeAllForms(); renderHabits(); });
-});
-
-/* ---------- Plus-Knopf (öffnet das Formular des aktiven Tabs) ---------- */
-const FORM_BY_TAB = { todo: "form-todo", books: "form-books", sport: "form-sport" };
-const fab = document.getElementById("btn-add");
-
-function currentFormId() {
-  if (currentTab === "habits") return "form-" + habitView;
-  return FORM_BY_TAB[currentTab];
-}
-
-function closeAllForms() {
-  document.querySelectorAll(".add-form").forEach(f => f.classList.remove("open"));
-  fab.classList.remove("open");
-}
-
-fab.addEventListener("click", () => {
-  const form = document.getElementById(currentFormId());
-  if (!form) return;
-  const willOpen = !form.classList.contains("open");
-  closeAllForms();
-  if (willOpen) {
-    form.classList.add("open");
-    fab.classList.add("open");
-  }
-});
-
-document.querySelectorAll(".add-form").forEach(f => f.addEventListener("submit", () => closeAllForms()));
-
-/* ---------- Settings-Seite ---------- */
-const settingsPage = document.getElementById("settings-page");
-document.getElementById("btn-settings").addEventListener("click", () => {
-  document.getElementById("api-key").value = getApiKey();
-  renderKeyStatus();
-  renderUsage();
-  settingsPage.hidden = false;
-});
-document.getElementById("btn-settings-close").addEventListener("click", () => { settingsPage.hidden = true; });
-
-/* ---------- Dark / Light Mode ---------- */
-const THEME_KEY = "meinTagTheme";
-const darkToggle = document.getElementById("toggle-dark");
-function applyTheme() {
-  const light = localStorage.getItem(THEME_KEY) === "light";
-  document.body.classList.toggle("light", light);
-  darkToggle.checked = !light;
-  document.querySelector('meta[name="theme-color"]').setAttribute("content", light ? "#f5f5f7" : "#000000");
-}
-darkToggle.addEventListener("change", () => {
-  localStorage.setItem(THEME_KEY, darkToggle.checked ? "dark" : "light");
-  applyTheme();
-});
-applyTheme();
-
-/* ---------- To-Do: Deadline (Datum + Uhrzeit) ---------- */
-const todoDateInput = document.getElementById("todo-deadline");
-const todoTimeInput = document.getElementById("todo-time");
-
-function updateDlLabels() {
-  document.getElementById("todo-date-label").textContent = todoDateInput.value ? fmtDate(todoDateInput.value) : "Datum";
-  todoDateInput.closest(".dl-wrap").classList.toggle("set", !!todoDateInput.value);
-  document.getElementById("todo-time-label").textContent = todoTimeInput.value ? todoTimeInput.value + " Uhr" : "Uhrzeit";
-  todoTimeInput.closest(".dl-wrap").classList.toggle("set", !!todoTimeInput.value);
-}
-todoDateInput.addEventListener("change", updateDlLabels);
-todoTimeInput.addEventListener("change", updateDlLabels);
-
-/* ---------- To-Do ---------- */
-document.getElementById("form-todo").addEventListener("submit", e => {
-  e.preventDefault();
-  data.todos.push({
-    id: uid(),
-    title: document.getElementById("todo-title").value.trim(),
-    deadline: todoDateInput.value,
-    deadlineTime: todoTimeInput.value,
-    done: false
-  });
-  save();
-  e.target.reset();
-  todoDateInput.value = ""; todoTimeInput.value = ""; updateDlLabels();
-  renderTodos();
-});
-
-function renderTodos() {
-  const ul = document.getElementById("list-todo");
-  ul.innerHTML = "";
-  const hint = document.getElementById("todo-swipe-hint");
-  if (hint) hint.style.display = data.todos.length ? "block" : "none";
-  if (!data.todos.length) { ul.innerHTML = '<div class="empty-state">Noch keine Aufgaben – drücke auf +, um die erste einzutragen.</div>'; return; }
-  const sorted = [...data.todos].sort((a, b) => (a.done - b.done) || (a.deadline || "9999").localeCompare(b.deadline || "9999"));
-  sorted.forEach((t, i) => {
-    const li = document.createElement("li");
-    li.className = "item" + (t.done ? " done" : "");
-    li.style.animationDelay = (i * 0.03) + "s";
-    const overdue = !t.done && t.deadline && t.deadline < todayStr();
-    li.innerHTML = `
-      <button class="check" title="Erledigt">${t.done ? "✓" : ""}</button>
-      <div class="body">
-        <div class="title">${esc(t.title)}</div>
-        ${(t.deadline || t.deadlineTime) ? '<div class="meta">'
-          + (t.deadline ? '<span class="' + (overdue ? "overdue" : "") + '">⏳ ' + fmtDate(t.deadline) + (overdue ? " (überfällig!)" : "") + "</span>" : "")
-          + (t.deadlineTime ? "<span>🕐 " + t.deadlineTime + " Uhr</span>" : "")
-          + "</div>" : ""}
-      </div>`;
-    li.querySelector(".check").addEventListener("click", () => { t.done = !t.done; save(); renderTodos(); });
-    // Wischen: rechts = ab-/anhaken, links = löschen
-    enableSwipe(li, {
-      onRight: () => { t.done = !t.done; save(); renderTodos(); },
-      onDelete: () => { data.todos = data.todos.filter(x => x.id !== t.id); save(); renderTodos(); }
-    });
-    ul.appendChild(li);
-  });
-}
-
-/* ---------- Regelmäßige Gewohnheiten ---------- */
-function daysBetweenIso(a, b) {
-  const da = new Date(a + "T00:00:00"), db = new Date(b + "T00:00:00");
-  return Math.round((db - da) / 86400000);
-}
-function addDaysIso(iso, n) {
-  const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoDate(d);
-}
-function freqLabel(n) {
-  if (n === 1) return "Täglich";
-  if (n === 7) return "1x pro Woche";
-  if (n === 14) return "Alle 2 Wochen";
-  return "Alle " + n + " Tage";
-}
-
-document.getElementById("form-daily").addEventListener("submit", e => {
-  e.preventDefault();
-  data.dailies.push({
-    id: uid(),
-    title: document.getElementById("daily-title").value.trim(),
-    interval: parseInt(document.getElementById("daily-freq").value, 10) || 1,
-    streak: 0,
-    lastDone: null,
-    prevStreak: 0,
-    prevLastDone: null
-  });
-  save(); e.target.reset(); renderDailies();
-});
-
-function renderDailies() {
-  const ul = document.getElementById("list-daily");
-  ul.innerHTML = "";
-  document.getElementById("daily-swipe-hint").style.display = data.dailies.length ? "block" : "none";
-  if (!data.dailies.length) { ul.innerHTML = '<div class="empty-state">Noch keine Gewohnheiten – drücke auf +.</div>'; return; }
-  const today = todayStr();
-  for (const h of data.dailies) {
-    const interval = h.interval || 1;
-    const gap = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
-    const alive = h.lastDone && gap <= interval;          // Streak noch aktiv?
-    const effectiveStreak = alive ? h.streak : 0;
-    const doneToday = h.lastDone === today;
-    const nextDue = h.lastDone ? addDaysIso(h.lastDone, interval) : today;
-    const due = !doneToday && nextDue <= today;
-
-    let statusText;
-    if (doneToday) statusText = "Heute erledigt ✓";
-    else if (due) statusText = "Jetzt fällig";
-    else statusText = "Nächste: " + fmtDate(nextDue);
-
-    const li = document.createElement("li");
-    li.className = "item" + (doneToday ? " today" : "");
-    li.innerHTML = `
-      <button class="check" title="Erledigt">${doneToday ? "✓" : ""}</button>
-      <div class="body">
-        <div class="title">${esc(h.title)}</div>
-        <div class="meta">
-          <span class="streak">🔥 Streak: ${effectiveStreak}</span>
-          <span>${freqLabel(interval)}</span>
-          <span>${statusText}</span>
-        </div>
-      </div>`;
-    const toggleDaily = () => {
-      if (h.lastDone === today) {
-        // Abhaken von heute rückgängig machen
-        h.streak = h.prevStreak;
-        h.lastDone = h.prevLastDone;
-      } else {
-        h.prevStreak = h.streak;
-        h.prevLastDone = h.lastDone;
-        const g = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
-        h.streak = (h.lastDone && g <= interval) ? h.streak + 1 : 1;
-        h.lastDone = today;
-      }
-      save(); renderDailies();
-    };
-    li.querySelector(".check").addEventListener("click", toggleDaily);
-    // Wischen: rechts = ab-/anhaken, links = löschen
-    enableSwipe(li, {
-      onRight: toggleDaily,
-      onDelete: () => { data.dailies = data.dailies.filter(x => x.id !== h.id); save(); renderDailies(); }
-    });
-    ul.appendChild(li);
-  }
-}
-
-/* ---------- Vermeiden ---------- */
-document.getElementById("form-avoid").addEventListener("submit", e => {
-  e.preventDefault();
-  data.avoids.push({
-    id: uid(),
-    title: document.getElementById("avoid-title").value.trim(),
-    since: Date.now()
-  });
-  save(); e.target.reset(); renderAvoids();
-});
-
-function renderAvoids() {
-  const ul = document.getElementById("list-avoid");
-  ul.innerHTML = "";
-  document.getElementById("avoid-swipe-hint").style.display = data.avoids.length ? "block" : "none";
-  if (!data.avoids.length) { ul.innerHTML = '<div class="empty-state">Noch nichts eingetragen.</div>'; return; }
-  for (const a of data.avoids) {
-    const days = daysSince(a.since);
-    const li = document.createElement("li");
-    li.className = "item";
-    li.innerHTML = `
-      <div class="body">
-        <div class="title">${esc(a.title)}</div>
-        <div class="meta">
-          <span class="streak">🛡 Streak: ${days}</span>
-          <span>seit ${new Date(a.since).toLocaleDateString("de-DE")}</span>
-        </div>
-      </div>
-      <button class="small-btn" title="Zähler zurücksetzen">Reset</button>`;
-    const reset = () => {
-      if (confirm("Rückfall bei „" + a.title + "“? Der Zähler startet neu bei 0.")) {
-        a.since = Date.now(); save(); renderAvoids();
-      }
-    };
-    li.querySelector(".small-btn").addEventListener("click", reset);
-    // Wischen: rechts = Rückfall/Reset, links = löschen
-    enableSwipe(li, {
-      onRight: reset,
-      onDelete: () => { data.avoids = data.avoids.filter(x => x.id !== a.id); save(); renderAvoids(); }
-    });
-    ul.appendChild(li);
-  }
-}
-
-/* ---------- API-Schlüssel & Verbrauch ---------- */
+/* ================================================================
+   Claude-API (eigener Schlüssel, nur lokal gespeichert)
+   ================================================================ */
 const KEY_STORE = "meinTagApiKey";
 function getApiKey() { return localStorage.getItem(KEY_STORE) || ""; }
 
-function renderKeyStatus() {
-  const status = document.getElementById("key-status");
-  status.textContent = getApiKey() ? "✓ Schlüssel gespeichert" : "Noch kein Schlüssel eingetragen";
-}
-document.getElementById("api-key").value = getApiKey();
-renderKeyStatus();
-
-document.getElementById("btn-save-key").addEventListener("click", () => {
-  const val = document.getElementById("api-key").value.trim();
-  if (val) localStorage.setItem(KEY_STORE, val);
-  else localStorage.removeItem(KEY_STORE);
-  renderKeyStatus();
-  alert(val ? "Schlüssel gespeichert!" : "Schlüssel entfernt.");
-});
-
-// Preise in US-Dollar pro 1 Mio. Tokens (je Modell)
 const PRICES = {
   "claude-opus-4-8":  { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
   "claude-haiku-4-5": { input: 1, output: 5,  cacheWrite: 1.25, cacheRead: 0.1 }
 };
 function usdCost(u, model) {
-  const p = PRICES[model] || PRICES["claude-opus-4-8"];
+  const p = PRICES[model] || PRICES["claude-haiku-4-5"];
   return (u.input_tokens || 0) * p.input / 1e6
        + (u.output_tokens || 0) * p.output / 1e6
        + (u.cache_creation_input_tokens || 0) * p.cacheWrite / 1e6
        + (u.cache_read_input_tokens || 0) * p.cacheRead / 1e6;
 }
 function fmtCost(c) { return "$" + c.toFixed(4); }
-function renderUsage() {
-  document.getElementById("usage-total").textContent =
-    fmtCost(data.usage.cost) + " (" + data.usage.input + " Tokens rein / " + data.usage.output + " raus)";
-}
 
-/* ---------- Allgemeiner Claude-Aufruf ---------- */
 async function callClaude({ system, userText, maxTokens = 4096, tools = null, model = "claude-haiku-4-5", image = null }) {
   const apiKey = getApiKey();
   if (!apiKey) {
-    alert("Bitte trage zuerst unten in den Einstellungen deinen API-Schlüssel ein.");
+    alert("Bitte trage zuerst in den Einstellungen (Zahnrad oben rechts) deinen API-Schlüssel ein.");
     return null;
   }
   let content = userText;
@@ -1126,8 +734,6 @@ async function callClaude({ system, userText, maxTokens = 4096, tools = null, mo
   }
   const messages = [{ role: "user", content }];
   let cost = 0, tokIn = 0, tokOut = 0, response = null;
-
-  // Schleife für pause_turn (Server-Tools wie web_fetch können pausieren)
   for (let i = 0; i < 6; i++) {
     const reqBody = { model, max_tokens: maxTokens, system, messages };
     if (tools) reqBody.tools = tools;
@@ -1156,99 +762,452 @@ async function callClaude({ system, userText, maxTokens = 4096, tools = null, mo
     }
     break;
   }
-
-  if (response.stop_reason === "refusal") {
-    throw new Error("Claude hat diese Anfrage aus Sicherheitsgründen abgelehnt.");
-  }
-  const text = (response.content || [])
-    .filter(b => b.type === "text")
-    .map(b => b.text)
-    .join("\n")
-    .trim();
+  if (response.stop_reason === "refusal") throw new Error("Claude hat diese Anfrage abgelehnt.");
+  const text = (response.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
   if (!text) throw new Error("Es kam keine Text-Antwort zurück. Versuche es noch einmal.");
-
   data.usage.cost += cost;
   data.usage.input += tokIn;
   data.usage.output += tokOut;
+  save();
   return { text, cost };
 }
 
-/* ---------- Sterne-Bewertung ---------- */
-function starsHtml(rating, interactive) {
-  rating = rating || 0;
-  let s = "";
-  for (let i = 1; i <= 5; i++) s += `<span class="star ${i <= rating ? "on" : ""}"${interactive ? ` data-star="${i}"` : ""}>★</span>`;
-  return `<span class="stars${interactive ? " interactive" : ""}">${s}</span>`;
+/* ================================================================
+   Navigation + FAB
+   ================================================================ */
+let currentTab = "heute";
+let habitView = "daily";
+let mediaView = "book";
+let sportView = "training";
+let booksView = null;
+
+document.querySelectorAll("nav.tabs button").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("visible", v.id === "view-" + tab));
+  renderCurrent();
+  updateFab();
+  window.scrollTo({ top: 0 });
+}
+function renderCurrent() {
+  if (currentTab === "heute") renderToday();
+  else if (currentTab === "todo") renderTodos();
+  else if (currentTab === "habits") renderHabits();
+  else if (currentTab === "media") renderMedia();
+  else if (currentTab === "sport") renderSport();
+}
+function rerenderAll() {
+  renderCurrent();
 }
 
-/* ---------- Antwort-Overlay (Großansicht) ---------- */
-function openModal(k, opts = {}) {
-  const askFn = opts.ask;
-  const rerender = opts.rerender || renderBooks;
-  const labels = opts.labels;
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const modal = document.createElement("div");
-  modal.className = "modal" + (opts.purple ? " purple" : "");
-  modal.innerHTML = `
-    <h2>${esc(k.question)}</h2>
-    <div class="modal-meta">${k.cost ? "Kosten dieser Antwort: " + fmtCost(k.cost) : ""}</div>
-    ${opts.rating ? `<div class="rate-row"><span class="rate-label">Meine Bewertung:</span>${starsHtml(k.rating, true)}</div>` : ""}
-    <div class="modal-answer ${k.answer ? "" : "empty"}">${k.answer ? esc(k.answer) : labels.empty}</div>
-    <div class="modal-actions">
-      <button class="ask-btn" data-act="ask">${k.answer ? labels.has : labels.none}</button>
-      <button class="small-btn" data-act="edit">Edit</button>
-      <button class="small-btn" data-act="close">Close</button>
+const fab = $("fab");
+function fabAction() {
+  if (currentTab === "heute" || currentTab === "todo") return openTodoSheet;
+  if (currentTab === "habits") return habitView === "daily" ? openDailySheet : openAvoidSheet;
+  if (currentTab === "media") return openMediaSheet;
+  if (currentTab === "sport") {
+    if (sportView === "training") return openExerciseSheet;
+    if (sportView === "runs") return () => openRunSheet(null);
+    return openSkillSheet; // Skills
+  }
+  return null;
+}
+function updateFab() { fab.classList.toggle("hide", !fabAction()); }
+fab.addEventListener("click", () => { const a = fabAction(); if (a) a(); });
+
+/* ================================================================
+   HEUTE — das Tages-Dashboard
+   ================================================================ */
+function habitState(h) {
+  const today = todayStr();
+  const interval = h.interval || 1;
+  const gap = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
+  const alive = h.lastDone && gap <= interval;
+  const doneToday = h.lastDone === today;
+  const nextDue = h.lastDone ? addDaysIso(h.lastDone, interval) : today;
+  const due = !doneToday && nextDue <= today;
+  return { interval, doneToday, due, nextDue, streak: alive ? h.streak : 0 };
+}
+function toggleDailyHabit(h) {
+  const today = todayStr();
+  if (h.lastDone === today) {
+    h.streak = h.prevStreak;
+    h.lastDone = h.prevLastDone;
+  } else {
+    h.prevStreak = h.streak;
+    h.prevLastDone = h.lastDone;
+    const g = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
+    h.streak = (h.lastDone && g <= (h.interval || 1)) ? h.streak + 1 : 1;
+    h.lastDone = today;
+  }
+  save(); rerenderAll();
+}
+function resetAvoid(a) {
+  if (confirm("Rückfall bei „" + a.title + "“? Der Zähler startet neu bei 0.")) {
+    a.since = Date.now(); save(); rerenderAll();
+  }
+}
+function freqLabel(n) {
+  if (n === 1) return "Täglich";
+  if (n === 7) return "1x pro Woche";
+  if (n === 14) return "Alle 2 Wochen";
+  return "Alle " + n + " Tage";
+}
+
+function renderToday() {
+  const box = $("view-heute");
+  const today = todayStr();
+
+  // Tagesplan zusammenstellen
+  const dueTodos = data.todos.filter(t => t.deadline && t.deadline <= today);
+  const habitStates = data.dailies.map(h => ({ h, st: habitState(h) }));
+  const planHabits = habitStates.filter(x => x.st.due || x.st.doneToday);
+  const isTrainDay = data.sport.trainingDays.includes(new Date().getDay()) && allEx().length > 0;
+  const trainedToday = data.sport.log[today] && Object.keys(data.sport.log[today]).length > 0;
+
+  let total = dueTodos.length + planHabits.length + (isTrainDay ? 1 : 0);
+  let done = dueTodos.filter(t => t.done).length + planHabits.filter(x => x.st.doneToday).length + ((isTrainDay && trainedToday) ? 1 : 0);
+  const pct = total ? Math.round(done / total * 100) : 100;
+  const C = 2 * Math.PI * 47;
+
+  let msg;
+  if (total === 0) msg = "Freier Tag – nichts ist fällig.";
+  else if (done === total) msg = "Alles geschafft. Stark!";
+  else if (done === 0) msg = total + (total === 1 ? " Punkt steht" : " Punkte stehen") + " heute an.";
+  else msg = "Noch " + (total - done) + " von " + total + " offen.";
+
+  let html = `
+    <div class="card today-hero">
+      <div class="ringwrap">
+        <svg viewBox="0 0 108 108">
+          <circle class="ring-bg" cx="54" cy="54" r="47"/>
+          <circle class="ring-fg" cx="54" cy="54" r="47" stroke-dasharray="${C.toFixed(1)}"
+            stroke-dashoffset="${(C * (1 - (total ? done / total : 1))).toFixed(1)}"
+            style="stroke:${done === total && total > 0 ? "var(--todo)" : "var(--sport)"}"/>
+        </svg>
+        <div class="ring-label"><div>${total ? done + "<small>von " + total + "</small>" : "✓<small>frei</small>"}</div></div>
+      </div>
+      <div class="msg">
+        <div class="m1">${esc(msg)}</div>
+        <div class="m2">${pct}% deines Tagesplans erledigt</div>
+      </div>
     </div>`;
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
 
-  const close = () => backdrop.remove();
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
-  modal.querySelector('[data-act="close"]').addEventListener("click", close);
-  modal.querySelectorAll(".stars.interactive .star").forEach(st => st.addEventListener("click", () => {
-    const v = parseInt(st.dataset.star, 10);
-    k.rating = (k.rating === v) ? 0 : v;   // nochmal auf denselben Stern tippen = Bewertung entfernen
-    save();
-    modal.querySelectorAll(".stars.interactive .star").forEach(s2 => s2.classList.toggle("on", parseInt(s2.dataset.star, 10) <= (k.rating || 0)));
-    rerender();
-  }));
-  modal.querySelector('[data-act="ask"]').addEventListener("click", async ev => {
-    ev.target.disabled = true;
-    ev.target.textContent = "Claude denkt nach…";
-    await askFn(k);
-    close();
-    openModal(k, opts);
+  // Fällig heute
+  html += `<div class="sect"><span class="tick" style="background:var(--todo)"></span><h2>Fällig heute</h2></div>`;
+  box.innerHTML = html;
+
+  const planWrap = document.createElement("div");
+  if (!dueTodos.length && !planHabits.length && !isTrainDay) {
+    planWrap.innerHTML = '<div class="empty-state">Heute ist nichts fällig.<br>Genieß den Tag – oder plane etwas über +.</div>';
+  }
+
+  dueTodos.sort((a, b) => (a.done - b.done)).forEach((t, i) => {
+    const overdue = !t.done && t.deadline < today;
+    const row = document.createElement("div");
+    row.className = "row" + (t.done ? " done" : "");
+    row.style.animationDelay = (i * .04) + "s";
+    row.innerHTML = `
+      <button class="ring-check ${t.done ? "on" : ""}" style="${t.done ? "background:var(--todo);border-color:var(--todo)" : ""}">${t.done ? "✓" : ""}</button>
+      <div class="grow"><div class="t">${esc(t.title)}</div>
+      <div class="s">${overdue ? '<span class="overdue">Überfällig · ' + fmtNice(t.deadline) + "</span>" : "Aufgabe" + (t.deadlineTime ? " · " + t.deadlineTime + " Uhr" : "")}</div></div>`;
+    row.querySelector(".ring-check").addEventListener("click", () => { t.done = !t.done; save(); rerenderAll(); });
+    planWrap.appendChild(row);
   });
-  modal.querySelector('[data-act="edit"]').addEventListener("click", () => {
-    const answerDiv = modal.querySelector(".modal-answer");
-    if (!answerDiv) return;
-    const ta = document.createElement("textarea");
-    ta.value = k.answer;
-    answerDiv.replaceWith(ta);
-    const editBtn = modal.querySelector('[data-act="edit"]');
-    editBtn.textContent = "Save";
-    editBtn.onclick = () => {
-      k.answer = ta.value.trim();
-      save(); rerender();
-      close(); openModal(k, opts);
-    };
-    ta.focus();
+
+  planHabits.forEach(({ h, st }, i) => {
+    const row = document.createElement("div");
+    row.className = "row" + (st.doneToday ? " done" : "");
+    row.style.animationDelay = ((dueTodos.length + i) * .04) + "s";
+    row.innerHTML = `
+      <button class="ring-check ${st.doneToday ? "on" : ""}" style="${st.doneToday ? "background:var(--habit);border-color:var(--habit)" : ""}">${st.doneToday ? "✓" : ""}</button>
+      <div class="grow"><div class="t">${esc(h.title)}</div>
+      <div class="s">Gewohnheit · ${st.streak > 0 ? "Streak " + st.streak : freqLabel(st.interval)}</div></div>`;
+    row.querySelector(".ring-check").addEventListener("click", () => toggleDailyHabit(h));
+    planWrap.appendChild(row);
+  });
+
+  if (isTrainDay) {
+    const todayLog = data.sport.log[today] || {};
+    const row = document.createElement("div");
+    row.className = "row" + (trainedToday ? " done" : "");
+    row.style.cursor = "pointer";
+    const chips = allEx().map(ex =>
+      `<span class="me ${todayLog[ex.name] ? "on" : ""}">${esc(ex.name)}${todayLog[ex.name] ? " " + todayLog[ex.name] : ""}</span>`
+    ).join("");
+    row.innerHTML = `
+      <button class="ring-check ${trainedToday ? "on" : ""}" style="${trainedToday ? "background:var(--sport);border-color:var(--sport)" : ""}">${trainedToday ? "✓" : ""}</button>
+      <div class="grow"><div class="t">Training</div><div class="mini-ex">${chips}</div></div>`;
+    row.addEventListener("click", () => { sportView = "training"; switchTab("sport"); });
+    planWrap.appendChild(row);
+  }
+
+  // Läufe heute
+  const todayRuns = data.sport.runs.filter(r => r.date === today);
+  todayRuns.forEach(r => {
+    const row = document.createElement("div");
+    row.className = "row done";
+    row.innerHTML = `<button class="ring-check on" style="background:var(--run);border-color:var(--run)">✓</button>
+      <div class="grow"><div class="t">Lauf</div><div class="s">${r.km.toFixed(2).replace(".", ",")} km · ${fmtDur(r.durSec)} · ${fmtPace(r.durSec, r.km)}</div></div>`;
+    planWrap.appendChild(row);
+  });
+  box.appendChild(planWrap);
+
+  // Weitere offene Aufgaben (ohne heutige Deadline)
+  const otherOpen = data.todos.filter(t => !t.done && !(t.deadline && t.deadline <= today));
+  if (otherOpen.length) {
+    const link = document.createElement("button");
+    link.className = "linklike";
+    link.innerHTML = `<b>${otherOpen.length}</b> weitere offene ${otherOpen.length === 1 ? "Aufgabe" : "Aufgaben"} ansehen →`;
+    link.addEventListener("click", () => switchTab("todo"));
+    box.appendChild(link);
+  }
+
+  // Vermeiden-Zähler
+  if (data.avoids.length) {
+    const sect = document.createElement("div");
+    sect.className = "sect";
+    sect.innerHTML = '<span class="tick" style="background:var(--avoid)"></span><h2>Vermeiden</h2>';
+    box.appendChild(sect);
+    const strip = document.createElement("div");
+    strip.className = "shield-strip";
+    data.avoids.forEach(a => {
+      const el = document.createElement("div");
+      el.className = "shield";
+      el.innerHTML = `<b>${daysSince(a.since)}</b><span>${daysSince(a.since) === 1 ? "Tag" : "Tage"} · ${esc(a.title)}</span>`;
+      el.addEventListener("click", () => { habitView = "avoid"; switchTab("habits"); });
+      strip.appendChild(el);
+    });
+    box.appendChild(strip);
+  }
+}
+
+/* ================================================================
+   AUFGABEN
+   ================================================================ */
+function renderTodos() {
+  const box = $("view-todo");
+  box.innerHTML = "";
+  const open = data.todos.filter(t => !t.done).sort((a, b) => (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+  const finished = data.todos.filter(t => t.done);
+
+  const sect = document.createElement("div");
+  sect.className = "sect";
+  sect.innerHTML = `<span class="tick" style="background:var(--todo)"></span><h2>Offen</h2><span class="chip-badge">${open.length}</span>`;
+  box.appendChild(sect);
+
+  if (!open.length) {
+    box.insertAdjacentHTML("beforeend", '<div class="empty-state">Nichts offen.<br>Neue Aufgabe über den +&#8209;Knopf.</div>');
+  } else {
+    box.insertAdjacentHTML("beforeend", '<div class="hint">Wischen: rechts = abhaken · links = löschen</div>');
+  }
+  const today = todayStr();
+  open.forEach((t, i) => box.appendChild(todoRow(t, i, today)));
+
+  if (finished.length) {
+    const s2 = document.createElement("div");
+    s2.className = "sect";
+    s2.innerHTML = `<span class="tick" style="background:var(--faint)"></span><h2>Erledigt</h2><span class="chip-badge">${finished.length}</span>`;
+    box.appendChild(s2);
+    finished.forEach((t, i) => box.appendChild(todoRow(t, i, today)));
+  }
+}
+function todoRow(t, i, today) {
+  const overdue = !t.done && t.deadline && t.deadline < today;
+  const row = document.createElement("div");
+  row.className = "row" + (t.done ? " done" : "");
+  row.style.animationDelay = (i * .03) + "s";
+  const meta = [];
+  if (t.deadline) meta.push((overdue ? '<span class="overdue">' : "<span>") + fmtNice(t.deadline) + (overdue ? " · überfällig</span>" : "</span>"));
+  if (t.deadlineTime) meta.push("<span>" + t.deadlineTime + " Uhr</span>");
+  row.innerHTML = `
+    <button class="ring-check ${t.done ? "on" : ""}" style="${t.done ? "background:var(--todo);border-color:var(--todo)" : ""}">${t.done ? "✓" : ""}</button>
+    <div class="grow"><div class="t">${esc(t.title)}</div>${meta.length ? '<div class="s">' + meta.join("") + "</div>" : ""}</div>`;
+  const toggle = () => { t.done = !t.done; save(); rerenderAll(); };
+  row.querySelector(".ring-check").addEventListener("click", toggle);
+  enableSwipe(row, {
+    onRight: toggle,
+    onDelete: () => { data.todos = data.todos.filter(x => x.id !== t.id); save(); rerenderAll(); }
+  });
+  return row;
+}
+
+function openTodoSheet() {
+  const { sheet, close } = openSheet(`
+    <h3>Neue Aufgabe</h3>
+    <div class="sub">Was willst du erledigen?</div>
+    <input type="text" id="sh-todo-title" placeholder="z.B. Zimmer aufräumen" autocomplete="off">
+    <label>Frist (optional)</label>
+    <div class="pickers">
+      <div class="pick" id="pick-date"><span>📅</span><span id="pick-date-l">Datum</span><input type="date" id="sh-todo-date"></div>
+      <div class="pick" id="pick-time"><span>🕐</span><span id="pick-time-l">Uhrzeit</span><input type="time" id="sh-todo-time"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Hinzufügen</button>
+    </div>`, { accent: "var(--todo)" });
+  const dateI = sheet.querySelector("#sh-todo-date"), timeI = sheet.querySelector("#sh-todo-time");
+  const upd = () => {
+    sheet.querySelector("#pick-date-l").textContent = dateI.value ? fmtNice(dateI.value) : "Datum";
+    sheet.querySelector("#pick-date").classList.toggle("set", !!dateI.value);
+    sheet.querySelector("#pick-time-l").textContent = timeI.value ? timeI.value + " Uhr" : "Uhrzeit";
+    sheet.querySelector("#pick-time").classList.toggle("set", !!timeI.value);
+  };
+  dateI.addEventListener("change", upd);
+  timeI.addEventListener("change", upd);
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const title = sheet.querySelector("#sh-todo-title").value.trim();
+    if (!title) return;
+    data.todos.push({ id: uid(), title, deadline: dateI.value, deadlineTime: timeI.value, done: false });
+    save(); close(); rerenderAll();
+  });
+  setTimeout(() => sheet.querySelector("#sh-todo-title").focus(), 350);
+}
+
+/* ================================================================
+   GEWOHNHEITEN
+   ================================================================ */
+document.querySelectorAll("#habit-seg button").forEach(b => {
+  b.addEventListener("click", () => {
+    habitView = b.dataset.hview;
+    document.querySelectorAll("#habit-seg button").forEach(x => x.classList.toggle("on", x.dataset.hview === habitView));
+    renderHabits(); updateFab();
+  });
+});
+
+function renderHabits() {
+  document.querySelectorAll("#habit-seg button").forEach(x => x.classList.toggle("on", x.dataset.hview === habitView));
+  const box = $("habits-body");
+  box.innerHTML = "";
+  if (habitView === "daily") renderDailies(box); else renderAvoids(box);
+}
+
+function renderDailies(box) {
+  if (!data.dailies.length) {
+    box.innerHTML = '<div class="empty-state">Noch keine Gewohnheiten.<br>Leg über + die erste an – z.B. „20 Min lesen“.</div>';
+    return;
+  }
+  box.insertAdjacentHTML("beforeend", '<div class="hint">Wischen: rechts = abhaken · links = löschen</div>');
+  data.dailies.forEach((h, i) => {
+    const st = habitState(h);
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.animationDelay = (i * .03) + "s";
+    let status;
+    if (st.doneToday) status = "Heute erledigt";
+    else if (st.due) status = '<span style="color:var(--habit);font-weight:700">Jetzt fällig</span>';
+    else status = "Nächste: " + fmtNice(st.nextDue);
+    row.innerHTML = `
+      <button class="ring-check ${st.doneToday ? "on" : ""}" style="${st.doneToday ? "background:var(--habit);border-color:var(--habit)" : ""}">${st.doneToday ? "✓" : ""}</button>
+      <div class="grow">
+        <div class="t">${esc(h.title)}</div>
+        <div class="s"><span>🔥 ${st.streak}</span><span>${freqLabel(st.interval)}</span><span>${status}</span></div>
+      </div>`;
+    row.querySelector(".ring-check").addEventListener("click", () => toggleDailyHabit(h));
+    enableSwipe(row, {
+      onRight: () => toggleDailyHabit(h),
+      onDelete: () => { data.dailies = data.dailies.filter(x => x.id !== h.id); save(); rerenderAll(); }
+    });
+    box.appendChild(row);
   });
 }
 
-/* ---------- Medien (Bücher / Filme & Serien / Spiele) ---------- */
+function renderAvoids(box) {
+  if (!data.avoids.length) {
+    box.innerHTML = '<div class="empty-state">Noch nichts eingetragen.<br>Was willst du dir abgewöhnen?</div>';
+    return;
+  }
+  box.insertAdjacentHTML("beforeend", '<div class="hint">Wischen: rechts = Rückfall · links = löschen</div>');
+  data.avoids.forEach((a, i) => {
+    const days = daysSince(a.since);
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.animationDelay = (i * .03) + "s";
+    row.innerHTML = `
+      <div class="grow">
+        <div class="t">${esc(a.title)}</div>
+        <div class="s"><span>seit ${new Date(a.since).toLocaleDateString("de-DE")}</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--serif);font-size:24px;font-weight:600;color:var(--avoid)">${days}</div>
+        <div style="font-size:11px;color:var(--faint)">${days === 1 ? "Tag" : "Tage"}</div>
+      </div>`;
+    enableSwipe(row, {
+      onRight: () => resetAvoid(a),
+      onDelete: () => { data.avoids = data.avoids.filter(x => x.id !== a.id); save(); rerenderAll(); }
+    });
+    box.appendChild(row);
+  });
+}
+
+function openDailySheet() {
+  const { sheet, close } = openSheet(`
+    <h3>Neue Gewohnheit</h3>
+    <div class="sub">Dranbleiben zahlt sich aus.</div>
+    <input type="text" id="sh-daily-title" placeholder="z.B. 20 Min lesen" autocomplete="off">
+    <label>Wie oft?</label>
+    <select id="sh-daily-freq">
+      <option value="1">Täglich</option>
+      <option value="2">Alle 2 Tage</option>
+      <option value="3">Alle 3 Tage</option>
+      <option value="7">1x pro Woche</option>
+      <option value="14">Alle 2 Wochen</option>
+    </select>
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Hinzufügen</button>
+    </div>`, { accent: "var(--habit)" });
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const title = sheet.querySelector("#sh-daily-title").value.trim();
+    if (!title) return;
+    data.dailies.push({
+      id: uid(), title,
+      interval: parseInt(sheet.querySelector("#sh-daily-freq").value, 10) || 1,
+      streak: 0, lastDone: null, prevStreak: 0, prevLastDone: null
+    });
+    save(); close(); rerenderAll();
+  });
+  setTimeout(() => sheet.querySelector("#sh-daily-title").focus(), 350);
+}
+
+function openAvoidSheet() {
+  const { sheet, close } = openSheet(`
+    <h3>Vermeiden</h3>
+    <div class="sub">Der Zähler startet ab jetzt.</div>
+    <input type="text" id="sh-avoid-title" placeholder="z.B. Snoozen am Morgen" autocomplete="off">
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Starten</button>
+    </div>`, { accent: "var(--avoid)" });
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const title = sheet.querySelector("#sh-avoid-title").value.trim();
+    if (!title) return;
+    data.avoids.push({ id: uid(), title, since: Date.now() });
+    save(); close(); rerenderAll();
+  });
+  setTimeout(() => sheet.querySelector("#sh-avoid-title").focus(), 350);
+}
+
+/* ================================================================
+   MEDIEN (Bücher / Filme & Serien / Spiele)
+   ================================================================ */
 const MEDIA = {
   book: {
     label: "Bücher", one: "Buch", many: "Bücher", verb: "gelesen",
     placeholder: "Buchtitel und Autor, z.B. Momo – Michael Ende",
-    thing: "des genannten Buchs", noun: "Buch",
-    tipsFabLabel: "📚 Buch-Tipps", tipsTitle: "📚 Buchvorschläge",
+    thing: "des genannten Buchs",
+    tipsTitle: "Buchvorschläge", tipsBtn: "✨ Buch-Tipps für dich",
     known: "Diese Bücher kenne ich",
     tipsIntro: "Diese Bücher habe ich gelesen und mochte sie",
     tipsAsk: "Empfiehl mir 5 Bücher, die dazu passen und die ich noch nicht gelesen habe. Gib pro Buch genau eine Zeile im Format: Titel | Autor | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
     summarize: "Zusammenfassen", redo: "Neue Zusammenfassung",
-    emptyHint: "Zum Zusammenfassen tippen", loadingHint: "Claude fasst zusammen…",
+    emptyHint: "Noch keine Zusammenfassung", loadingHint: "Claude fasst zusammen…",
     emptyModal: "Noch keine Zusammenfassung. Drücke „Zusammenfassen“.",
     defaultIcon: "📚",
     cats: ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"],
@@ -1257,13 +1216,13 @@ const MEDIA = {
   screen: {
     label: "Filme & Serien", one: "Titel", many: "Titel", verb: "gesehen",
     placeholder: "Film oder Serie, z.B. Interstellar",
-    thing: "des genannten Films bzw. der genannten Serie", noun: "Film/Serie",
-    tipsFabLabel: "🎬 Film-Tipps", tipsTitle: "🎬 Film- & Serien-Tipps",
+    thing: "des genannten Films bzw. der genannten Serie",
+    tipsTitle: "Film- & Serien-Tipps", tipsBtn: "✨ Film-Tipps für dich",
     known: "Diese Filme und Serien kenne ich",
     tipsIntro: "Diese Filme und Serien habe ich gesehen und mochte sie",
     tipsAsk: "Empfiehl mir 5 Filme oder Serien, die dazu passen und die ich noch nicht gesehen habe. Gib pro Titel genau eine Zeile im Format: Titel | Jahr oder Regie | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
     summarize: "Worum geht's?", redo: "Neu beschreiben",
-    emptyHint: "Für Beschreibung tippen", loadingHint: "Claude beschreibt…",
+    emptyHint: "Noch keine Beschreibung", loadingHint: "Claude beschreibt…",
     emptyModal: "Noch keine Beschreibung. Drücke „Worum geht's?“.",
     defaultIcon: "🎬",
     cats: ["Action", "Drama", "Komödie", "Sci-Fi & Fantasy", "Thriller & Horror", "Doku", "Anime", "Serie", "Sonstiges"],
@@ -1272,34 +1231,206 @@ const MEDIA = {
   game: {
     label: "Spiele", one: "Spiel", many: "Spiele", verb: "gespielt",
     placeholder: "Videospiel, z.B. The Legend of Zelda: BotW",
-    thing: "des genannten Videospiels", noun: "Videospiel",
-    tipsFabLabel: "🎮 Spiel-Tipps", tipsTitle: "🎮 Spiele-Tipps",
+    thing: "des genannten Videospiels",
+    tipsTitle: "Spiele-Tipps", tipsBtn: "✨ Spiel-Tipps für dich",
     known: "Diese Spiele kenne ich",
     tipsIntro: "Diese Spiele habe ich gespielt und mochte sie",
     tipsAsk: "Empfiehl mir 5 Videospiele, die dazu passen und die ich noch nicht gespielt habe. Gib pro Spiel genau eine Zeile im Format: Titel | Plattform oder Studio | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
     summarize: "Worum geht's?", redo: "Neu beschreiben",
-    emptyHint: "Für Beschreibung tippen", loadingHint: "Claude beschreibt…",
+    emptyHint: "Noch keine Beschreibung", loadingHint: "Claude beschreibt…",
     emptyModal: "Noch keine Beschreibung. Drücke „Worum geht's?“.",
     defaultIcon: "🎮",
-    cats: ["Rollenspiel", "Action & Adventure", "Shooter", "Strategie", "Aufbau & Simulation", "Sport & Rennen", "Indie", "Sonstiges"],
-    icons: { "Rollenspiel": "⚔️", "Action & Adventure": "🗺️", "Shooter": "🎯", "Strategie": "♟️", "Aufbau & Simulation": "🏗️", "Sport & Rennen": "🏎️", "Indie": "🕹️", "Sonstiges": "🎮" }
+    cats: ["Fantasy", "Sci-Fi", "Action & Abenteuer", "Horror & Thriller", "Mystery & Krimi", "Drama & Story", "Open World", "Sonstiges"],
+    icons: { "Fantasy": "🐉", "Sci-Fi": "🚀", "Action & Abenteuer": "🗺️", "Horror & Thriller": "🔪", "Mystery & Krimi": "🕵️", "Drama & Story": "🎭", "Open World": "🌍", "Sonstiges": "🎮" }
   }
 };
-
-let mediaView = "book";
 function M() { return MEDIA[mediaView]; }
-const BOOK_MODAL_OPTS = () => ({
-  purple: true,
-  rating: true,
-  rerender: () => renderBooks(),
-  ask: b => summarizeBook(b),
-  labels: { has: M().redo, none: M().summarize, empty: M().emptyModal }
+function catOf(b) { return b.cat || "Sonstiges"; }
+function iconOf(cat, media = mediaView) { return MEDIA[media].icons[cat] || MEDIA[media].defaultIcon; }
+function itemsOfMedia() { return data.books.filter(b => (b.media || "book") === mediaView); }
+
+document.querySelectorAll("#media-seg button").forEach(b => {
+  b.addEventListener("click", () => {
+    mediaView = b.dataset.media; booksView = null;
+    document.querySelectorAll("#media-seg button").forEach(x => x.classList.toggle("on", x.dataset.media === mediaView));
+    renderMedia();
+  });
 });
 
-async function summarizeBook(b) {
+/* Tier-Wertung: S = Highlight … D = gefällt mir nicht */
+const TIERS = ["S", "A", "B", "C", "D"];
+const TIER_COLOR = { S: "#e8796a", A: "#e0a458", B: "#d9bc5a", C: "#8fc178", D: "#7aa5f0" };
+function tierRank(t) { const i = TIERS.indexOf(t); return i === -1 ? 99 : i; }
+function tierBadge(t) {
+  if (!t || !TIER_COLOR[t]) return "";
+  return `<span class="tier-badge" style="background:${TIER_COLOR[t]}">${t}</span>`;
+}
+
+function renderMedia() {
+  document.querySelectorAll("#media-seg button").forEach(x => x.classList.toggle("on", x.dataset.media === mediaView));
+  const box = $("media-body");
+  const cfg = M();
+  box.innerHTML = "";
+  const items = itemsOfMedia();
+
+  if (!items.length) {
+    box.innerHTML = `<div class="empty-state">Noch nichts unter „${esc(cfg.label)}“.<br>Füge über + deinen ersten Eintrag hinzu.</div>`;
+    booksView = null;
+    return;
+  }
+
+  // Tipps + Tierlist
+  box.insertAdjacentHTML("beforeend", `
+    <div class="duo">
+      <button class="ghost" id="media-tips" style="color:var(--media)">✨ Tipps</button>
+      <button class="ghost" id="media-tierlist">🏆 Tierlist</button>
+    </div>`);
+  $("media-tips").addEventListener("click", openTipsSheet);
+  $("media-tierlist").addEventListener("click", openTierlistSheet);
+
+  if (booksView === null) {
+    box.insertAdjacentHTML("beforeend",
+      `<div class="media-total">Insgesamt ${cfg.verb}: <b>${items.length} ${items.length === 1 ? cfg.one : cfg.many}</b></div>`);
+    const cats = [...new Set(items.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
+    const grid = document.createElement("div");
+    grid.className = "tiles";
+    cats.forEach((cat, i) => {
+      const inCat = items.filter(b => catOf(b) === cat);
+      const sCount = inCat.filter(b => b.tier === "S").length;
+      const tile = document.createElement("button");
+      tile.className = "tile";
+      tile.style.animationDelay = (i * .04) + "s";
+      tile.innerHTML = `<div class="ic">${iconOf(cat)}</div><div class="n">${esc(cat)}</div>
+        <div class="c">${inCat.length} ${inCat.length === 1 ? cfg.one : cfg.many}${sCount ? " · " + sCount + "× S" : ""}</div>`;
+      tile.addEventListener("click", () => { booksView = cat; renderMedia(); });
+      grid.appendChild(tile);
+    });
+    box.appendChild(grid);
+    return;
+  }
+
+  // Innerhalb einer Kategorie
+  const back = document.createElement("button");
+  back.className = "back-row";
+  back.textContent = "← Alle Kategorien";
+  back.addEventListener("click", () => { booksView = null; renderMedia(); });
+  box.appendChild(back);
+  box.insertAdjacentHTML("beforeend", `<div class="cat-title">${iconOf(booksView)} ${esc(booksView)}</div>`);
+  box.insertAdjacentHTML("beforeend", '<div class="hint">Antippen für Details · nach links wischen = löschen</div>');
+
+  const inCat = items.filter(x => catOf(x) === booksView).sort((a, b) => tierRank(a.tier) - tierRank(b.tier));
+  inCat.forEach((b, i) => {
+    const cfg2 = MEDIA[b.media] || MEDIA.book;
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.cursor = "pointer";
+    row.style.animationDelay = (i * .03) + "s";
+    const status = b.loading ? cfg2.loadingHint : (b.answer ? "" : cfg2.emptyHint);
+    row.innerHTML = `
+      <div class="grow">
+        <div class="t">${esc(b.question)}</div>
+        ${status ? '<div class="s"><span>' + esc(status) + "</span></div>" : ""}
+      </div>${tierBadge(b.tier)}<span style="color:var(--faint)">›</span>`;
+    row.addEventListener("click", () => openMediaDetail(b));
+    enableSwipe(row, {
+      onDelete: () => { data.books = data.books.filter(x => x.id !== b.id); save(); renderMedia(); }
+    });
+    box.appendChild(row);
+  });
+}
+
+/* Tierlist-Übersicht: Einträge per Ziehen einsortieren */
+function openTierlistSheet() {
+  const cfg = M();
+  const { sheet, close } = openSheet(`
+    <h3>🏆 Tierlist · ${esc(cfg.label)}</h3>
+    <div class="sub">Zieh einen Eintrag in eine Reihe. S = Highlight · D = gefällt mir nicht.</div>
+    <div id="tl-wrap"></div>
+    <label>Ohne Wertung</label>
+    <div class="tl-pool" id="tl-pool" data-tier=""></div>
+    <div class="hint" style="margin-top:8px">Zurück in „Ohne Wertung“ ziehen = Wertung entfernen.</div>
+    <div class="sheet-actions"><button class="quiet" data-act="close">Close</button></div>`, { accent: "var(--media)" });
+  sheet.querySelector('[data-act="close"]').addEventListener("click", close);
+
+  const rebuild = () => {
+    const items = itemsOfMedia();
+    const wrap = sheet.querySelector("#tl-wrap");
+    wrap.innerHTML = TIERS.map(t => `
+      <div class="tl-row" data-tier="${t}">
+        <span class="tier-badge" style="background:${TIER_COLOR[t]}">${t}</span>
+        <div class="tl-items"></div>
+      </div>`).join("");
+    TIERS.forEach(t => {
+      const target = wrap.querySelector(`.tl-row[data-tier="${t}"] .tl-items`);
+      const inTier = items.filter(b => b.tier === t);
+      if (!inTier.length) target.innerHTML = '<span class="tl-empty">–</span>';
+      else inTier.forEach(b => target.appendChild(makeTierChip(b, sheet, rebuild)));
+    });
+    const pool = sheet.querySelector("#tl-pool");
+    pool.innerHTML = "";
+    const unrated = items.filter(b => !b.tier);
+    if (!unrated.length) pool.innerHTML = '<span class="tl-empty">Alles einsortiert ✓</span>';
+    else unrated.forEach(b => pool.appendChild(makeTierChip(b, sheet, rebuild)));
+  };
+  rebuild();
+}
+
+function makeTierChip(b, sheet, rebuild) {
+  const chip = document.createElement("span");
+  chip.className = "tl-item";
+  chip.textContent = b.question;
+  chip.style.touchAction = "none";
+  chip.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    let ghost = null, dragging = false;
+    try { chip.setPointerCapture(e.pointerId); } catch {}
+    const clearOver = () => sheet.querySelectorAll("[data-tier]").forEach(r => r.classList.remove("tl-over"));
+    const targetAt = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      return el ? el.closest("[data-tier]") : null;
+    };
+    const move = ev => {
+      if (!dragging && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) {
+        dragging = true;
+        ghost = chip.cloneNode(true);
+        ghost.classList.add("tl-ghost");
+        document.body.appendChild(ghost);
+        chip.classList.add("tl-dragging");
+      }
+      if (!dragging) return;
+      ghost.style.left = ev.clientX + "px";
+      ghost.style.top = ev.clientY + "px";
+      clearOver();
+      const t = targetAt(ev.clientX, ev.clientY);
+      if (t) t.classList.add("tl-over");
+    };
+    const up = ev => {
+      chip.removeEventListener("pointermove", move);
+      chip.removeEventListener("pointerup", up);
+      chip.removeEventListener("pointercancel", up);
+      if (ghost) ghost.remove();
+      chip.classList.remove("tl-dragging");
+      clearOver();
+      if (!dragging) return;
+      const t = targetAt(ev.clientX, ev.clientY);
+      if (t) {
+        b.tier = t.dataset.tier || "";
+        save(); renderMedia(); rebuild();
+      }
+    };
+    chip.addEventListener("pointermove", move);
+    chip.addEventListener("pointerup", up);
+    chip.addEventListener("pointercancel", up);
+  });
+  return chip;
+}
+
+async function summarizeMedia(b) {
   const cfg = MEDIA[b.media] || MEDIA.book;
   b.loading = true;
-  renderBooks();
+  renderMedia();
   try {
     const r = await callClaude({
       system: "Antworte auf Deutsch in genau diesem Format: Erste Zeile 'KATEGORIE: X', wobei X genau eine dieser Kategorien ist: " + cfg.cats.join(", ") + ". Danach eine Zusammenfassung " + cfg.thing + " in maximal 4 kurzen Sätzen: Worum geht es, was macht es aus? Kein Vorwort, keine Aufzählung, keine Spoiler zum Schluss der Handlung.",
@@ -1311,7 +1442,6 @@ async function summarizeBook(b) {
       const m = text.match(/^KATEGORIE:\s*(.+)$/m);
       if (m) {
         const cat = m[1].trim();
-        // Automatische Einordnung nur, wenn keine Kategorie manuell gewählt wurde
         if (cfg.cats.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
         text = text.replace(/^KATEGORIE:.*\n?/m, "").trim();
       }
@@ -1322,227 +1452,197 @@ async function summarizeBook(b) {
     alert("Das hat nicht geklappt: " + err.message);
   } finally {
     b.loading = false;
-    save(); renderBooks(); renderUsage();
+    save(); renderMedia();
   }
 }
 
-let booksView = null; // null = Ordner-Übersicht, sonst der geöffnete Kategoriename
-
-// Medien-Umschalter + Formular an den gewählten Typ anpassen
-function applyMediaToForm() {
+function openMediaSheet() {
   const cfg = M();
-  document.getElementById("book-title").placeholder = cfg.placeholder;
-  const sel = document.getElementById("book-cat");
-  sel.innerHTML = '<option value="Auto" selected>Kategorie: Auto (Claude wählt)</option>'
-    + cfg.cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
-}
-document.querySelectorAll(".media-seg button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    mediaView = btn.dataset.media;
-    booksView = null;
-    document.querySelectorAll(".media-seg button").forEach(b => b.classList.toggle("on", b.dataset.media === mediaView));
-    applyMediaToForm();
-    renderBooks();
-  });
-});
-applyMediaToForm();
+  const catOpts = cfg.cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  const tierBtns = TIERS.map(t => `<button data-tier="${t}">${t}</button>`).join("");
+  const { sheet, close } = openSheet(`
+    <h3>${esc(cfg.label)}: Neuer Eintrag</h3>
+    <div class="sub">Claude beschreibt und sortiert ihn automatisch ein.</div>
+    <input type="text" id="sh-media-title" placeholder="${esc(cfg.placeholder)}" autocomplete="off">
+    <label>Kategorie</label>
+    <select id="sh-media-cat">
+      <option value="Auto" selected>Auto (Claude wählt)</option>${catOpts}
+    </select>
+    <label>Meine Wertung (optional)</label>
+    <div class="tier-row" id="sh-add-tier">${tierBtns}</div>
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Hinzufügen</button>
+    </div>`, { accent: "var(--media)" });
 
-document.getElementById("form-books").addEventListener("submit", e => {
-  e.preventDefault();
-  const sel = document.getElementById("book-cat").value;
-  const b = {
-    id: uid(),
-    media: mediaView,
-    question: document.getElementById("book-title").value.trim(),
-    cat: sel === "Auto" ? "" : sel,
-    autoCat: sel === "Auto",
-    answer: "",
-    cost: 0
-  };
-  data.books.push(b);
-  booksView = null; // zurück zur Ordner-Übersicht, damit der Eintrag einsortiert erscheint
-  save(); e.target.reset(); renderBooks();
-  summarizeBook(b);
-});
-
-function catOf(b) { return b.cat || "Sonstiges"; }
-function iconOf(cat, media = mediaView) { return (MEDIA[media].icons[cat]) || MEDIA[media].defaultIcon; }
-function itemsOfMedia() { return data.books.filter(b => (b.media || "book") === mediaView); }
-
-function updateTipsFab() {
-  const show = currentTab === "books" && itemsOfMedia().length > 0;
-  tipsFab.hidden = !show;
-  if (show) tipsFab.textContent = M().tipsFabLabel;
-}
-
-function renderBooks() {
-  const ul = document.getElementById("list-books");
-  const cfg = M();
-  ul.innerHTML = "";
-  updateTipsFab();
-  const items = itemsOfMedia();
-
-  if (!items.length) {
-    ul.innerHTML = `<div class="empty-state">Noch keine Einträge unter „${esc(cfg.label)}“ – drücke auf +.</div>`;
-    booksView = null;
-    return;
-  }
-
-  // ----- Ordner-Übersicht -----
-  if (booksView === null) {
-    const total = document.createElement("div");
-    total.className = "book-total";
-    total.innerHTML = "Insgesamt " + cfg.verb + ": <b>" + items.length + " " + (items.length === 1 ? cfg.one : cfg.many) + "</b>";
-    ul.appendChild(total);
-
-    const cats = [...new Set(items.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
-    const grid = document.createElement("div");
-    grid.className = "folder-grid";
-    for (const cat of cats) {
-      const count = items.filter(b => catOf(b) === cat).length;
-      const folder = document.createElement("button");
-      folder.className = "folder";
-      folder.innerHTML = `<span class="folder-icon">${iconOf(cat)}</span><span class="folder-name">${esc(cat)}</span><span class="folder-count">${count} ${count === 1 ? cfg.one : cfg.many}</span>`;
-      folder.addEventListener("click", () => { booksView = cat; renderBooks(); });
-      grid.appendChild(folder);
-    }
-    ul.appendChild(grid);
-    return;
-  }
-
-  // ----- Einträge innerhalb einer Kategorie -----
-  const back = document.createElement("button");
-  back.className = "back-btn";
-  back.textContent = "← Kategorien";
-  back.addEventListener("click", () => { booksView = null; renderBooks(); });
-  ul.appendChild(back);
-
-  const head = document.createElement("div");
-  head.className = "cat-head";
-  head.textContent = iconOf(booksView) + " " + booksView;
-  ul.appendChild(head);
-
-  const bHint = document.createElement("div");
-  bHint.className = "swipe-hint";
-  bHint.textContent = "💡 Nach links wischen = löschen";
-  ul.appendChild(bHint);
-
-  const inCat = items.filter(x => catOf(x) === booksView).sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  for (const b of inCat) {
-    const li = document.createElement("li");
-    li.className = "item";
-    li.style.cursor = "pointer";
-    const status = b.loading ? cfg.loadingHint : (b.answer ? "" : cfg.emptyHint);
-    li.innerHTML = `
-      <div class="know-head">
-        <div class="body">
-          <div class="know-q">${esc(b.question)}</div>
-          ${b.rating ? '<div class="item-stars">' + starsHtml(b.rating, false) + "</div>" : ""}
-          ${status ? '<div class="know-a empty">' + esc(status) + "</div>" : ""}
-        </div>
-      </div>`;
-    li.addEventListener("click", () => openModal(b, BOOK_MODAL_OPTS()));
-    // Wischen nach links = löschen (Wischen nach rechts hat hier keine Aktion)
-    enableSwipe(li, {
-      onDelete: () => { data.books = data.books.filter(x => x.id !== b.id); save(); renderBooks(); }
+  let chosenTier = "";
+  sheet.querySelectorAll("#sh-add-tier button").forEach(bt => bt.addEventListener("click", () => {
+    chosenTier = (chosenTier === bt.dataset.tier) ? "" : bt.dataset.tier;
+    sheet.querySelectorAll("#sh-add-tier button").forEach(x => {
+      const on = x.dataset.tier === chosenTier;
+      x.classList.toggle("on", on);
+      x.style.background = on ? TIER_COLOR[x.dataset.tier] : "";
     });
-    ul.appendChild(li);
-  }
+  }));
+
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const title = sheet.querySelector("#sh-media-title").value.trim();
+    if (!title) return;
+    const sel = sheet.querySelector("#sh-media-cat").value;
+    const b = { id: uid(), media: mediaView, question: title, cat: sel === "Auto" ? "" : sel, autoCat: sel === "Auto", answer: "", cost: 0, tier: chosenTier };
+    data.books.push(b);
+    booksView = null;
+    save(); close(); renderMedia();
+    summarizeMedia(b);
+  });
+  setTimeout(() => sheet.querySelector("#sh-media-title").focus(), 350);
 }
 
-/* ---------- Vorschläge (fester Knopf + aufgeräumtes Overlay) ---------- */
-async function fetchBookTips() {
+function openMediaDetail(b) {
+  const cfg = MEDIA[b.media] || MEDIA.book;
+  const tierBtns = TIERS.map(t =>
+    `<button data-tier="${t}" class="${b.tier === t ? "on" : ""}" style="${b.tier === t ? "background:" + TIER_COLOR[t] : ""}">${t}</button>`).join("");
+  const { sheet, close } = openSheet(`
+    <h3>${esc(b.question)}</h3>
+    <div class="sub">${esc(catOf(b))}${b.cost ? " · KI-Kosten: " + fmtCost(b.cost) : ""}</div>
+    <label>Meine Wertung</label>
+    <div class="tier-row" id="sh-tier">${tierBtns}</div>
+    <div class="hint" style="margin-top:8px">S = Highlight · D = gefällt mir nicht · nochmal tippen = entfernen</div>
+    <label>${b.media === "book" ? "Zusammenfassung" : "Beschreibung"}</label>
+    <div class="answer ${b.answer ? "" : "blank"}" id="sh-answer">${b.answer ? esc(b.answer) : esc(cfg.emptyModal)}</div>
+    <div class="sheet-actions">
+      <button class="primary" data-act="ask">${b.answer ? cfg.redo : cfg.summarize}</button>
+      <button class="quiet" data-act="edit">Edit</button>
+      <button class="danger" data-act="del">🗑</button>
+    </div>`, { accent: "var(--media)" });
+
+  sheet.querySelectorAll("#sh-tier button").forEach(bt => bt.addEventListener("click", () => {
+    const t = bt.dataset.tier;
+    b.tier = (b.tier === t) ? "" : t;   // gleicher Tier nochmal = entfernen
+    save();
+    sheet.querySelectorAll("#sh-tier button").forEach(x => {
+      const on = x.dataset.tier === b.tier;
+      x.classList.toggle("on", on);
+      x.style.background = on ? TIER_COLOR[x.dataset.tier] : "";
+    });
+    renderMedia();
+  }));
+
+  sheet.querySelector('[data-act="ask"]').addEventListener("click", async ev => {
+    ev.target.disabled = true; ev.target.textContent = "Claude denkt nach…";
+    await summarizeMedia(b);
+    close(); openMediaDetail(b);
+  });
+  sheet.querySelector('[data-act="edit"]').addEventListener("click", ev => {
+    const div = sheet.querySelector("#sh-answer");
+    const ta = document.createElement("textarea");
+    ta.value = b.answer || "";
+    div.replaceWith(ta);
+    ev.target.textContent = "Save";
+    ev.target.onclick = () => { b.answer = ta.value.trim(); save(); renderMedia(); close(); openMediaDetail(b); };
+    ta.focus();
+  });
+  sheet.querySelector('[data-act="del"]').addEventListener("click", () => {
+    if (!confirm("„" + b.question + "“ löschen?")) return;
+    data.books = data.books.filter(x => x.id !== b.id);
+    save(); close(); renderMedia();
+  });
+}
+
+async function fetchTips() {
   const cfg = M();
   const items = itemsOfMedia();
-  const hasRatings = items.some(b => b.rating);
+  const hasTiers = items.some(b => b.tier);
   let userText;
-  if (hasRatings) {
-    const list = items.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "") + (b.rating ? " – " + b.rating + "/5 Sternen" : " – ohne Bewertung")).join("; ");
-    userText = cfg.known + " (mit meinen Sterne-Bewertungen 1–5): " + list
-      + ". Berücksichtige die Bewertungen stark: empfiehl vor allem Ähnliches zu den hoch bewerteten (4–5 Sterne) und meide Ähnliches zu den niedrig bewerteten (1–2 Sterne). " + cfg.tipsAsk;
+  if (hasTiers) {
+    const list = items.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "") + (b.tier ? " – Tier " + b.tier : " – ohne Wertung")).join("; ");
+    userText = cfg.known + " (mit meiner Tier-Wertung: S = absolutes Highlight, A = sehr gut, B = okay, C = schwach, D = gefällt mir nicht): " + list
+      + ". Berücksichtige die Wertungen stark: empfiehl vor allem Ähnliches zu S- und A-Titeln und meide Ähnliches zu C- und D-Titeln. " + cfg.tipsAsk;
   } else {
-    const titles = items.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ");
-    userText = cfg.tipsIntro + ": " + titles + ". " + cfg.tipsAsk;
+    userText = cfg.tipsIntro + ": " + items.map(b => b.question + (b.cat ? " [" + b.cat + "]" : "")).join("; ") + ". " + cfg.tipsAsk;
   }
   const r = await callClaude({
     system: "Du gibst Empfehlungen für " + cfg.label + ". Antworte auf Deutsch, ohne Vorwort und ohne Abschluss.",
-    userText,
-    maxTokens: 500
+    userText, maxTokens: 500
   });
   if (r) {
     data.mediaTips[mediaView] = { text: r.text, cost: r.cost, date: fmtDate(todayStr()) };
-    save(); renderUsage();
+    save();
   }
 }
 
-function openTipsModal() {
-  const tips = data.mediaTips[mediaView];
-  if (!tips) return;
+function tipsCardsHtml(tips) {
   const lines = tips.text.split("\n").map(l => l.trim()).filter(Boolean);
-  const cards = lines.map((line, i) => {
-    const clean = line.replace(/^\s*\d+[.)]\s*/, "");        // evtl. Nummerierung entfernen
+  return lines.map((line, i) => {
+    const clean = line.replace(/^\s*\d+[.)]\s*/, "");
     const parts = clean.split("|").map(s => s.trim());
-    const title = parts[0] || clean;
-    const author = parts[1] || "";
-    const reason = parts.slice(2).join(" – ");
     return `<div class="tip-card">
-      <div class="tip-title">${i + 1}. ${esc(title)}</div>
-      ${author ? '<div class="tip-author">' + esc(author) + "</div>" : ""}
-      ${reason ? '<div class="tip-reason">' + esc(reason) + "</div>" : ""}
+      <div class="tt">${i + 1}. ${esc(parts[0] || clean)}</div>
+      ${parts[1] ? '<div class="ta">' + esc(parts[1]) + "</div>" : ""}
+      ${parts[2] ? '<div class="tr">' + esc(parts.slice(2).join(" – ")) + "</div>" : ""}
     </div>`;
   }).join("");
+}
 
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const modal = document.createElement("div");
-  modal.className = "modal purple";
-  modal.innerHTML = `
-    <h2>${esc(M().tipsTitle)}</h2>
-    <div class="modal-meta">${esc(tips.date || "")} · Kosten: ${fmtCost(tips.cost || 0)}</div>
-    <div class="modal-answer" style="white-space:normal">${cards}</div>
-    <div class="modal-actions">
-      <button class="ask-btn" data-act="refresh">Neue Vorschläge</button>
-      <button class="small-btn" data-act="close">Close</button>
-    </div>`;
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
-
-  const close = () => backdrop.remove();
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
-  modal.querySelector('[data-act="close"]').addEventListener("click", close);
-  modal.querySelector('[data-act="refresh"]').addEventListener("click", async ev => {
-    ev.target.disabled = true;
-    ev.target.textContent = "Claude sucht…";
-    try { await fetchBookTips(); close(); openTipsModal(); }
+async function openTipsSheet() {
+  const cfg = M();
+  if (!data.mediaTips[mediaView]) {
+    const { sheet, close } = openSheet(`<h3>${esc(cfg.tipsTitle)}</h3><div class="sub">Claude sucht passende Vorschläge…</div>`, { accent: "var(--media)" });
+    try { await fetchTips(); close(); }
+    catch (err) { close(); alert("Das hat nicht geklappt: " + err.message); return; }
+    if (!data.mediaTips[mediaView]) return;
+  }
+  const tips = data.mediaTips[mediaView];
+  const { sheet, close } = openSheet(`
+    <h3>${esc(cfg.tipsTitle)}</h3>
+    <div class="sub">${esc(tips.date || "")} · Kosten: ${fmtCost(tips.cost || 0)}</div>
+    ${tipsCardsHtml(tips)}
+    <div class="sheet-actions">
+      <button class="quiet" data-act="close">Close</button>
+      <button class="primary" data-act="refresh">Neue Vorschläge</button>
+    </div>`, { accent: "var(--media)" });
+  sheet.querySelector('[data-act="close"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="refresh"]').addEventListener("click", async ev => {
+    ev.target.disabled = true; ev.target.textContent = "Claude sucht…";
+    try { await fetchTips(); close(); openTipsSheet(); }
     catch (err) { alert("Das hat nicht geklappt: " + err.message); ev.target.disabled = false; ev.target.textContent = "Neue Vorschläge"; }
   });
 }
 
-tipsFab.addEventListener("click", async () => {
-  if (!itemsOfMedia().length) {
-    alert("Trag zuerst mindestens einen Eintrag ein – dann kann Claude passende Vorschläge machen.");
-    return;
-  }
-  if (data.mediaTips[mediaView]) { openTipsModal(); return; }
-  tipsFab.disabled = true;
-  tipsFab.textContent = "Claude sucht…";
-  try { await fetchBookTips(); openTipsModal(); }
-  catch (err) { alert("Das hat nicht geklappt: " + err.message); }
-  finally { tipsFab.disabled = false; tipsFab.textContent = M().tipsFabLabel; }
-});
-
-/* ---------- Sport (Training + Skills) ---------- */
+/* ================================================================
+   SPORT
+   ================================================================ */
 const SPORT_EX = [
   { name: "Dips", unit: "Wdh" },
   { name: "Liegestütze", unit: "Wdh" },
   { name: "Klimmzüge", unit: "Wdh" },
   { name: "Plank", unit: "Sek" }
 ];
-const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-let sportView = "training";
+function allEx() {
+  return SPORT_EX.filter(e => !data.sport.removedEx.includes(e.name)).concat(data.sport.customEx);
+}
+function isCustomEx(name) { return data.sport.customEx.some(e => e.name === name); }
 let calDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-let calOpen = false;   // Kalender standardmäßig eingeklappt
+let calOpen = false;
 
+document.querySelectorAll("#sport-seg button").forEach(b => {
+  b.addEventListener("click", () => {
+    sportView = b.dataset.sview;
+    renderSport(); updateFab();
+  });
+});
+
+function renderSport() {
+  document.querySelectorAll("#sport-seg button").forEach(x => x.classList.toggle("on", x.dataset.sview === sportView));
+  const box = $("sport-body");
+  box.innerHTML = "";
+  if (sportView === "training") renderTraining(box);
+  else if (sportView === "runs") renderRuns(box);
+  else renderSkills(box);
+}
+
+/* ---- Training ---- */
 function mondayOf(d) { const x = new Date(d); const off = (x.getDay() + 6) % 7; x.setDate(x.getDate() - off); x.setHours(0, 0, 0, 0); return x; }
 function addD(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function weekTotal(exName, weeksAgo) {
@@ -1556,83 +1656,6 @@ function monthTotal(exName, y, m) {
   for (const iso in data.sport.log) { const [yy, mm] = iso.split("-").map(Number); if (yy === y && mm === m + 1 && data.sport.log[iso][exName]) sum += data.sport.log[iso][exName]; }
   return sum;
 }
-
-// Wochentag-Auswahl im Formular
-document.querySelectorAll("#weekday-row .wd").forEach(btn => {
-  btn.addEventListener("click", () => btn.classList.toggle("on"));
-});
-function syncWeekdayButtons() {
-  document.querySelectorAll("#weekday-row .wd").forEach(btn => {
-    btn.classList.toggle("on", data.sport.trainingDays.includes(parseInt(btn.dataset.dow, 10)));
-  });
-}
-document.getElementById("form-sport").addEventListener("submit", e => {
-  e.preventDefault();
-  data.sport.trainingDays = [...document.querySelectorAll("#weekday-row .wd.on")].map(b => parseInt(b.dataset.dow, 10));
-  save(); renderSport();
-});
-
-// Umschalter Training / Skills
-document.querySelectorAll(".sport-seg button").forEach(b => {
-  b.addEventListener("click", () => {
-    document.querySelectorAll(".sport-seg button").forEach(x => x.classList.remove("on"));
-    b.classList.add("on"); sportView = b.dataset.sview; renderSport();
-  });
-});
-
-function renderSport() {
-  document.getElementById("sport-training").hidden = sportView !== "training";
-  document.getElementById("sport-runs").hidden = sportView !== "runs";
-  document.getElementById("sport-bike").hidden = sportView !== "bike";
-  document.getElementById("sport-skills").hidden = sportView !== "skills";
-  document.querySelectorAll(".sport-seg button").forEach(b => b.classList.toggle("on", b.dataset.sview === sportView));
-  syncWeekdayButtons();
-  if (sportView === "training") renderTraining();
-  else if (sportView === "runs") renderRuns();
-  else if (sportView === "bike") renderRides();
-  else renderSkills();
-}
-
-function renderTraining() {
-  const box = document.getElementById("sport-training");
-  const todayIso = todayStr();
-  const todayLog = data.sport.log[todayIso] || {};
-  const isTrain = data.sport.trainingDays.includes(new Date().getDay());
-
-  const rows = SPORT_EX.map(ex => {
-    const val = todayLog[ex.name] || "";
-    const done = val !== "" && val > 0;
-    return `<div class="ex-row ${done ? "done" : ""}" data-ex="${esc(ex.name)}">
-      <span class="ex-check">${done ? "✓" : ""}</span>
-      <span class="ex-name">${esc(ex.name)}</span>
-      <input class="ex-input" type="number" inputmode="numeric" min="0" value="${val}" placeholder="0">
-      <span class="ex-unit">${ex.unit}</span>
-    </div>`;
-  }).join("");
-
-  box.innerHTML = `
-    <button class="prog-btn" id="btn-progress"><span>📈 Fortschritt ansehen</span><span class="chev">›</span></button>
-    <button class="cal-toggle ${calOpen ? "open" : ""}" id="cal-toggle"><span>📅 Kalender</span><span class="chev">›</span></button>
-    <div id="sport-cal" ${calOpen ? "" : "hidden"}></div>
-    <div class="sec-head">Heute${isTrain ? "" : " · Ruhetag"} – ${fmtDate(todayIso)}</div>
-    ${rows}`;
-
-  box.querySelectorAll(".ex-row .ex-input").forEach(inp => {
-    inp.addEventListener("change", () => {
-      const name = inp.closest(".ex-row").dataset.ex;
-      const v = parseInt(inp.value, 10);
-      if (!data.sport.log[todayIso]) data.sport.log[todayIso] = {};
-      if (v > 0) data.sport.log[todayIso][name] = v; else delete data.sport.log[todayIso][name];
-      if (Object.keys(data.sport.log[todayIso]).length === 0) delete data.sport.log[todayIso];
-      save(); renderTraining();
-    });
-  });
-  document.getElementById("btn-progress").addEventListener("click", openProgress);
-  document.getElementById("cal-toggle").addEventListener("click", () => { calOpen = !calOpen; renderTraining(); });
-  if (calOpen) renderCalendar();
-}
-
-// Letzter Wert (vor heute) + Bestwert einer Übung
 function statFor(exName) {
   const today = todayStr();
   let last = null, lastDate = "", best = 0;
@@ -1646,26 +1669,139 @@ function statFor(exName) {
   return { last, best: best || null };
 }
 
-// Fortschritts-Popup: pro Übung Woche/Monat + letztes Mal & Bestwert
-function openProgress() {
+function renderTraining(box) {
+  const todayIso = todayStr();
+  const todayLog = data.sport.log[todayIso] || {};
+  const isTrain = data.sport.trainingDays.includes(new Date().getDay());
+
+  box.insertAdjacentHTML("beforeend", `
+    <div class="duo" style="--duo-accent: var(--sport)">
+      <button class="ghost" id="btn-progress">📈 Fortschritt</button>
+      <button class="ghost cal-toggle-btn ${calOpen ? "open" : ""}" id="btn-cal">📅 Kalender</button>
+    </div>
+    <div id="cal-slot"></div>
+    <div class="sect"><span class="tick" style="background:var(--sport)"></span>
+      <h2>Heute · ${fmtNice(todayIso)}</h2>
+      ${isTrain ? "" : '<span class="chip-badge">Ruhetag</span>'}
+      <button class="sect-act" id="btn-days">Tage ›</button>
+    </div>`);
+
+  allEx().forEach((ex, i) => {
+    const val = todayLog[ex.name] || "";
+    const done = val !== "" && val > 0;
+    const row = document.createElement("div");
+    row.className = "row ex-row" + (done ? " done-ex" : "");
+    row.style.animationDelay = (i * .04) + "s";
+    row.innerHTML = `
+      <span class="ring-check">${done ? "✓" : ""}</span>
+      <div class="grow"><div class="t">${esc(ex.name)}</div>
+        ${statLine(ex)}</div>
+      <input class="val" type="number" inputmode="numeric" min="0" value="${val}" placeholder="0">
+      <span class="unit">${ex.unit}</span>`;
+    row.querySelector(".val").addEventListener("change", e => {
+      const v = parseInt(e.target.value, 10);
+      if (!data.sport.log[todayIso]) data.sport.log[todayIso] = {};
+      if (v > 0) data.sport.log[todayIso][ex.name] = v; else delete data.sport.log[todayIso][ex.name];
+      if (Object.keys(data.sport.log[todayIso]).length === 0) delete data.sport.log[todayIso];
+      save(); renderSport();
+    });
+    // Jede Übung: nach links wischen = entfernen (Standards lassen sich über + zurückholen)
+    enableSwipe(row, {
+      onDelete: () => {
+        if (isCustomEx(ex.name)) data.sport.customEx = data.sport.customEx.filter(e2 => e2.name !== ex.name);
+        else data.sport.removedEx.push(ex.name);
+        save(); renderSport();
+      }
+    });
+    box.appendChild(row);
+  });
+  if (allEx().length) {
+    box.insertAdjacentHTML("beforeend", '<div class="hint">Nach links wischen = Übung entfernen · neue über +</div>');
+  } else {
+    box.insertAdjacentHTML("beforeend", '<div class="empty-state">Keine Übungen.<br>Füge über + welche hinzu.</div>');
+  }
+
+  $("btn-progress").addEventListener("click", openProgressSheet);
+  $("btn-cal").addEventListener("click", () => { calOpen = !calOpen; renderSport(); });
+  $("btn-days").addEventListener("click", openTrainingDaysSheet);
+  if (calOpen) renderCalendar($("cal-slot"));
+}
+
+/* Eigene Übung hinzufügen */
+function openExerciseSheet() {
+  const { sheet, close } = openSheet(`
+    <h3>Neue Übung</h3>
+    <div class="sub">Erscheint ab sofort in deinem Training – mit Bestwert und Fortschritt.</div>
+    <input type="text" id="sh-ex-name" placeholder="z.B. Pistol Squats" autocomplete="off">
+    <label>Einheit</label>
+    <select id="sh-ex-unit">
+      <option value="Wdh">Wiederholungen</option>
+      <option value="Sek">Sekunden</option>
+    </select>
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Hinzufügen</button>
+    </div>`, { accent: "var(--sport)" });
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const name = sheet.querySelector("#sh-ex-name").value.trim();
+    if (!name) return;
+    if (allEx().some(e => e.name.toLowerCase() === name.toLowerCase())) { alert("Diese Übung gibt es schon."); return; }
+    // Entfernte Standard-Übung mit gleichem Namen? Dann wiederherstellen.
+    const ri = data.sport.removedEx.findIndex(n => n.toLowerCase() === name.toLowerCase());
+    if (ri >= 0) data.sport.removedEx.splice(ri, 1);
+    else data.sport.customEx.push({ name, unit: sheet.querySelector("#sh-ex-unit").value });
+    save(); close(); renderSport();
+  });
+  setTimeout(() => sheet.querySelector("#sh-ex-name").focus(), 350);
+}
+function statLine(ex) {
+  const { last, best } = statFor(ex.name);
+  if (last == null && best == null) return "";
+  return `<div class="s">${last != null ? "<span>Zuletzt " + last + "</span>" : ""}${best != null ? "<span>Best " + best + "</span>" : ""}</div>`;
+}
+
+function openProgressSheet() {
   const now = new Date();
-  const cards = SPORT_EX.map(ex => {
+  const cards = allEx().map(ex => {
     const tw = weekTotal(ex.name, 0), lw = weekTotal(ex.name, 1), delta = tw - lw;
     const dcls = delta > 0 ? "pp-up" : delta < 0 ? "pp-down" : "";
     const dtxt = delta === 0 ? "±0" : (delta > 0 ? "+" + delta : "" + delta);
     const mt = monthTotal(ex.name, now.getFullYear(), now.getMonth());
     const { last, best } = statFor(ex.name);
     return `<div class="pp-card">
-      <div class="pp-name">${esc(ex.name)}</div>
-      <div class="pp-line">Diese Woche: ${tw} <span class="${dcls}">(${dtxt} ggü. letzter)</span> · Monat: ${mt}</div>
-      <div class="pp-line">Letztes Mal: ${last != null ? last + " " + ex.unit : "–"} · Bestwert: ${best != null ? best + " " + ex.unit : "–"}</div>
+      <div class="pn">${esc(ex.name)}</div>
+      <div class="pl">Diese Woche: <b>${tw}</b> <span class="${dcls}">(${dtxt} ggü. letzter)</span> · Monat: ${mt}</div>
+      <div class="pl">Letztes Mal: ${last != null ? last + " " + ex.unit : "–"} · Bestwert: ${best != null ? best + " " + ex.unit : "–"}</div>
     </div>`;
   }).join("");
-  showTextModalHTML("📈 Fortschritt", cards);
+  const { sheet, close } = openSheet(`<h3>📈 Fortschritt</h3><div class="sub">Woche & Monat je Übung</div>${cards}
+    <div class="sheet-actions"><button class="quiet" data-act="close">Close</button></div>`, { accent: "var(--sport)" });
+  sheet.querySelector('[data-act="close"]').addEventListener("click", close);
 }
 
-function renderCalendar() {
-  const el = document.getElementById("sport-cal");
+function openTrainingDaysSheet() {
+  const { sheet, close } = openSheet(`
+    <h3>Trainingstage</h3>
+    <div class="sub">An welchen Tagen willst du trainieren?</div>
+    <div class="wd-row" id="sh-wd">
+      ${[["Mo",1],["Di",2],["Mi",3],["Do",4],["Fr",5],["Sa",6],["So",0]].map(([l, d]) =>
+        `<button class="wd ${data.sport.trainingDays.includes(d) ? "on" : ""}" data-dow="${d}">${l}</button>`).join("")}
+    </div>
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Speichern</button>
+    </div>`, { accent: "var(--sport)" });
+  sheet.querySelectorAll("#sh-wd .wd").forEach(b => b.addEventListener("click", () => b.classList.toggle("on")));
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    data.sport.trainingDays = [...sheet.querySelectorAll("#sh-wd .wd.on")].map(b => parseInt(b.dataset.dow, 10));
+    save(); close(); rerenderAll();
+  });
+}
+
+/* ---- Kalender ---- */
+function renderCalendar(el) {
   const y = calDate.getFullYear(), m = calDate.getMonth();
   const startOff = (new Date(y, m, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -1677,44 +1813,47 @@ function renderCalendar() {
     const dt = new Date(y, m, day), iso = isoDate(dt);
     const logged = data.sport.log[iso] && Object.keys(data.sport.log[iso]).length > 0;
     const ran = data.sport.runs.some(r => r.date === iso);
-    const biked = data.sport.rides.some(r => r.date === iso);
     const cls = ["cal-cell"];
     if (data.sport.trainingDays.includes(dt.getDay())) cls.push("train");
     if (iso === todayIso) cls.push("today");
-    if (logged || ran || biked) cls.push("active");
+    if (logged || ran) cls.push("active");
     const dots = (logged ? '<span class="dot cali"></span>' : "")
-      + (ran ? '<span class="dot run"></span>' : "")
-      + (biked ? '<span class="dot bike"></span>' : "");
+      + (ran ? '<span class="dot run"></span>' : "");
     cells += `<div class="${cls.join(" ")}" data-iso="${iso}"><span>${day}</span><span class="cal-dots">${dots}</span></div>`;
   }
 
   el.innerHTML = `
-    <div class="cal-head">
-      <button class="cal-nav" data-nav="-1">‹</button>
-      <span class="cal-title">${MONTHS[m]} ${y}</span>
-      <button class="cal-nav" data-nav="1">›</button>
-    </div>
-    <div class="cal-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
-    <div class="cal-grid">${cells}</div>`;
-
+    <div class="cal">
+      <div class="cal-head">
+        <button class="cal-nav" data-nav="-1">‹</button>
+        <span class="cal-title">${MONTHS[m]} ${y}</span>
+        <button class="cal-nav" data-nav="1">›</button>
+      </div>
+      <div class="cal-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+      <div class="cal-grid">${cells}</div>
+    </div>`;
   el.querySelectorAll(".cal-nav").forEach(b => b.addEventListener("click", () => {
-    calDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1); renderCalendar();
+    calDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1); renderCalendar(el);
   }));
-  el.querySelectorAll(".cal-cell.active").forEach(c => c.addEventListener("click", () => openDayDetail(c.dataset.iso)));
+  el.querySelectorAll(".cal-cell.active").forEach(c => c.addEventListener("click", () => openDaySheet(c.dataset.iso)));
 }
 
-function openDayDetail(iso) {
+function openDaySheet(iso) {
   const day = data.sport.log[iso] || {};
   const runs = data.sport.runs.filter(r => r.date === iso);
-  const rides = data.sport.rides.filter(r => r.date === iso);
-  const exRows = SPORT_EX.filter(ex => day[ex.name]).map(ex => `<div class="day-detail-ex"><span>${esc(ex.name)}</span><span>${day[ex.name]} ${ex.unit}</span></div>`).join("");
-  const runRows = runs.map(r => `<div class="day-detail-ex"><span style="color:var(--run)">🏃 Lauf</span><span>${r.km.toFixed(2).replace(".", ",")} km · ${fmtDur(r.durSec)} · ${fmtPace(r.durSec, r.km)}</span></div>`).join("");
-  const rideRows = rides.map(r => `<div class="day-detail-ex"><span style="color:var(--bike)">🚵 Biken</span><span>${fmtDur(r.durSec)}${r.trails && r.trails.length ? " · " + esc(r.trails.join(", ")) : ""}</span></div>`).join("");
-  const html = (exRows + runRows + rideRows) || '<div class="note">Nichts eingetragen.</div>';
-  showTextModalHTML(fmtDate(iso), html);
+  const exRows = allEx().filter(ex => day[ex.name]).map(ex =>
+    `<div class="kv"><span class="k">${esc(ex.name)}</span><span class="v" style="color:var(--sport)">${day[ex.name]} ${ex.unit}</span></div>`).join("");
+  const runRows = runs.map(r =>
+    `<div class="kv"><span class="k">🏃 Lauf</span><span class="v" style="color:var(--run)">${r.km.toFixed(2).replace(".", ",")} km · ${fmtDur(r.durSec)} · ${fmtPace(r.durSec, r.km)}</span></div>`).join("");
+  const { sheet, close } = openSheet(`
+    <h3>${fmtNice(iso)}</h3>
+    <div class="sub">${fmtDate(iso)}</div>
+    ${(exRows + runRows) || '<div class="answer blank">Nichts eingetragen.</div>'}
+    <div class="sheet-actions"><button class="quiet" data-act="close">Close</button></div>`, { accent: "var(--sport)" });
+  sheet.querySelector('[data-act="close"]').addEventListener("click", close);
 }
 
-/* ---------- Laufen ---------- */
+/* ---- Laufen ---- */
 function fmtDur(sec) {
   sec = Math.round(sec);
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
@@ -1728,7 +1867,6 @@ function fmtPace(sec, km) {
   return mm + ":" + String(ss).padStart(2, "0") + " /km";
 }
 function parseDurInput(str) {
-  // akzeptiert "32:10", "1:05:30" oder Minuten als Zahl
   str = (str || "").trim();
   if (!str) return 0;
   if (str.includes(":")) {
@@ -1739,112 +1877,96 @@ function parseDurInput(str) {
   return Math.round((parseFloat(str.replace(",", ".")) || 0) * 60);
 }
 
-function renderRuns() {
-  const box = document.getElementById("sport-runs");
+function renderRuns(box) {
   const runs = [...data.sport.runs].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   const now = new Date();
   const month = runs.filter(r => { const [yy, mm] = r.date.split("-").map(Number); return yy === now.getFullYear() && mm === now.getMonth() + 1; });
   const mKm = month.reduce((s, r) => s + r.km, 0);
   const mSec = month.reduce((s, r) => s + r.durSec, 0);
 
-  box.innerHTML = `
-    <div class="run-actions">
-      <button class="run-btn" id="run-add">＋ Lauf eintragen</button>
-      <button class="run-btn ghost" id="run-import">📷 Foto</button>
+  box.insertAdjacentHTML("beforeend", `
+    <div class="duo" style="--duo-accent: var(--run)">
+      <button class="solid" id="run-add">＋ Lauf eintragen</button>
+      <button class="ghost" id="run-import">📷 Screenshot</button>
     </div>
-    <div class="run-summary">
-      <div class="run-stat"><div class="rs-val">${month.length}</div><div class="rs-lbl">Läufe</div></div>
-      <div class="run-stat"><div class="rs-val">${mKm.toFixed(1).replace(".", ",")}</div><div class="rs-lbl">km / Monat</div></div>
-      <div class="run-stat"><div class="rs-val">${fmtPace(mSec, mKm)}</div><div class="rs-lbl">Ø Pace</div></div>
-    </div>
-    <ul class="items" id="run-list"></ul>`;
+    <div class="stat-grid">
+      <div class="stat"><div class="v">${month.length}</div><div class="l">Läufe</div></div>
+      <div class="stat"><div class="v">${mKm.toFixed(1).replace(".", ",")}</div><div class="l">km / Monat</div></div>
+      <div class="stat"><div class="v" style="color:var(--run)">${fmtPace(mSec, mKm)}</div><div class="l">Ø Pace</div></div>
+    </div>`);
 
-  const ul = document.getElementById("run-list");
   if (!runs.length) {
-    ul.innerHTML = '<div class="empty-state">Noch keine Läufe – trag einen ein oder importiere einen Adidas-Running-Screenshot.</div>';
+    box.insertAdjacentHTML("beforeend", '<div class="empty-state">Noch keine Läufe.<br>Trag einen ein – oder importiere einen Screenshot aus deiner Lauf-App.</div>');
   } else {
+    box.insertAdjacentHTML("beforeend", '<div class="hint">Antippen = bearbeiten · nach links wischen = löschen</div>');
     runs.forEach((r, i) => {
-      const li = document.createElement("li");
-      li.className = "item run-item";
-      li.style.animationDelay = (i * 0.03) + "s";
-      li.innerHTML = `<div class="body">
-        <div class="run-date">${fmtDate(r.date)}</div>
-        <div class="run-main">${r.km.toFixed(2).replace(".", ",")} km</div>
-        <div class="run-sub">${fmtDur(r.durSec)} · <span class="run-pace">${fmtPace(r.durSec, r.km)}</span></div>
-      </div>`;
-      li.addEventListener("click", () => openRunEntry(r));
-      enableSwipe(li, {
-        onRight: () => openRunEntry(r),
-        onDelete: () => { data.sport.runs = data.sport.runs.filter(x => x.id !== r.id); save(); renderRuns(); if (calOpen) renderCalendar(); }
+      const row = document.createElement("div");
+      row.className = "row";
+      row.style.cursor = "pointer";
+      row.style.animationDelay = (i * .03) + "s";
+      row.innerHTML = `
+        <div class="grow">
+          <div class="s" style="margin:0 0 2px">${fmtNice(r.date)}</div>
+          <div class="t" style="font-family:var(--serif);font-size:19px">${r.km.toFixed(2).replace(".", ",")} km</div>
+          <div class="s">${fmtDur(r.durSec)} · <span style="color:var(--run);font-weight:700">${fmtPace(r.durSec, r.km)}</span></div>
+        </div>`;
+      row.addEventListener("click", () => openRunSheet(r));
+      enableSwipe(row, {
+        onRight: () => openRunSheet(r),
+        onDelete: () => { data.sport.runs = data.sport.runs.filter(x => x.id !== r.id); save(); rerenderAll(); }
       });
-      ul.appendChild(li);
+      box.appendChild(row);
     });
   }
-
-  document.getElementById("run-add").addEventListener("click", () => openRunEntry(null));
-  document.getElementById("run-import").addEventListener("click", () => document.getElementById("run-photo").click());
+  $("run-add").addEventListener("click", () => openRunSheet(null));
+  $("run-import").addEventListener("click", () => $("run-photo").click());
 }
 
-function openRunEntry(run) {
+function openRunSheet(run) {
   const isEdit = !!run && run.id != null;
   const cur = run || { date: todayStr(), km: "", durSec: 0 };
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const modal = document.createElement("div");
-  modal.className = "modal orange";
-  modal.innerHTML = `
-    <h2>${isEdit ? "Lauf bearbeiten" : "Lauf eintragen"}</h2>
-    <div class="run-form">
-      <label>Datum</label>
-      <input type="date" id="rf-date" value="${cur.date}">
-      <label>Distanz (km)</label>
-      <input type="text" id="rf-km" inputmode="decimal" placeholder="z.B. 5,2" value="${cur.km !== "" && cur.km != null ? String(cur.km).replace(".", ",") : ""}">
-      <label>Dauer (mm:ss oder h:mm:ss)</label>
-      <input type="text" id="rf-dur" inputmode="numeric" placeholder="z.B. 28:45" value="${cur.durSec ? fmtDur(cur.durSec) : ""}">
-      <div class="rf-pace" id="rf-pace"></div>
-    </div>
-    <div class="modal-actions">
-      ${isEdit ? '<button class="small-btn danger" data-act="del">Löschen</button>' : ""}
-      <button class="small-btn" data-act="cancel">Abbrechen</button>
-      <button class="small-btn primary" data-act="save">Speichern</button>
-    </div>`;
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
+  const { sheet, close } = openSheet(`
+    <h3>${isEdit ? "Lauf bearbeiten" : "Lauf eintragen"}</h3>
+    <label>Datum</label>
+    <div class="pick set" style="justify-content:flex-start;padding-left:16px"><span>📅</span><span id="sh-run-datel">${fmtNice(cur.date)}</span><input type="date" id="sh-run-date" value="${cur.date}"></div>
+    <label>Distanz (km)</label>
+    <input type="text" id="sh-run-km" inputmode="decimal" placeholder="z.B. 5,2" value="${cur.km !== "" && cur.km != null ? String(cur.km).replace(".", ",") : ""}">
+    <label>Dauer (mm:ss oder h:mm:ss)</label>
+    <input type="text" id="sh-run-dur" inputmode="numeric" placeholder="z.B. 28:45" value="${cur.durSec ? fmtDur(cur.durSec) : ""}">
+    <div class="pace-live" id="sh-run-pace"></div>
+    <div class="sheet-actions">
+      ${isEdit ? '<button class="danger" data-act="del">🗑</button>' : ""}
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Speichern</button>
+    </div>`, { accent: "var(--run)" });
 
-  const kmEl = modal.querySelector("#rf-km"), durEl = modal.querySelector("#rf-dur"), paceEl = modal.querySelector("#rf-pace");
-  const updatePace = () => {
-    const km = parseFloat((kmEl.value || "").replace(",", ".")) || 0;
-    const sec = parseDurInput(durEl.value);
-    paceEl.textContent = (km && sec) ? "Pace: " + fmtPace(sec, km) : "";
+  const dateI = sheet.querySelector("#sh-run-date"), kmI = sheet.querySelector("#sh-run-km"), durI = sheet.querySelector("#sh-run-dur");
+  dateI.addEventListener("change", () => { sheet.querySelector("#sh-run-datel").textContent = dateI.value ? fmtNice(dateI.value) : "Datum"; });
+  const upd = () => {
+    const km = parseFloat((kmI.value || "").replace(",", ".")) || 0;
+    const sec = parseDurInput(durI.value);
+    sheet.querySelector("#sh-run-pace").textContent = (km && sec) ? "Pace: " + fmtPace(sec, km) : "";
   };
-  kmEl.addEventListener("input", updatePace);
-  durEl.addEventListener("input", updatePace);
-  updatePace();
+  kmI.addEventListener("input", upd); durI.addEventListener("input", upd); upd();
 
-  const close = () => backdrop.remove();
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
-  modal.querySelector('[data-act="cancel"]').addEventListener("click", close);
-  const delBtn = modal.querySelector('[data-act="del"]');
-  if (delBtn) delBtn.addEventListener("click", () => {
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  const del = sheet.querySelector('[data-act="del"]');
+  if (del) del.addEventListener("click", () => {
     data.sport.runs = data.sport.runs.filter(x => x.id !== run.id);
-    save(); close(); renderRuns(); if (calOpen) renderCalendar();
+    save(); close(); rerenderAll();
   });
-  modal.querySelector('[data-act="save"]').addEventListener("click", () => {
-    const km = parseFloat((kmEl.value || "").replace(",", ".")) || 0;
-    const sec = parseDurInput(durEl.value);
-    const date = modal.querySelector("#rf-date").value || todayStr();
+  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+    const km = parseFloat((kmI.value || "").replace(",", ".")) || 0;
+    const sec = parseDurInput(durI.value);
+    const date = dateI.value || todayStr();
     if (km <= 0) { alert("Bitte eine Distanz eintragen."); return; }
-    if (isEdit) {
-      run.date = date; run.km = km; run.durSec = sec;
-    } else {
-      data.sport.runs.push({ id: Date.now(), date, km, durSec: sec });
-    }
-    save(); close(); renderRuns(); if (calOpen) renderCalendar();
+    if (isEdit) { run.date = date; run.km = km; run.durSec = sec; }
+    else data.sport.runs.push({ id: Date.now(), date, km, durSec: sec });
+    save(); close(); rerenderAll();
   });
 }
 
-// Screenshot-Import via Claude Vision
-document.getElementById("run-photo").addEventListener("change", async e => {
+$("run-photo").addEventListener("change", async e => {
   const file = e.target.files && e.target.files[0];
   e.target.value = "";
   if (!file) return;
@@ -1853,7 +1975,7 @@ document.getElementById("run-photo").addEventListener("change", async e => {
 
 async function importRunFromImage(file) {
   if (!getApiKey()) { alert("Bitte trage zuerst in den Einstellungen deinen API-Schlüssel ein."); return; }
-  let overlay;
+  let loading = null;
   try {
     const dataUrl = await new Promise((res, rej) => {
       const fr = new FileReader();
@@ -1861,20 +1983,14 @@ async function importRunFromImage(file) {
     });
     const [, mediaType, base64] = /^data:(.+);base64,(.*)$/.exec(dataUrl) || [];
     if (!base64) { alert("Das Bild konnte nicht gelesen werden."); return; }
-
-    overlay = document.createElement("div");
-    overlay.className = "modal-backdrop";
-    overlay.innerHTML = '<div class="modal orange"><h2>📷 Lauf wird gelesen…</h2><div class="note">Claude wertet den Screenshot aus.</div></div>';
-    document.body.appendChild(overlay);
-
+    loading = openSheet('<h3>📷 Lauf wird gelesen…</h3><div class="sub">Claude wertet den Screenshot aus.</div>', { accent: "var(--run)" });
     const r = await callClaude({
       system: 'Du liest Screenshots von Lauf-Apps (z.B. Adidas Running). Gib AUSSCHLIESSLICH ein JSON-Objekt zurück, kein Vorwort, keine Code-Fences. Format: {"km": <Zahl>, "durationSeconds": <Ganzzahl>, "date": "YYYY-MM-DD" | null}. km ist die Distanz in Kilometern (Dezimalpunkt). durationSeconds ist die gesamte Laufdauer in Sekunden. date nur wenn im Bild erkennbar, sonst null. Wenn ein Wert nicht erkennbar ist, setze ihn auf null.',
       userText: "Lies Distanz, Dauer und Datum aus diesem Lauf-Screenshot.",
       image: { mediaType, data: base64 },
       maxTokens: 200
     });
-    renderUsage();
-    overlay.remove(); overlay = null;
+    loading.close(); loading = null;
     if (!r) return;
     let parsed;
     try { parsed = JSON.parse(r.text.replace(/```json|```/g, "").trim()); }
@@ -1882,249 +1998,198 @@ async function importRunFromImage(file) {
     const km = parseFloat(parsed.km) || "";
     const durSec = parseInt(parsed.durationSeconds, 10) || 0;
     const date = /^\d{4}-\d{2}-\d{2}$/.test(parsed.date || "") ? parsed.date : todayStr();
-    openRunEntry({ id: null, date, km, durSec, __new: true });
+    openRunSheet({ id: null, date, km, durSec });
   } catch (err) {
-    if (overlay) overlay.remove();
+    if (loading) loading.close();
     alert("Import fehlgeschlagen: " + err.message);
   }
 }
 
-/* ---------- Biken (MTB): Dauer, Häufigkeit, Trails ---------- */
-function knownTrails() {
-  const set = new Map(); // Name (lowercase) -> Originalschreibweise, nach Häufigkeit
-  const count = {};
-  data.sport.rides.forEach(r => (r.trails || []).forEach(t => {
-    const k = t.toLowerCase();
-    if (!set.has(k)) set.set(k, t);
-    count[k] = (count[k] || 0) + 1;
-  }));
-  return [...set.entries()].sort((a, b) => count[b[0]] - count[a[0]]).map(e => e[1]);
-}
-
-function renderRides() {
-  const box = document.getElementById("sport-bike");
-  const rides = [...data.sport.rides].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-  const now = new Date();
-  const month = rides.filter(r => { const [yy, mm] = r.date.split("-").map(Number); return yy === now.getFullYear() && mm === now.getMonth() + 1; });
-  const mSec = month.reduce((s, r) => s + r.durSec, 0);
-
-  box.innerHTML = `
-    <div class="run-actions">
-      <button class="run-btn" id="ride-add">＋ Tour eintragen</button>
-    </div>
-    <div class="run-summary">
-      <div class="run-stat"><div class="rs-val">${month.length}</div><div class="rs-lbl">Touren</div></div>
-      <div class="run-stat"><div class="rs-val">${fmtDur(mSec)}</div><div class="rs-lbl">Zeit / Monat</div></div>
-    </div>
-    <ul class="items" id="ride-list"></ul>`;
-
-  const ul = document.getElementById("ride-list");
-  if (!rides.length) {
-    ul.innerHTML = '<div class="empty-state">Noch keine Touren – trag deine erste MTB-Runde ein.</div>';
-  } else {
-    rides.forEach((r, i) => {
-      const li = document.createElement("li");
-      li.className = "item bike-item";
-      li.style.animationDelay = (i * 0.03) + "s";
-      li.innerHTML = `<div class="body">
-        <div class="run-date">${fmtDate(r.date)}</div>
-        <div class="run-main">${fmtDur(r.durSec)}</div>
-        ${r.trails && r.trails.length ? `<div class="run-trails">${esc(r.trails.join(" · "))}</div>` : ""}
-      </div>`;
-      li.addEventListener("click", () => openRideEntry(r));
-      enableSwipe(li, {
-        onRight: () => openRideEntry(r),
-        onDelete: () => { data.sport.rides = data.sport.rides.filter(x => x.id !== r.id); save(); renderRides(); if (calOpen) renderCalendar(); }
-      });
-      ul.appendChild(li);
-    });
+/* ---- Skills (KI-generierte Trainingspläne) ---- */
+function renderSkills(box) {
+  const skills = data.sport.skillList;
+  if (!skills.length) {
+    box.insertAdjacentHTML("beforeend", '<div class="empty-state">Noch keine Skills.<br>Füge über + einen hinzu – Claude erstellt dir den Etappenplan.</div>');
+    return;
   }
-  document.getElementById("ride-add").addEventListener("click", () => openRideEntry(null));
+  skills.forEach(sk => {
+    const doneCount = sk.steps.filter((_, i) => sk.done[i]).length;
+    const sect = document.createElement("div");
+    sect.className = "sect skill-head" + (sk.collapsed ? "" : " open");
+    sect.innerHTML = `<span class="tick" style="background:var(--skill)"></span>
+      <h2>${esc((sk.emoji ? sk.emoji + " " : "") + sk.name)}</h2>
+      <span class="chip-badge">${doneCount}/${sk.steps.length}</span>
+      <button class="sect-act" data-del>✕</button>
+      <span class="skill-chev">›</span>`;
+    sect.addEventListener("click", () => {
+      sk.collapsed = !sk.collapsed; save(); renderSport();
+    });
+    sect.querySelector("[data-del]").addEventListener("click", e => {
+      e.stopPropagation();
+      if (!confirm("Skill „" + sk.name + "“ samt Fortschritt löschen?")) return;
+      data.sport.skillList = data.sport.skillList.filter(x => x !== sk);
+      save(); renderSport();
+    });
+    box.appendChild(sect);
+
+    if (sk.collapsed) return;
+
+    sk.steps.forEach((step, i) => {
+      const row = document.createElement("div");
+      row.className = "row step-row" + (sk.done[i] ? " done" : "");
+      row.style.animationDelay = (i * .04) + "s";
+      row.innerHTML = `<span class="ring-check">${sk.done[i] ? "✓" : ""}</span><div class="grow"><div class="t" style="font-size:15px">${esc(step)}</div></div>`;
+      row.addEventListener("click", () => { sk.done[i] = !sk.done[i]; save(); renderSport(); });
+      box.appendChild(row);
+    });
+
+    const btn = document.createElement("button");
+    btn.className = "tips-btn";
+    btn.style.color = "var(--skill)";
+    btn.style.marginTop = "6px";
+    btn.textContent = "💡 Claude-Tipp zur aktuellen Etappe";
+    btn.addEventListener("click", () => skillTip(sk, btn));
+    box.appendChild(btn);
+  });
 }
 
-function openRideEntry(ride) {
-  const isEdit = !!ride && ride.id != null;
-  const cur = ride || { date: todayStr(), durSec: 0, trails: [] };
-  let trails = [...(cur.trails || [])];
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const modal = document.createElement("div");
-  modal.className = "modal orange";
-  modal.innerHTML = `
-    <h2>${isEdit ? "Tour bearbeiten" : "Tour eintragen"}</h2>
-    <div class="run-form">
-      <label>Datum</label>
-      <input type="date" id="rf-date" value="${cur.date}">
-      <label>Dauer (mm:ss oder h:mm:ss)</label>
-      <input type="text" id="rf-dur" inputmode="numeric" placeholder="z.B. 1:15:00" value="${cur.durSec ? fmtDur(cur.durSec) : ""}">
-      <label>Trails</label>
-      <input type="text" id="rf-trail" placeholder="Trail-Name + Enter">
-      <div class="trail-chips" id="rf-known"></div>
-      <div class="trail-chips" id="rf-selected"></div>
-    </div>
-    <div class="modal-actions">
-      ${isEdit ? '<button class="small-btn danger" data-act="del">Löschen</button>' : ""}
-      <button class="small-btn" data-act="cancel">Abbrechen</button>
-      <button class="small-btn primary" data-act="save">Speichern</button>
-    </div>`;
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
-
-  const selBox = modal.querySelector("#rf-selected");
-  const knownBox = modal.querySelector("#rf-known");
-  const trailInput = modal.querySelector("#rf-trail");
-  const renderChips = () => {
-    selBox.innerHTML = trails.map((t, i) => `<span class="trail-chip on" data-i="${i}">${esc(t)} ✕</span>`).join("");
-    const avail = knownTrails().filter(t => !trails.some(x => x.toLowerCase() === t.toLowerCase()));
-    knownBox.innerHTML = avail.map(t => `<span class="trail-chip" data-add="${esc(t)}">${esc(t)}</span>`).join("");
-    selBox.querySelectorAll(".trail-chip").forEach(c => c.addEventListener("click", () => { trails.splice(parseInt(c.dataset.i, 10), 1); renderChips(); }));
-    knownBox.querySelectorAll(".trail-chip").forEach(c => c.addEventListener("click", () => { trails.push(c.dataset.add); renderChips(); }));
-  };
-  renderChips();
-  const addTrail = () => {
-    const v = trailInput.value.trim();
-    if (v && !trails.some(x => x.toLowerCase() === v.toLowerCase())) trails.push(v);
-    trailInput.value = ""; renderChips();
-  };
-  trailInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addTrail(); } });
-
-  const close = () => backdrop.remove();
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
-  modal.querySelector('[data-act="cancel"]').addEventListener("click", close);
-  const delBtn = modal.querySelector('[data-act="del"]');
-  if (delBtn) delBtn.addEventListener("click", () => {
-    data.sport.rides = data.sport.rides.filter(x => x.id !== ride.id);
-    save(); close(); renderRides(); if (calOpen) renderCalendar();
-  });
-  modal.querySelector('[data-act="save"]').addEventListener("click", () => {
-    if (trailInput.value.trim()) addTrail();
-    const sec = parseDurInput(modal.querySelector("#rf-dur").value);
-    const date = modal.querySelector("#rf-date").value || todayStr();
-    if (sec <= 0) { alert("Bitte eine Dauer eintragen."); return; }
-    if (isEdit) {
-      ride.date = date; ride.durSec = sec; ride.trails = trails;
-    } else {
-      data.sport.rides.push({ id: Date.now(), date, durSec: sec, trails });
+/* Neuen Skill per KI anlegen: Claude erstellt den Etappenplan */
+function openSkillSheet() {
+  const { sheet, close } = openSheet(`
+    <h3>Neuer Skill</h3>
+    <div class="sub">Sag mir, was du lernen willst – Claude baut dir den Etappenplan.</div>
+    <input type="text" id="sh-skill-name" placeholder="z.B. Muscle-Up, Front Lever, Spagat" autocomplete="off">
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="create">Plan erstellen</button>
+    </div>`, { accent: "var(--skill)" });
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="create"]').addEventListener("click", async ev => {
+    const name = sheet.querySelector("#sh-skill-name").value.trim();
+    if (!name) return;
+    if (data.sport.skillList.some(x => x.name.toLowerCase() === name.toLowerCase())) { alert("Diesen Skill gibt es schon."); return; }
+    ev.target.disabled = true; ev.target.textContent = "Claude erstellt den Plan…";
+    try {
+      const r = await callClaude({
+        system: 'Du bist ein Trainer für Calisthenics und Körperbeherrschung. Gib AUSSCHLIESSLICH ein JSON-Objekt zurück, kein Vorwort, keine Code-Fences. Format: {"emoji": "<ein passendes Emoji>", "steps": ["Etappe 1", "Etappe 2", ...]}. 6 bis 8 aufeinander aufbauende Trainings-Etappen auf Deutsch, von den Grundlagen bis zum fertigen Skill. Jede Etappe kurz und konkret (max. 12 Wörter) mit Sätzen/Wiederholungen bzw. Haltezeiten.',
+        userText: "Skill, den ich lernen will: " + name,
+        maxTokens: 500
+      });
+      if (!r) { ev.target.disabled = false; ev.target.textContent = "Plan erstellen"; return; }
+      let parsed;
+      try { parsed = JSON.parse(r.text.replace(/```json|```/g, "").trim()); }
+      catch { throw new Error("Der Plan kam in einem unerwarteten Format zurück. Versuch es noch einmal."); }
+      if (!Array.isArray(parsed.steps) || !parsed.steps.length) throw new Error("Es kamen keine Etappen zurück. Versuch es noch einmal.");
+      data.sport.skillList.push({
+        id: uid(), name,
+        emoji: typeof parsed.emoji === "string" ? parsed.emoji.slice(0, 4) : "🎯",
+        steps: parsed.steps.map(String).slice(0, 10),
+        done: []
+      });
+      save(); close(); renderSport();
+    } catch (err) {
+      alert("Das hat nicht geklappt: " + err.message);
+      ev.target.disabled = false; ev.target.textContent = "Plan erstellen";
     }
-    save(); close(); renderRides(); if (calOpen) renderCalendar();
   });
+  setTimeout(() => sheet.querySelector("#sh-skill-name").focus(), 350);
 }
 
-/* ---------- Skills (Handstand) ---------- */
-const HANDSTAND_STEPS = [
-  "Handgelenke aufwärmen & Hollow-Body-Hold 3×20 Sek.",
-  "Pike Push-ups 3×8 – baut die Schulterkraft auf",
-  "Wall Walk: mit den Füßen die Wand hochlaufen, 3×3",
-  "Wandhandstand (Bauch zur Wand), 3×20 Sek. halten",
-  "Wandhandstand (Rücken zur Wand), Balance suchen, 3×30 Sek.",
-  "Kurz von der Wand lösen, frei halten 3–5 Sek.",
-  "Freier Handstand 15+ Sek."
-];
-
-function renderSkills() {
-  const box = document.getElementById("sport-skills");
-  const hs = data.sport.skills.handstand;
-  const doneCount = hs.done.filter(Boolean).length;
-  const steps = HANDSTAND_STEPS.map((s, i) => `
-    <div class="step-row ${hs.done[i] ? "done" : ""}" data-i="${i}">
-      <span class="step-check">${hs.done[i] ? "✓" : ""}</span>
-      <span class="step-text">${esc(s)}</span>
-    </div>`).join("");
-  box.innerHTML = `
-    <div class="skill-card">
-      <h3>🤸 Handstand</h3>
-      <div class="skill-progress-txt">${doneCount}/${HANDSTAND_STEPS.length} Etappen geschafft</div>
-      ${steps}
-      <button class="ask-btn" id="btn-skill-tip" style="margin-top:16px">💡 Claude-Tipp holen</button>
-    </div>`;
-  box.querySelectorAll(".step-row").forEach(r => r.addEventListener("click", () => {
-    const i = parseInt(r.dataset.i, 10);
-    hs.done[i] = !hs.done[i]; save(); renderSkills();
-  }));
-  document.getElementById("btn-skill-tip").addEventListener("click", handstandTip);
-}
-
-async function handstandTip() {
-  const btn = document.getElementById("btn-skill-tip");
-  const hs = data.sport.skills.handstand;
+async function skillTip(sk, btn) {
   let nextIdx = -1;
-  for (let i = 0; i < HANDSTAND_STEPS.length; i++) { if (!hs.done[i]) { nextIdx = i; break; } }
-  const stufe = nextIdx === -1 ? "Ich kann schon frei im Handstand stehen." : "Meine aktuelle Etappe: " + HANDSTAND_STEPS[nextIdx];
+  for (let i = 0; i < sk.steps.length; i++) { if (!sk.done[i]) { nextIdx = i; break; } }
+  const stufe = nextIdx === -1
+    ? "Ich beherrsche den Skill schon – gib mir einen Tipp zum Verfeinern."
+    : "Meine aktuelle Etappe: " + sk.steps[nextIdx];
   btn.disabled = true; btn.textContent = "Claude denkt nach…";
   try {
     const r = await callClaude({
-      system: "Du bist ein Calisthenics-Coach für den Handstand. Gib einen kurzen, konkreten Tipp auf Deutsch (maximal 4 Sätze): eine passende Übung oder Technik, worauf man achten sollte, und ein häufiger Fehler. Kein Vorwort.",
+      system: "Du bist ein Coach für den Skill „" + sk.name + "“ (Calisthenics/Körperbeherrschung). Gib einen kurzen, konkreten Tipp auf Deutsch (maximal 4 Sätze): eine passende Übung oder Technik, worauf man achten sollte, und ein häufiger Fehler. Kein Vorwort.",
       userText: stufe + " Gib mir einen konkreten Tipp, wie ich weiterkomme.",
       maxTokens: 300
     });
-    renderUsage();
-    if (r) showTextModal("💡 Handstand-Tipp", r.text);
+    if (r) {
+      const { sheet, close } = openSheet(`<h3>💡 ${esc(sk.name)}-Tipp</h3><div class="answer">${esc(r.text)}</div>
+        <div class="sheet-actions"><button class="quiet" data-act="close">Close</button></div>`, { accent: "var(--skill)" });
+      sheet.querySelector('[data-act="close"]').addEventListener("click", close);
+    }
   } catch (err) {
     alert("Das hat nicht geklappt: " + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = "💡 Claude-Tipp holen";
+    btn.disabled = false; btn.textContent = "💡 Claude-Tipp zur aktuellen Etappe";
   }
 }
 
-/* Kleines Text-/HTML-Overlay (orange) */
-function showTextModalHTML(title, html) {
-  const backdrop = document.createElement("div");
-  backdrop.className = "modal-backdrop";
-  const modal = document.createElement("div");
-  modal.className = "modal orange";
-  modal.innerHTML = `<h2>${esc(title)}</h2><div class="modal-answer" style="white-space:normal">${html}</div><div class="modal-actions"><button class="small-btn" data-act="close">Close</button></div>`;
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
-  const close = () => backdrop.remove();
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
-  modal.querySelector('[data-act="close"]').addEventListener("click", close);
-}
-function showTextModal(title, text) { showTextModalHTML(title, esc(text)); }
+/* ================================================================
+   EINSTELLUNGEN
+   ================================================================ */
+$("btn-settings").addEventListener("click", () => {
+  const { sheet, close } = openSheet(`
+    <h3>Einstellungen</h3>
+    <div class="sub">Tagwerk – dein Tag als Werk.</div>
+    <label>API-Schlüssel</label>
+    <input type="password" id="sh-key" placeholder="Anthropic API-Schlüssel (sk-ant-…)" value="${esc(getApiKey())}">
+    <div class="hint" style="margin-top:8px">Wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin.</div>
+    <label>Design</label>
+    <div class="toggle-row"><span>Dark Mode</span>
+      <span class="switch"><input type="checkbox" id="sh-dark" ${localStorage.getItem(THEME_KEY) === "light" ? "" : "checked"}><span class="knob"></span></span>
+    </div>
+    <label>KI-Verbrauch</label>
+    <div class="kv"><span class="k">Kosten insgesamt</span><span class="v">${fmtCost(data.usage.cost)}</span></div>
+    <div class="kv"><span class="k">Tokens</span><span class="v">${data.usage.input} rein · ${data.usage.output} raus</span></div>
+    <label>Backup</label>
+    <div class="sheet-actions" style="margin-top:6px">
+      <button class="quiet" data-act="export">Copy Data</button>
+      <button class="quiet" data-act="import">Import Data</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="primary" data-act="done">Done</button>
+    </div>`, { accent: "var(--text)" });
 
-/* ---------- Export / Import ---------- */
-document.getElementById("btn-export").addEventListener("click", async () => {
-  const text = JSON.stringify(data, null, 2);
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("Alle Daten wurden kopiert! Du kannst sie jetzt einfügen (z.B. im Chat mit Claude).");
-  } catch {
-    prompt("Kopieren nicht möglich – markiere den Text und kopiere ihn selbst:", text);
-  }
+  sheet.querySelector("#sh-dark").addEventListener("change", e => {
+    localStorage.setItem(THEME_KEY, e.target.checked ? "dark" : "light");
+    applyTheme();
+  });
+  sheet.querySelector('[data-act="export"]').addEventListener("click", async () => {
+    const text = JSON.stringify(data, null, 2);
+    try { await navigator.clipboard.writeText(text); alert("Alle Daten wurden kopiert!"); }
+    catch { prompt("Kopieren nicht möglich – markiere den Text und kopiere ihn selbst:", text); }
+  });
+  sheet.querySelector('[data-act="import"]').addEventListener("click", () => {
+    const text = prompt("Füge hier deine exportierten Daten ein:");
+    if (!text) return;
+    try {
+      const imported = JSON.parse(text);
+      if (!imported || typeof imported !== "object") throw new Error();
+      data.todos = imported.todos || [];
+      data.dailies = imported.dailies || [];
+      data.avoids = imported.avoids || [];
+      data.books = imported.books || [];
+      data.mediaTips = imported.mediaTips || {};
+      data.bookTips = imported.bookTips || null;
+      data.sport = imported.sport || {};
+      data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
+      normalizeData();
+      save(); rerenderAll();
+      alert("Daten erfolgreich importiert!");
+    } catch {
+      alert("Das sah nicht nach gültigen Daten aus – nichts wurde verändert.");
+    }
+  });
+  sheet.querySelector('[data-act="done"]').addEventListener("click", () => {
+    const val = sheet.querySelector("#sh-key").value.trim();
+    if (val) localStorage.setItem(KEY_STORE, val);
+    else localStorage.removeItem(KEY_STORE);
+    close();
+  });
 });
 
-document.getElementById("btn-import").addEventListener("click", () => {
-  const text = prompt("Füge hier deine exportierten Daten ein:");
-  if (!text) return;
-  try {
-    const imported = JSON.parse(text);
-    if (!imported || typeof imported !== "object") throw new Error();
-    data.todos = imported.todos || [];
-    data.dailies = imported.dailies || [];
-    data.avoids = imported.avoids || [];
-    data.books = imported.books || [];
-    data.books.forEach(b => { if (!b.media) b.media = "book"; });
-    data.mediaTips = imported.mediaTips || {};
-    if (imported.bookTips && !data.mediaTips.book) data.mediaTips.book = imported.bookTips;
-    data.sport = imported.sport || {};
-    if (!Array.isArray(data.sport.trainingDays)) data.sport.trainingDays = [1, 2, 4, 5];
-    if (!data.sport.log || typeof data.sport.log !== "object") data.sport.log = {};
-    if (!data.sport.skills) data.sport.skills = {};
-    if (!data.sport.skills.handstand) data.sport.skills.handstand = { done: [] };
-    if (!Array.isArray(data.sport.skills.handstand.done)) data.sport.skills.handstand.done = [];
-    if (!Array.isArray(data.sport.runs)) data.sport.runs = [];
-    if (!Array.isArray(data.sport.rides)) data.sport.rides = [];
-    data.usage = imported.usage || { input: 0, output: 0, cost: 0 };
-    save();
-    renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderHabits(); renderUsage();
-    alert("Daten erfolgreich importiert!");
-  } catch {
-    alert("Das hat leider nicht geklappt – der Text war kein gültiger Export.");
-  }
-});
+/* ================================================================
+   Start
+   ================================================================ */
+renderToday();
+updateFab();
 
-renderTodos(); renderDailies(); renderAvoids(); renderBooks(); renderSport(); renderHabits(); renderUsage();
-
-/* ---------- Service Worker (macht die App installierbar & offline-fähig) ---------- */
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
