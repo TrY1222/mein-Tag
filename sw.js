@@ -1,7 +1,7 @@
 // Service Worker für "Tagwerk"
 // Strategie: Netzwerk zuerst (damit Updates sofort ankommen),
 // bei Offline-Betrieb Rückgriff auf den Cache.
-const CACHE = "mein-tag-v33";
+const CACHE = "mein-tag-v34";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

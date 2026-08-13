@@ -123,7 +123,7 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
 .row .grow { flex: 1; min-width: 0; }
 .row .t { font-size: 16px; font-weight: 600; overflow-wrap: break-word; }
 .row .s { font-size: 13px; color: var(--muted); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
-.row .s .prev { display: block; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .s .prev { flex: 1 1 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row.done .t { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--faint); }
 
 .ring-check {
@@ -361,13 +361,22 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 }
 .sheet-backdrop.open { opacity: 1; }
 .sheet {
+  position: relative;
   width: 100%; max-width: 640px; margin: 0 auto; max-height: 88dvh; overflow-y: auto;
   background: var(--surface); border-radius: 24px 24px 0 0;
   padding: 10px 20px calc(26px + env(safe-area-inset-bottom));
   transform: translateY(100%); transition: transform .32s cubic-bezier(.25,.9,.3,1);
 }
 .sheet-backdrop.open .sheet { transform: none; }
-.grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 4px auto 16px; }
+.grab-zone { padding: 6px 0 12px; margin: -4px 0 4px; cursor: grab; touch-action: none; }
+.grab { width: 44px; height: 5px; border-radius: 3px; background: var(--border); margin: 0 auto; }
+.sheet-x {
+  position: absolute; top: 12px; right: 14px; z-index: 5;
+  width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--surface2); color: var(--muted); font-size: 15px; line-height: 1;
+  display: grid; place-items: center;
+}
+.sheet-x:active { background: var(--border); }
 .sheet h3 { font-family: var(--serif); font-size: 23px; font-weight: 600; margin-bottom: 4px; }
 .sheet .sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
 .sheet label { display: block; font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 14px 2px 6px; letter-spacing: .04em; text-transform: uppercase; }
@@ -495,7 +504,6 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
   <section class="view" id="view-media">
     <div class="seg" id="media-seg" style="--seg-accent: var(--media)">
       <button data-media="book" class="on">Bücher</button>
-      <button data-media="screen">Filme &amp; Serien</button>
       <button data-media="game">Spiele</button>
     </div>
     <div id="media-body"></div>
@@ -631,6 +639,9 @@ function normalizeData() {
   });
   // Medien: Typ-Kennung + Sterne (1–5) in Tiers (S–D) überführen
   data.books.forEach(b => { if (!b.media) b.media = "book"; });
+  // Filme & Serien gibt es nicht mehr (läuft über Letterboxd)
+  data.books = data.books.filter(b => b.media !== "screen");
+  if (data.mediaTips && typeof data.mediaTips === "object") delete data.mediaTips.screen;
   const R2T = { 5: "S", 4: "A", 3: "B", 2: "C", 1: "D" };
   data.books.forEach(b => {
     if (!b.tier && b.rating) b.tier = R2T[b.rating] || "";
@@ -679,15 +690,50 @@ function openSheet(html, { accent } = {}) {
   const sheet = document.createElement("div");
   sheet.className = "sheet";
   if (accent) sheet.style.setProperty("--sheet-accent", accent);
-  sheet.innerHTML = '<div class="grab"></div>' + html;
+  sheet.innerHTML = '<div class="grab-zone"><div class="grab"></div></div>'
+    + '<button class="sheet-x" title="Schließen">✕</button>' + html;
   backdrop.appendChild(sheet);
   document.body.appendChild(backdrop);
   requestAnimationFrame(() => backdrop.classList.add("open"));
+
   const close = () => {
+    sheet.style.transform = "";
+    backdrop.style.opacity = "";
     backdrop.classList.remove("open");
     setTimeout(() => backdrop.remove(), 280);
   };
   backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  sheet.querySelector(".sheet-x").addEventListener("click", close);
+
+  // Runterwischen zum Schließen – am Griff immer, sonst nur wenn oben angekommen
+  let sy = 0, dy = 0, drag = false, pid = null;
+  sheet.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const onGrab = !!e.target.closest(".grab-zone");
+    const onControl = !!e.target.closest("input, textarea, select, button, .tl-item, .trail-chip, .row");
+    if (!onGrab && (sheet.scrollTop > 0 || onControl)) return;
+    sy = e.clientY; dy = 0; drag = true; pid = e.pointerId;
+    sheet.style.transition = "none";
+  });
+  sheet.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== pid) return;
+    dy = e.clientY - sy;
+    if (dy < 0) dy /= 5;                       // nach oben spürbarer Widerstand
+    if (dy > 4) { try { sheet.setPointerCapture(pid); } catch {} }
+    sheet.style.transform = "translateY(" + dy + "px)";
+    if (dy > 0) backdrop.style.opacity = String(Math.max(0.15, 1 - dy / 480));
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    drag = false;
+    sheet.style.transition = "";
+    if (dy > 110) { close(); return; }
+    sheet.style.transform = "";
+    backdrop.style.opacity = "";
+  };
+  sheet.addEventListener("pointerup", endDrag);
+  sheet.addEventListener("pointercancel", endDrag);
+
   return { sheet, close };
 }
 
@@ -1228,12 +1274,13 @@ function openAvoidSheet() {
 }
 
 /* ================================================================
-   MEDIEN (Bücher / Filme & Serien / Spiele)
+   MEDIEN (Bücher / Spiele)
    ================================================================ */
 const MEDIA = {
   book: {
     label: "Bücher", one: "Buch", many: "Bücher", verb: "gelesen",
-    placeholder: "Buchtitel und Autor, z.B. Momo – Michael Ende",
+    placeholder: "Buchtitel, z.B. der herr der ringe 1",
+    thing: "Buch", things: "Bücher", who: "Autor", whoEx: "J. R. R. Tolkien",
     tipsTitle: "Buchvorschläge",
     known: "Diese Bücher kenne ich",
     tipsIntro: "Diese Bücher habe ich gelesen und mochte sie",
@@ -1242,20 +1289,10 @@ const MEDIA = {
     cats: ["Fantasy", "Roman", "Krimi & Thriller", "Sachbuch", "Finanzen", "Selbstentwicklung", "Wissenschaft", "Biografie", "Sonstiges"],
     icons: { "Fantasy": "🐉", "Roman": "📖", "Krimi & Thriller": "🕵️", "Sachbuch": "💡", "Finanzen": "💰", "Selbstentwicklung": "🌱", "Wissenschaft": "🔬", "Biografie": "👤", "Sonstiges": "📚" }
   },
-  screen: {
-    label: "Filme & Serien", one: "Titel", many: "Titel", verb: "gesehen",
-    placeholder: "Film oder Serie, z.B. Interstellar",
-    tipsTitle: "Film- & Serien-Tipps",
-    known: "Diese Filme und Serien kenne ich",
-    tipsIntro: "Diese Filme und Serien habe ich gesehen und mochte sie",
-    tipsAsk: "Empfiehl mir 5 Filme oder Serien, die dazu passen und die ich noch nicht gesehen habe. Gib pro Titel genau eine Zeile im Format: Titel | Jahr oder Regie | kurzer Grund (max. 10 Wörter). Keine Nummerierung, keine weiteren Zeilen.",
-    defaultIcon: "🎬",
-    cats: ["Action", "Drama", "Komödie", "Sci-Fi & Fantasy", "Thriller & Horror", "Doku", "Anime", "Serie", "Sonstiges"],
-    icons: { "Action": "💥", "Drama": "🎭", "Komödie": "😂", "Sci-Fi & Fantasy": "🚀", "Thriller & Horror": "🔪", "Doku": "🎥", "Anime": "🌸", "Serie": "📺", "Sonstiges": "🎬" }
-  },
   game: {
     label: "Spiele", one: "Spiel", many: "Spiele", verb: "gespielt",
-    placeholder: "Videospiel, z.B. The Legend of Zelda: BotW",
+    placeholder: "Videospiel, z.B. zelda botw",
+    thing: "Videospiel", things: "Videospiele", who: "Entwicklerstudio", whoEx: "FromSoftware",
     tipsTitle: "Spiele-Tipps",
     known: "Diese Spiele kenne ich",
     tipsIntro: "Diese Spiele habe ich gespielt und mochte sie",
@@ -1309,6 +1346,17 @@ function renderMedia() {
   $("media-tips").addEventListener("click", openTipsSheet);
   $("media-tierlist").addEventListener("click", openTierlistSheet);
 
+  // Nachtragen, wenn irgendwo Autor oder Beschreibung fehlt
+  const missing = items.filter(needsEnrich).length;
+  if (missing) {
+    const fix = document.createElement("button");
+    fix.className = "tips-btn";
+    fix.style.color = "var(--media)";
+    fix.textContent = "🪄 " + missing + " " + (missing === 1 ? "Eintrag" : "Einträge") + " nachtragen (Titel, " + cfg.who + ", Beschreibung)";
+    fix.addEventListener("click", () => enrichAllMissing(fix));
+    box.appendChild(fix);
+  }
+
   if (booksView === null) {
     box.insertAdjacentHTML("beforeend",
       `<div class="media-total">Insgesamt ${cfg.verb}: <b>${items.length} ${items.length === 1 ? cfg.one : cfg.many}</b></div>`);
@@ -1345,7 +1393,8 @@ function renderMedia() {
     row.className = "row";
     row.style.cursor = "pointer";
     row.style.animationDelay = (i * .03) + "s";
-    const preview = (b.answer || "").split("\n")[0].trim();
+    const preview = b.busy ? "Claude schlägt nach …"
+      : (b.desc || (b.answer || "").split("\n")[0]).trim();
     row.innerHTML = `
       <div class="grow">
         <div class="t">${esc(b.question)}</div>
@@ -1447,26 +1496,167 @@ function makeTierChip(b, sheet, rebuild) {
   return chip;
 }
 
-// Nur die Genre-Einsortierung läuft noch über Claude (winziger Aufruf).
-// Ohne API-Schlüssel oder bei Fehlern bleibt der Eintrag einfach unter "Sonstiges".
-async function categorizeMedia(b) {
+/* ---- Claude räumt auf: Titel korrigieren, Urheber anhängen, Genre, ein Satz ---- */
+function jsonFrom(text) {
+  const t = String(text).replace(/```json|```/g, "").trim();
+  try { return JSON.parse(t); } catch {}
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch {} }
+  const c = t.indexOf("["), d = t.lastIndexOf("]");
+  if (c >= 0 && d > c) { try { return JSON.parse(t.slice(c, d + 1)); } catch {} }
+  return null;
+}
+function enrichSystem(cfg) {
+  return "Du bist ein sorgfältiger Katalog für " + cfg.things + ". "
+    + "Der Nutzer tippt Titel oft falsch, unvollständig oder klein geschrieben. "
+    + "Erkenne, welches " + cfg.thing + " gemeint ist, und korrigiere die Schreibweise auf die offizielle deutsche Fassung (falls es keine gibt, den Originaltitel). "
+    + "Hänge hinten mit „ – “ den " + cfg.who + " an, z.B. „… – " + cfg.whoEx + "“. "
+    + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences, im Format: "
+    + '{"title":"<Titel> – <' + cfg.who + '>","cat":"<Kategorie>","desc":"<genau ein Satz>"}. '
+    + "cat ist genau eine dieser Kategorien: " + cfg.cats.join(", ") + ". "
+    + "desc ist EIN einziger Satz auf Deutsch (max. 20 Wörter): worum es geht bzw. die Kernaussage. Keine Spoiler zum Ende. "
+    + "Wenn du den Titel nicht sicher erkennst, gib ihn unverändert zurück und setze desc auf \"\".";
+}
+function applyEnrich(b, o, cfg) {
+  if (!o || typeof o !== "object") return false;
+  if (typeof o.title === "string" && o.title.trim()) b.question = o.title.trim();
+  if (typeof o.cat === "string" && cfg.cats.includes(o.cat.trim()) && (b.autoCat || !b.cat)) b.cat = o.cat.trim();
+  if (typeof o.desc === "string" && o.desc.trim()) b.desc = o.desc.trim();
+  b.enriched = true;
+  return true;
+}
+
+// Einzelner Eintrag – läuft still im Hintergrund nach dem Hinzufügen
+async function enrichMedia(b) {
   const cfg = MEDIA[b.media] || MEDIA.book;
   if (!getApiKey()) return;
+  b.busy = true; renderMedia();
   try {
     const r = await callClaude({
-      system: "Ordne den genannten Titel (" + cfg.label + ") genau einer dieser Kategorien zu: " + cfg.cats.join(", ") + ". Antworte NUR mit dem Kategorienamen, sonst nichts.",
+      system: enrichSystem(cfg),
       userText: b.question,
-      maxTokens: 20
+      maxTokens: 220
     });
     if (r) {
-      const cat = r.text.trim();
-      if (cfg.cats.includes(cat) && (b.autoCat || !b.cat)) b.cat = cat;
+      applyEnrich(b, jsonFrom(r.text), cfg);
       b.cost = (b.cost || 0) + r.cost;
-      save(); renderMedia();
     }
   } catch {
-    // still bleiben – Einsortieren ist nur Komfort
+    // still bleiben – der Eintrag steht ja schon
+  } finally {
+    delete b.busy;
+    save(); renderMedia();
   }
+}
+
+// Sammel-Knopf: alle Einträge ohne Autor/Beschreibung in einem Aufruf nachtragen
+function needsEnrich(b) { return !b.enriched || !b.desc; }
+async function enrichAllMissing(btn) {
+  const cfg = M();
+  const todo = itemsOfMedia().filter(needsEnrich);
+  if (!todo.length) { alert("Alles schon vollständig."); return; }
+  if (!getApiKey()) { alert("Dafür brauchst du deinen API-Schlüssel in den Einstellungen."); return; }
+  const label = btn.textContent;
+  btn.disabled = true;
+  try {
+    // in Portionen, damit die Antwort nicht abgeschnitten wird
+    const CHUNK = 12;
+    for (let i = 0; i < todo.length; i += CHUNK) {
+      const part = todo.slice(i, i + CHUNK);
+      btn.textContent = "Claude arbeitet … " + Math.min(i + CHUNK, todo.length) + "/" + todo.length;
+      const list = part.map((b, n) => (n + 1) + ". " + b.question).join("\n");
+      const r = await callClaude({
+        system: enrichSystem(cfg).replace(
+          'Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences, im Format: {"title"',
+          'Du bekommst eine nummerierte Liste. Antworte AUSSCHLIESSLICH mit einem JSON-Array in genau dieser Reihenfolge und Länge, ohne Code-Fences, Elemente im Format: {"title"'
+        ),
+        userText: list,
+        maxTokens: 180 * part.length + 200
+      });
+      if (!r) break;
+      const arr = jsonFrom(r.text);
+      if (Array.isArray(arr)) part.forEach((b, n) => applyEnrich(b, arr[n], cfg));
+      save(); renderMedia();
+    }
+    alert("Fertig – " + todo.length + " " + (todo.length === 1 ? cfg.one : cfg.many) + " nachgetragen.");
+  } catch (err) {
+    alert("Das hat nicht geklappt: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+    save(); renderMedia();
+  }
+}
+
+/* ---- Ganze Reihe: „Der Herr der Ringe 1-“ oder „… 1-3“ ---- */
+function parseSeries(input) {
+  const m = String(input).match(/^(.*?[^\d\s])\s*(\d+)\s*-\s*(\d+)?\s*$/);
+  if (!m) return null;
+  const from = parseInt(m[2], 10);
+  const to = m[3] ? parseInt(m[3], 10) : null;
+  if (!from || (to && to < from)) return null;
+  return { base: m[1].trim(), from, to };
+}
+
+async function askSeries(base, from, to, cfg) {
+  const range = to ? ("Band " + from + " bis " + to) : ("ab Band " + from + " alle erschienenen Bände");
+  const r = await callClaude({
+    system: "Du bist ein sorgfältiger Katalog für " + cfg.things + ". Der Nutzer nennt eine Reihe, oft falsch geschrieben. "
+      + "Erkenne die Reihe und liste die einzelnen Bände in Erscheinungsreihenfolge auf. "
+      + "Jeder Titel offiziell deutsch geschrieben, hinten mit „ – “ den " + cfg.who + " angehängt. "
+      + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences: "
+      + '{"series":"<Reihenname>","items":[{"title":"<Bandtitel> – <' + cfg.who + '>","cat":"<Kategorie>","desc":"<genau ein Satz, max. 20 Wörter>"}]}. '
+      + "cat ist genau eine dieser Kategorien: " + cfg.cats.join(", ") + ". "
+      + "Höchstens 20 Einträge. Wenn du keine Reihe erkennst, gib \"items\": [] zurück.",
+    userText: "Reihe: " + base + "\nGewünscht: " + range,
+    maxTokens: 2000
+  });
+  if (!r) return null;
+  const o = jsonFrom(r.text);
+  if (!o || !Array.isArray(o.items) || !o.items.length) return null;
+  return o;
+}
+
+function openSeriesConfirm(o, cfg) {
+  const have = new Set(itemsOfMedia().map(b => b.question.toLowerCase()));
+  const rows = o.items.map((it, i) => {
+    const dup = have.has(String(it.title || "").toLowerCase());
+    return `<div class="row ${dup ? "" : "sel"}" data-i="${i}" style="cursor:pointer">
+      <button class="ring-check" style="${dup ? "" : "background:var(--media);border-color:var(--media)"}">${dup ? "" : "✓"}</button>
+      <div class="grow"><div class="t">${esc(it.title || "")}</div>
+        ${dup ? '<div class="s"><span>schon eingetragen</span></div>'
+              : (it.desc ? '<div class="s"><span class="prev">' + esc(it.desc) + "</span></div>" : "")}
+      </div></div>`;
+  }).join("");
+  const { sheet, close } = openSheet(`
+    <h3>${esc(o.series || "Reihe gefunden")}</h3>
+    <div class="sub">${o.items.length} ${o.items.length === 1 ? "Band" : "Bände"} gefunden. Tippe an, was du eintragen willst.</div>
+    ${rows}
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="add">Eintragen</button>
+    </div>`, { accent: "var(--media)" });
+
+  sheet.querySelectorAll(".row").forEach(row => row.addEventListener("click", () => {
+    const on = row.classList.toggle("sel");
+    const c = row.querySelector(".ring-check");
+    c.textContent = on ? "✓" : "";
+    c.style.cssText = on ? "background:var(--media);border-color:var(--media)" : "";
+  }));
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="add"]').addEventListener("click", () => {
+    const picked = [...sheet.querySelectorAll(".row.sel")].map(r => o.items[parseInt(r.dataset.i, 10)]);
+    if (!picked.length) { close(); return; }
+    picked.forEach(it => {
+      data.books.push({
+        id: uid(), media: mediaView, question: String(it.title || "").trim(),
+        cat: cfg.cats.includes(it.cat) ? it.cat : "", autoCat: true,
+        desc: typeof it.desc === "string" ? it.desc.trim() : "",
+        answer: "", cost: 0, tier: "", enriched: true
+      });
+    });
+    booksView = null;
+    save(); close(); renderMedia();
+  });
 }
 
 function openMediaSheet() {
@@ -1475,8 +1665,9 @@ function openMediaSheet() {
   const tierBtns = TIERS.map(t => `<button data-tier="${t}">${t}</button>`).join("");
   const { sheet, close } = openSheet(`
     <h3>${esc(cfg.label)}: Neuer Eintrag</h3>
-    <div class="sub">Claude beschreibt und sortiert ihn automatisch ein.</div>
+    <div class="sub">Tipp einfach drauflos – Claude korrigiert den Titel, hängt den ${esc(cfg.who)} an und sortiert ein.</div>
     <input type="text" id="sh-media-title" placeholder="${esc(cfg.placeholder)}" autocomplete="off">
+    <div class="hint" style="margin-top:8px">Ganze Reihe: „Titel 1-“ für alle Bände, „Titel 1-3“ für Band 1 bis 3.</div>
     <label>Kategorie</label>
     <select id="sh-media-cat">
       <option value="Auto" selected>Auto (Claude wählt)</option>${catOpts}
@@ -1501,20 +1692,35 @@ function openMediaSheet() {
   }));
 
   sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
-  sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
+  sheet.querySelector('[data-act="save"]').addEventListener("click", async ev => {
     const title = sheet.querySelector("#sh-media-title").value.trim();
     if (!title) return;
     const sel = sheet.querySelector("#sh-media-cat").value;
+
+    // Reihen-Schreibweise erkannt? Dann erst Bände holen und nachfragen.
+    const ser = parseSeries(title);
+    if (ser && getApiKey()) {
+      ev.target.disabled = true; ev.target.textContent = "Claude sucht die Bände …";
+      try {
+        const o = await askSeries(ser.base, ser.from, ser.to, cfg);
+        if (o) { close(); openSeriesConfirm(o, cfg); return; }
+        alert("Dazu habe ich keine Reihe gefunden – ich trage es als einzelnen Eintrag ein.");
+      } catch (err) {
+        alert("Das hat nicht geklappt: " + err.message);
+      }
+      ev.target.disabled = false; ev.target.textContent = "Hinzufügen";
+    }
+
     const b = {
       id: uid(), media: mediaView, question: title,
       cat: sel === "Auto" ? "" : sel, autoCat: sel === "Auto",
-      answer: sheet.querySelector("#sh-add-notes").value.trim(),
+      desc: "", answer: sheet.querySelector("#sh-add-notes").value.trim(),
       cost: 0, tier: chosenTier
     };
     data.books.push(b);
     booksView = null;
     save(); close(); renderMedia();
-    if (b.autoCat) categorizeMedia(b);
+    enrichMedia(b);
   });
   setTimeout(() => sheet.querySelector("#sh-media-title").focus(), 350);
 }
@@ -1528,6 +1734,9 @@ function openMediaDetail(b) {
     <label>Meine Wertung</label>
     <div class="tier-row" id="sh-tier">${tierBtns}</div>
     <div class="hint" style="margin-top:8px">S = Highlight · D = gefällt mir nicht · nochmal tippen = entfernen</div>
+    <label>Worum es geht</label>
+    <div class="answer ${b.desc ? "" : "blank"}" id="sh-desc">${b.desc ? esc(b.desc) : "Noch keine Beschreibung."}</div>
+    <button class="tips-btn" id="sh-redesc" style="color:var(--media);margin-top:10px">🪄 ${b.desc ? "Neu holen" : "Von Claude holen"}</button>
     <label>Meine Notizen</label>
     <textarea id="sh-notes" placeholder="Was du dazu festhalten willst …">${esc(b.answer || "")}</textarea>
     <div class="hint" style="margin-top:8px">Wird automatisch gespeichert.</div>
@@ -1535,6 +1744,18 @@ function openMediaDetail(b) {
       <button class="danger" data-act="del">🗑</button>
       <button class="primary" data-act="done">Fertig</button>
     </div>`, { accent: "var(--media)" });
+
+  sheet.querySelector("#sh-redesc").addEventListener("click", async e => {
+    const lbl = e.target.textContent;
+    e.target.disabled = true; e.target.textContent = "Claude schlägt nach …";
+    b.enriched = false;
+    await enrichMedia(b);
+    e.target.disabled = false; e.target.textContent = lbl;
+    const d = sheet.querySelector("#sh-desc");
+    d.textContent = b.desc || "Noch keine Beschreibung.";
+    d.classList.toggle("blank", !b.desc);
+    sheet.querySelector("h3").textContent = b.question;
+  });
 
   sheet.querySelectorAll("#sh-tier button").forEach(bt => bt.addEventListener("click", () => {
     const t = bt.dataset.tier;
