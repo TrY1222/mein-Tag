@@ -427,6 +427,23 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 .kv .k { color: var(--muted); }
 .kv .v { font-weight: 700; text-align: right; }
 
+/* Erinnerungs-Stufen */
+.lvl-list { display: flex; flex-direction: column; gap: 7px; }
+.lvl {
+  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  border: 1px solid var(--hairline); background: var(--surface2); color: var(--text);
+  border-radius: 13px; padding: 12px 14px; cursor: pointer; font-family: var(--sans);
+}
+.lvl .dot-sel {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border); display: grid; place-items: center;
+}
+.lvl.on { border-color: var(--avoid); background: color-mix(in srgb, var(--avoid) 12%, transparent); }
+.lvl.on .dot-sel { border-color: var(--avoid); }
+.lvl.on .dot-sel::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--avoid); }
+.lvl .n { display: block; font-size: 15px; font-weight: 700; }
+.lvl .d { display: block; font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; font-size: 15.5px; font-weight: 600; }
 .switch { position: relative; width: 50px; height: 30px; }
 .switch input { opacity: 0; width: 100%; height: 100%; position: absolute; z-index: 2; cursor: pointer; margin: 0; }
@@ -578,6 +595,14 @@ const DEFAULT_HANDSTAND_STEPS = [
   "Freier Handstand 15+ Sek."
 ];
 
+/* Eskalationsstufen der Erinnerungen */
+const NAG_LEVELS = {
+  sanft:     { label: "Sanft",     desc: "Ein Hinweis, alle 4 Stunden.",        everyMin: 240, max: 1, wall: false },
+  normal:    { label: "Normal",    desc: "Alle 2 Stunden, freundlich.",          everyMin: 120, max: 2, wall: false },
+  penetrant: { label: "Penetrant", desc: "Alle 30 Minuten. Mit Nachdruck.",      everyMin: 30,  max: 3, wall: true },
+  gnadenlos: { label: "Gnadenlos", desc: "Alle 10 Minuten. Du hast es so gewollt.", everyMin: 10, max: 6, wall: true }
+};
+
 function normalizeData() {
   if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
   if (!Array.isArray(data.todos)) data.todos = [];
@@ -613,6 +638,12 @@ function normalizeData() {
   });
   if (!data.mediaTips || typeof data.mediaTips !== "object") data.mediaTips = {};
   if (data.bookTips && !data.mediaTips.book) { data.mediaTips.book = data.bookTips; data.bookTips = null; }
+  // Erinnerungen
+  if (!data.notify || typeof data.notify !== "object") data.notify = {};
+  if (typeof data.notify.on !== "boolean") data.notify.on = false;
+  if (!NAG_LEVELS[data.notify.level]) data.notify.level = "penetrant";
+  if (typeof data.notify.night !== "boolean") data.notify.night = true;
+  if (!data.notify.lastFire || typeof data.notify.lastFire !== "object") data.notify.lastFire = {};
 }
 normalizeData();
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
@@ -802,6 +833,7 @@ function renderCurrent() {
 }
 function rerenderAll() {
   renderCurrent();
+  if (typeof updateBadge === "function") updateBadge();
 }
 
 const fab = $("fab");
@@ -2104,6 +2136,220 @@ async function skillTip(sk, btn) {
 }
 
 /* ================================================================
+   ERINNERUNGEN — Mitteilungen, Badge und das schlechte Gewissen
+   ================================================================ */
+
+/* Was ist gerade offen? Sortiert nach Dringlichkeit. */
+function pendingItems() {
+  const today = todayStr();
+  const now = new Date();
+  const out = [];
+
+  data.todos.forEach(t => {
+    if (t.done || !t.deadline || t.deadline > today) return;
+    const days = daysBetweenIso(t.deadline, today);
+    // Heute fällig mit Uhrzeit: erst ab der Uhrzeit nerven
+    if (days === 0 && t.deadlineTime) {
+      const [h, m] = t.deadlineTime.split(":").map(Number);
+      if (now.getHours() * 60 + now.getMinutes() < h * 60 + m) return;
+    }
+    out.push({ key: "todo:" + t.id, kind: "todo", title: t.title, days, ref: t });
+  });
+
+  data.dailies.forEach(h => {
+    const st = habitState(h);
+    if (!st.due) return;
+    out.push({ key: "habit:" + h.id, kind: "habit", title: h.title, days: 0, streak: st.streak, ref: h });
+  });
+
+  // Training erst ab dem Nachmittag anmahnen
+  const isTrainDay = data.sport.trainingDays.includes(now.getDay()) && allEx().length > 0;
+  const trained = data.sport.log[today] && Object.keys(data.sport.log[today]).length > 0;
+  if (isTrainDay && !trained && now.getHours() >= 15) {
+    out.push({ key: "training:" + today, kind: "training", title: "Training", days: 0 });
+  }
+
+  return out.sort((a, b) => b.days - a.days);
+}
+
+/* Der Ton wird mit der Stufe rauer. */
+function nagLine(item, level) {
+  const t = item.title, d = item.days;
+  const overdue = d > 0 ? (d === 1 ? "seit gestern" : "seit " + d + " Tagen") : "";
+  const M = {
+    sanft: {
+      todo: [`„${t}“ steht noch offen.`],
+      habit: [`Heute dran: ${t}`],
+      training: [`Heute ist Trainingstag.`]
+    },
+    normal: {
+      todo: [`„${t}“ wartet noch auf dich.`, `Noch nicht erledigt: „${t}“.`],
+      habit: [`${t} steht heute an.`, `Dranbleiben: ${t}`],
+      training: [`Dein Training wartet noch.`, `Trainingstag – noch nichts eingetragen.`]
+    },
+    penetrant: {
+      todo: [`„${t}“. Immer noch.`, `Wir beide wissen, dass „${t}“ offen ist.`, `„${t}“ – jetzt wäre ein guter Moment.`],
+      habit: [`${t}. Heute. Nicht morgen.`, `Deine Streak bei „${t}“ steht auf dem Spiel.`],
+      training: [`Trainingstag, null Wiederholungen. Auffällig.`, `Dein Körper wartet. Immer noch.`]
+    },
+    gnadenlos: {
+      todo: [
+        `„${t}“ ist offen. Ich frage in 10 Minuten wieder.`,
+        `Du liest das hier. „${t}“ erledigt sich davon nicht.`,
+        overdue ? `„${t}“ – ${overdue} überfällig. Das ist eine Entscheidung, die du triffst.` : `„${t}“. Heute. Jetzt.`
+      ],
+      habit: [`„${t}“. Jeden Tag dieselbe Diskussion.`, `${item.streak > 0 ? item.streak + " Tage Streak. Heute wirfst du sie weg?" : "„" + t + "“. Wieder nicht."}`],
+      training: [`Kein Training eingetragen. Der Tag läuft ab.`, `Dips machen sich nicht von allein.`]
+    }
+  };
+  const arr = (M[level] || M.normal)[item.kind] || [t];
+  // Rotiert, damit nicht immer derselbe Satz kommt
+  const n = Math.floor(Date.now() / 60000);
+  return arr[n % arr.length];
+}
+const NAG_TITLE = {
+  sanft: "Erinnerung", normal: "Noch offen",
+  penetrant: "Hey.", gnadenlos: "Ernsthaft jetzt."
+};
+
+function notifySupported() { return "Notification" in window; }
+function notifyGranted() { return notifySupported() && Notification.permission === "granted"; }
+function isQuietHour() {
+  if (!data.notify.night) return false;
+  const h = new Date().getHours();
+  return h >= 22 || h < 7;
+}
+
+async function fireNote(title, body, tag) {
+  if (!notifyGranted()) return;
+  const opts = {
+    body, tag, renotify: true,
+    icon: "icon-192.png", badge: "icon-192.png",
+    requireInteraction: data.notify.level === "gnadenlos",
+    data: { url: location.href }
+  };
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg && reg.showNotification) { await reg.showNotification(title, opts); return; }
+  } catch {}
+  try { new Notification(title, opts); } catch {}
+}
+
+/* Badge auf dem App-Icon – das Einzige, was auch bei geschlossener App sichtbar bleibt. */
+function updateBadge() {
+  const n = pendingItems().length;
+  try {
+    if (n > 0 && navigator.setAppBadge) navigator.setAppBadge(n);
+    else if (navigator.clearAppBadge) navigator.clearAppBadge();
+  } catch {}
+}
+
+let nagTimer = null;
+function runNagCheck() {
+  updateBadge();
+  if (!data.notify.on || !notifyGranted() || isQuietHour()) return;
+  const lvl = NAG_LEVELS[data.notify.level] || NAG_LEVELS.normal;
+  const items = pendingItems();
+  if (!items.length) return;
+  const now = Date.now();
+  let fired = 0;
+  for (const it of items) {
+    if (fired >= lvl.max) break;
+    const last = data.notify.lastFire[it.key] || 0;
+    if (now - last < lvl.everyMin * 60000) continue;
+    data.notify.lastFire[it.key] = now;
+    fireNote(NAG_TITLE[data.notify.level], nagLine(it, data.notify.level), it.key);
+    fired++;
+  }
+  // Sammelmeldung, wenn deutlich mehr offen ist als einzeln gemeldet wurde
+  if (items.length > lvl.max && fired > 0) {
+    fireNote("Tagwerk", "Insgesamt " + items.length + " Punkte offen.", "summary");
+  }
+  // Aufgeräumt halten: alte Einträge entfernen
+  const live = new Set(items.map(i => i.key));
+  Object.keys(data.notify.lastFire).forEach(k => { if (!live.has(k)) delete data.notify.lastFire[k]; });
+  if (fired) save();
+}
+function startNagLoop() {
+  clearInterval(nagTimer);
+  nagTimer = setInterval(runNagCheck, 60000);
+}
+
+/* Der In-App-Vorhalter: beim Öffnen erst mal Rechenschaft. */
+function maybeShowNagWall() {
+  if (!data.notify.on) return;
+  const lvl = NAG_LEVELS[data.notify.level] || NAG_LEVELS.normal;
+  if (!lvl.wall || isQuietHour()) return;
+  const items = pendingItems();
+  if (!items.length) return;
+  const last = data.notify.lastWall || 0;
+  if (Date.now() - last < 60 * 60000) return;   // höchstens 1x pro Stunde
+  data.notify.lastWall = Date.now(); save();
+  openNagWall(items);
+}
+
+function openNagWall(items) {
+  const worst = items[0];
+  const head = worst.days > 0
+    ? (worst.days === 1 ? "Seit gestern offen." : "Seit " + worst.days + " Tagen offen.")
+    : (items.length === 1 ? "Ein Punkt steht heute noch aus." : items.length + " Punkte stehen heute noch aus.");
+  const rows = items.map((it, i) => `
+    <div class="row" data-i="${i}">
+      <button class="ring-check"></button>
+      <div class="grow"><div class="t">${esc(it.title)}</div>
+        <div class="s"><span>${it.kind === "todo" ? "Aufgabe" : it.kind === "habit" ? "Gewohnheit" : "Sport"}${it.days > 0 ? " · " + it.days + (it.days === 1 ? " Tag" : " Tage") + " überfällig" : ""}</span></div>
+      </div>
+    </div>`).join("");
+  const { sheet, close } = openSheet(`
+    <h3>Kurz mal ehrlich.</h3>
+    <div class="sub">${esc(head)} Hak ab, was erledigt ist.</div>
+    ${rows}
+    <div class="sheet-actions">
+      <button class="quiet" data-act="later">Später</button>
+      <button class="primary" data-act="ok">Ich kümmere mich</button>
+    </div>`, { accent: "var(--avoid)" });
+
+  sheet.querySelectorAll(".row").forEach(row => {
+    row.querySelector(".ring-check").addEventListener("click", () => {
+      const it = items[parseInt(row.dataset.i, 10)];
+      if (it.kind === "todo") { it.ref.done = true; save(); }
+      else if (it.kind === "habit") toggleDailyHabit(it.ref);
+      else { sportView = "training"; switchTab("sport"); close(); return; }
+      row.classList.add("done");
+      row.querySelector(".ring-check").textContent = "✓";
+      row.querySelector(".ring-check").style.cssText = "background:var(--todo);border-color:var(--todo)";
+      rerenderAll(); updateBadge();
+    });
+  });
+  sheet.querySelector('[data-act="later"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="ok"]').addEventListener("click", close);
+}
+
+async function enableNotify() {
+  if (!notifySupported()) {
+    alert("Dieser Browser kennt keine Mitteilungen. Auf dem iPhone musst du Tagwerk zum Home-Bildschirm hinzufügen und von dort öffnen.");
+    return false;
+  }
+  let perm = Notification.permission;
+  if (perm === "default") {
+    try { perm = await Notification.requestPermission(); } catch { perm = "denied"; }
+  }
+  if (perm !== "granted") {
+    alert("Mitteilungen sind nicht erlaubt. Du kannst sie in den iPhone-Einstellungen unter „Tagwerk“ wieder freigeben.");
+    return false;
+  }
+  data.notify.on = true; save();
+  startNagLoop(); updateBadge();
+  fireNote("Erinnerungen sind an.", "Ab jetzt hake ich nach. Du hast es so gewollt.", "welcome");
+  return true;
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") { runNagCheck(); maybeShowNagWall(); }
+  else updateBadge();
+});
+
+/* ================================================================
    EINSTELLUNGEN
    ================================================================ */
 $("btn-settings").addEventListener("click", () => {
@@ -2113,6 +2359,24 @@ $("btn-settings").addEventListener("click", () => {
     <label>API-Schlüssel</label>
     <input type="password" id="sh-key" placeholder="Anthropic API-Schlüssel (sk-ant-…)" value="${esc(getApiKey())}">
     <div class="hint" style="margin-top:8px">Wird nur lokal in diesem Browser gespeichert und direkt an Anthropic geschickt – sonst nirgendwohin.</div>
+
+    <label>Erinnerungen</label>
+    <div class="toggle-row"><span>Nachhaken erlauben</span>
+      <span class="switch"><input type="checkbox" id="sh-notify" ${data.notify.on && notifyGranted() ? "checked" : ""}><span class="knob"></span></span>
+    </div>
+    <div class="hint" id="sh-notify-status"></div>
+    <div class="lvl-list" id="sh-levels" style="margin-top:12px">
+      ${Object.entries(NAG_LEVELS).map(([k, v]) => `
+        <button class="lvl ${data.notify.level === k ? "on" : ""}" data-lvl="${k}">
+          <span class="dot-sel"></span>
+          <span><span class="n">${v.label}</span><span class="d">${esc(v.desc)}</span></span>
+        </button>`).join("")}
+    </div>
+    <div class="toggle-row"><span>Nachtruhe (22–7 Uhr)</span>
+      <span class="switch"><input type="checkbox" id="sh-night" ${data.notify.night ? "checked" : ""}><span class="knob"></span></span>
+    </div>
+    <button class="tips-btn" id="sh-notify-test" style="color:var(--avoid)">🔔 Testmitteilung senden</button>
+
     <label>Design</label>
     <div class="toggle-row"><span>Dark Mode</span>
       <span class="switch"><input type="checkbox" id="sh-dark" ${localStorage.getItem(THEME_KEY) === "light" ? "" : "checked"}><span class="knob"></span></span>
@@ -2128,6 +2392,48 @@ $("btn-settings").addEventListener("click", () => {
     <div class="sheet-actions">
       <button class="primary" data-act="done">Done</button>
     </div>`, { accent: "var(--text)" });
+
+  /* --- Erinnerungen --- */
+  const statusEl = sheet.querySelector("#sh-notify-status");
+  const notifyBox = sheet.querySelector("#sh-notify");
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const paintStatus = () => {
+    let s;
+    if (!notifySupported()) s = standalone
+      ? "Dieser Browser unterstützt keine Mitteilungen."
+      : "Nur als installierte App: Teilen → „Zum Home-Bildschirm“, dann von dort öffnen.";
+    else if (Notification.permission === "denied") s = "In den Systemeinstellungen blockiert – dort unter „Tagwerk“ wieder erlauben.";
+    else if (data.notify.on && notifyGranted()) s = "Aktiv. " + pendingItems().length + " Punkte offen.";
+    else s = "Aus. Beim Einschalten fragt dein iPhone einmal nach Erlaubnis.";
+    statusEl.textContent = s;
+  };
+  paintStatus();
+
+  notifyBox.addEventListener("change", async e => {
+    if (e.target.checked) {
+      const ok = await enableNotify();
+      e.target.checked = ok;
+    } else {
+      data.notify.on = false; save();
+      clearInterval(nagTimer);
+      try { navigator.clearAppBadge && navigator.clearAppBadge(); } catch {}
+    }
+    paintStatus();
+  });
+  sheet.querySelectorAll("#sh-levels .lvl").forEach(b => b.addEventListener("click", () => {
+    data.notify.level = b.dataset.lvl; save();
+    sheet.querySelectorAll("#sh-levels .lvl").forEach(x => x.classList.toggle("on", x === b));
+  }));
+  sheet.querySelector("#sh-night").addEventListener("change", e => {
+    data.notify.night = e.target.checked; save();
+  });
+  sheet.querySelector("#sh-notify-test").addEventListener("click", async () => {
+    if (!notifyGranted()) { const ok = await enableNotify(); notifyBox.checked = ok; paintStatus(); if (!ok) return; }
+    const items = pendingItems();
+    const it = items[0];
+    fireNote(NAG_TITLE[data.notify.level],
+      it ? nagLine(it, data.notify.level) : "Nichts offen. Diesmal.", "test");
+  });
 
   sheet.querySelector("#sh-dark").addEventListener("change", e => {
     localStorage.setItem(THEME_KEY, e.target.checked ? "dark" : "light");
@@ -2172,6 +2478,11 @@ $("btn-settings").addEventListener("click", () => {
    ================================================================ */
 renderToday();
 updateFab();
+updateBadge();
+if (data.notify.on && notifyGranted()) {
+  startNagLoop();
+  setTimeout(() => { runNagCheck(); maybeShowNagWall(); }, 1200);
+}
 
 if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});

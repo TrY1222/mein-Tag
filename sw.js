@@ -1,7 +1,7 @@
 // Service Worker für "Tagwerk"
 // Strategie: Netzwerk zuerst (damit Updates sofort ankommen),
 // bei Offline-Betrieb Rückgriff auf den Cache.
-const CACHE = "mein-tag-v32";
+const CACHE = "mein-tag-v33";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -16,6 +16,33 @@ self.addEventListener("activate", e => {
     )
   );
   self.clients.claim();
+});
+
+// Tippen auf eine Mitteilung: App nach vorne holen statt neuen Tab öffnen
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if ("focus" in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow("./");
+    })
+  );
+});
+
+// Für später: echte Push-Nachrichten von einem Server
+self.addEventListener("push", e => {
+  let title = "Tagwerk", body = "Da ist noch was offen.";
+  try {
+    const d = e.data ? e.data.json() : null;
+    if (d) { title = d.title || title; body = d.body || body; }
+  } catch {
+    if (e.data) body = e.data.text();
+  }
+  e.waitUntil(self.registration.showNotification(title, {
+    body, icon: "icon-192.png", badge: "icon-192.png", tag: "push", renotify: true
+  }));
 });
 
 self.addEventListener("fetch", e => {
