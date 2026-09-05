@@ -315,6 +315,11 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
 .cal-dots { display: flex; gap: 3px; height: 5px; }
 .cal-dots .dot { width: 5px; height: 5px; border-radius: 50%; }
 .dot.cali { background: var(--sport); } .dot.run { background: var(--run); }
+.dot.todo { background: var(--todo); } .dot.habit { background: var(--habit); } .dot.note { background: var(--media); }
+.cal-cell.future { opacity: .3; }
+.review-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; font-size: 11.5px; color: var(--faint); }
+.review-legend span { display: flex; align-items: center; gap: 5px; }
+.review-legend i { width: 7px; height: 7px; border-radius: 50%; display: block; }
 
 .step-row { cursor: pointer; }
 .step-row .ring-check { pointer-events: none; }
@@ -467,6 +472,51 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 .switch input:checked + .knob { background: var(--todo); border-color: var(--todo); }
 .switch input:checked + .knob::after { transform: translateX(20px); background: var(--ink-on-accent); }
 
+/* ---------- Vokabeln ---------- */
+.vc-filter { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.vc-chip {
+  background: var(--surface2); border: 1px solid var(--hairline); color: var(--muted);
+  border-radius: 999px; padding: 7px 13px; font-size: 13px; cursor: pointer; font-family: var(--sans);
+}
+.vc-chip.on { background: var(--media); border-color: var(--media); color: var(--ink-on-accent); font-weight: 700; }
+.vc-word { font-size: 17px; font-weight: 700; }
+.vc-trans { font-size: 14px; color: var(--muted); margin-top: 1px; }
+.vc-box {
+  flex-shrink: 0; font-family: var(--serif); font-size: 12px; font-weight: 600;
+  width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
+  background: var(--surface2); color: var(--muted);
+}
+.vc-box.ripe { background: color-mix(in srgb, var(--todo) 24%, transparent); color: var(--todo); }
+
+/* Abfrage */
+.quiz {
+  position: fixed; inset: 0; z-index: 380; background: var(--bg);
+  display: flex; flex-direction: column;
+  padding: max(24px, env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom));
+}
+.quiz-top { display: flex; align-items: center; justify-content: space-between; }
+.quiz-count { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.quiz-bar { height: 4px; border-radius: 2px; background: var(--surface2); margin-top: 12px; overflow: hidden; }
+.quiz-bar span { display: block; height: 100%; background: var(--media); transition: width .3s; }
+.quiz-mid { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; }
+.quiz-w { font-family: var(--serif); font-size: 40px; font-weight: 600; line-height: 1.1; }
+.quiz-src { font-size: 13px; color: var(--faint); }
+.quiz-a { display: none; }
+.quiz.open .quiz-a { display: block; animation: viewIn .25s ease; }
+.quiz-t { font-size: 22px; font-weight: 700; color: var(--media); }
+.quiz-m { font-size: 15px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+.quiz-e { font-size: 14.5px; font-style: italic; color: var(--faint); margin-top: 12px; line-height: 1.5; }
+.quiz-btns { display: flex; gap: 10px; }
+.quiz-btns button {
+  flex: 1; border: none; border-radius: 14px; padding: 17px 8px;
+  font-size: 16px; font-weight: 800; cursor: pointer; font-family: var(--sans);
+}
+.quiz-reveal { background: var(--media); color: var(--ink-on-accent); }
+.quiz-again { background: var(--surface2); color: var(--avoid); border: 1px solid var(--border) !important; }
+.quiz-got { background: var(--todo); color: var(--ink-on-accent); }
+.quiz-done { text-align: center; }
+.quiz-done .qd-big { font-family: var(--serif); font-size: 34px; font-weight: 600; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
@@ -505,6 +555,7 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
     <div class="seg" id="media-seg" style="--seg-accent: var(--media)">
       <button data-media="book" class="on">Bücher</button>
       <button data-media="game">Spiele</button>
+      <button data-media="vocab">Vokabeln</button>
     </div>
     <div id="media-body"></div>
   </section>
@@ -603,6 +654,9 @@ const DEFAULT_HANDSTAND_STEPS = [
   "Freier Handstand 15+ Sek."
 ];
 
+/* Karteikasten: Pause bis zur nächsten Abfrage, je Fach */
+const VOCAB_BOXES = [1, 3, 7, 14, 30];
+
 /* Eskalationsstufen der Erinnerungen */
 const NAG_LEVELS = {
   sanft:     { label: "Sanft",     desc: "Ein Hinweis, alle 4 Stunden.",        everyMin: 240, max: 1, wall: false },
@@ -614,7 +668,15 @@ const NAG_LEVELS = {
 function normalizeData() {
   if (!data.usage) data.usage = { input: 0, output: 0, cost: 0 };
   if (!Array.isArray(data.todos)) data.todos = [];
+  // Aufgaben: „bis wann" (until) oder „an diesem Tag" (on)
+  data.todos.forEach(t => { if (t.kind !== "on") t.kind = "until"; });
   if (!Array.isArray(data.dailies)) data.dailies = [];
+  // Gewohnheiten führen jetzt eine Liste erledigter Tage – für den Rückblick
+  data.dailies.forEach(h => {
+    if (!Array.isArray(h.history)) h.history = h.lastDone ? [h.lastDone] : [];
+  });
+  // Tagebuch: ein Text je Tag
+  if (!data.journal || typeof data.journal !== "object") data.journal = {};
   if (!Array.isArray(data.avoids)) data.avoids = [];
   if (!Array.isArray(data.books)) data.books = [];
   if (!data.sport) data.sport = {};
@@ -655,6 +717,13 @@ function normalizeData() {
   if (!NAG_LEVELS[data.notify.level]) data.notify.level = "penetrant";
   if (typeof data.notify.night !== "boolean") data.notify.night = true;
   if (!data.notify.lastFire || typeof data.notify.lastFire !== "object") data.notify.lastFire = {};
+  // Vokabeln
+  if (!Array.isArray(data.vocab)) data.vocab = [];
+  data.vocab.forEach(v => {
+    if (typeof v.box !== "number" || v.box < 1) v.box = 1;
+    if (v.box > VOCAB_BOXES.length) v.box = VOCAB_BOXES.length;
+    if (!v.due) v.due = todayStr();
+  });
 }
 normalizeData();
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
@@ -886,7 +955,7 @@ const fab = $("fab");
 function fabAction() {
   if (currentTab === "heute" || currentTab === "todo") return openTodoSheet;
   if (currentTab === "habits") return habitView === "daily" ? openDailySheet : openAvoidSheet;
-  if (currentTab === "media") return openMediaSheet;
+  if (currentTab === "media") return mediaView === "vocab" ? openVocabSheet : openMediaSheet;
   if (currentTab === "sport") {
     if (sportView === "training") return openExerciseSheet;
     if (sportView === "runs") return () => openRunSheet(null);
@@ -912,17 +981,35 @@ function habitState(h) {
 }
 function toggleDailyHabit(h) {
   const today = todayStr();
+  if (!Array.isArray(h.history)) h.history = [];
   if (h.lastDone === today) {
     h.streak = h.prevStreak;
     h.lastDone = h.prevLastDone;
+    h.history = h.history.filter(d => d !== today);
   } else {
     h.prevStreak = h.streak;
     h.prevLastDone = h.lastDone;
     const g = h.lastDone ? daysBetweenIso(h.lastDone, today) : Infinity;
     h.streak = (h.lastDone && g <= (h.interval || 1)) ? h.streak + 1 : 1;
     h.lastDone = today;
+    if (!h.history.includes(today)) h.history.push(today);
   }
   save(); rerenderAll();
+}
+
+/* Fällig heute? „until" = spätestens dann, „on" = genau dann. */
+function todoDue(t, today) {
+  if (t.done || !t.deadline) return false;
+  return t.kind === "on" ? t.deadline <= today : t.deadline <= today;
+}
+function todoSoon(t, today) {
+  if (t.done || !t.deadline || t.kind !== "on") return false;
+  const d = daysBetweenIso(today, t.deadline);
+  return d > 0 && d <= 2;
+}
+function markTodo(t, done) {
+  t.done = done;
+  if (done) t.doneAt = todayStr(); else delete t.doneAt;
 }
 function resetAvoid(a) {
   if (confirm("Rückfall bei „" + a.title + "“? Der Zähler startet neu bei 0.")) {
@@ -941,7 +1028,9 @@ function renderToday() {
   const today = todayStr();
 
   // Tagesplan zusammenstellen
-  const dueTodos = data.todos.filter(t => t.deadline && t.deadline <= today);
+  // Fällig ist: ohne Frist, oder Frist erreicht – plus was du heute abgehakt hast
+  const dueTodos = data.todos.filter(t =>
+    (!t.deadline || t.deadline <= today) && (!t.done || t.doneAt === today));
   const habitStates = data.dailies.map(h => ({ h, st: habitState(h) }));
   const planHabits = habitStates.filter(x => x.st.due || x.st.doneToday);
   const isTrainDay = data.sport.trainingDays.includes(new Date().getDay()) && allEx().length > 0;
@@ -984,18 +1073,32 @@ function renderToday() {
     planWrap.innerHTML = '<div class="empty-state">Heute ist nichts fällig.<br>Genieß den Tag – oder plane etwas über +.</div>';
   }
 
-  dueTodos.sort((a, b) => (a.done - b.done)).forEach((t, i) => {
-    const overdue = !t.done && t.deadline < today;
+  dueTodos.sort((a, b) => (a.done - b.done) || (a.deadline || "9999").localeCompare(b.deadline || "9999")).forEach((t, i) => {
+    const overdue = !t.done && t.deadline && t.deadline < today;
     const row = document.createElement("div");
     row.className = "row" + (t.done ? " done" : "");
     row.style.animationDelay = (i * .04) + "s";
     row.innerHTML = `
       <button class="ring-check ${t.done ? "on" : ""}" style="${t.done ? "background:var(--todo);border-color:var(--todo)" : ""}">${t.done ? "✓" : ""}</button>
       <div class="grow"><div class="t">${esc(t.title)}</div>
-      <div class="s">${overdue ? '<span class="overdue">Überfällig · ' + fmtNice(t.deadline) + "</span>" : "Aufgabe" + (t.deadlineTime ? " · " + t.deadlineTime + " Uhr" : "")}</div></div>`;
-    row.querySelector(".ring-check").addEventListener("click", () => { t.done = !t.done; save(); rerenderAll(); });
+      <div class="s">${overdue ? '<span class="overdue">Überfällig · ' + fmtNice(t.deadline) + "</span>" : (t.kind === "on" ? "Termin heute" : "Aufgabe") + (t.deadlineTime ? " · " + t.deadlineTime + " Uhr" : "")}</div></div>`;
+    row.querySelector(".ring-check").addEventListener("click", () => { markTodo(t, !t.done); save(); rerenderAll(); });
     planWrap.appendChild(row);
   });
+
+  // Termine der nächsten zwei Tage – sichtbar, aber nicht im Ring
+  data.todos.filter(t => todoSoon(t, today))
+    .sort((a, b) => a.deadline.localeCompare(b.deadline))
+    .forEach(t => {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.style.opacity = ".62";
+      row.innerHTML = `
+        <span class="ring-check" style="border-style:dashed"></span>
+        <div class="grow"><div class="t">${esc(t.title)}</div>
+        <div class="s"><span>kommt ${fmtNice(t.deadline)}${t.deadlineTime ? " · " + t.deadlineTime + " Uhr" : ""}</span></div></div>`;
+      planWrap.appendChild(row);
+    });
 
   planHabits.forEach(({ h, st }, i) => {
     const row = document.createElement("div");
@@ -1035,8 +1138,22 @@ function renderToday() {
   });
   box.appendChild(planWrap);
 
+  // Fällige Vokabeln – Hinweis, zählt bewusst nicht in den Ring
+  const vDue = vocabDue().length;
+  if (vDue) {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.cursor = "pointer";
+    row.innerHTML = `
+      <span class="ring-check" style="border-color:var(--media);color:var(--media);font-size:12px">▶</span>
+      <div class="grow"><div class="t">${vDue} ${vDue === 1 ? "Vokabel" : "Vokabeln"} wiederholen</div>
+        <div class="s"><span>Karteikasten · optional</span></div></div>`;
+    row.addEventListener("click", () => startQuiz(vocabDue()));
+    box.appendChild(row);
+  }
+
   // Weitere offene Aufgaben (ohne heutige Deadline)
-  const otherOpen = data.todos.filter(t => !t.done && !(t.deadline && t.deadline <= today));
+  const otherOpen = data.todos.filter(t => !t.done && t.deadline && t.deadline > today && !todoSoon(t, today));
   if (otherOpen.length) {
     const link = document.createElement("button");
     link.className = "linklike";
@@ -1062,6 +1179,109 @@ function renderToday() {
     });
     box.appendChild(strip);
   }
+
+  // Rückblick
+  const toggle = document.createElement("button");
+  toggle.className = "cal-toggle" + (reviewOpen ? " open" : "");
+  toggle.style.marginTop = "24px";
+  toggle.innerHTML = '<span>📖 Rückblick</span><span class="chev">›</span>';
+  toggle.addEventListener("click", () => { reviewOpen = !reviewOpen; renderToday(); });
+  box.appendChild(toggle);
+  const slot = document.createElement("div");
+  box.appendChild(slot);
+  if (reviewOpen) renderReviewCal(slot);
+}
+
+/* ================================================================
+   RÜCKBLICK — was war an einem Tag, und was du dazu schreibst
+   ================================================================ */
+let reviewOpen = false;
+let reviewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+function dayRecord(iso) {
+  const todos = data.todos.filter(t => t.doneAt === iso);
+  const habits = data.dailies.filter(h => (h.history || []).includes(iso));
+  const ex = data.sport.log[iso] || {};
+  const exList = allEx().filter(e => ex[e.name]).map(e => ({ name: e.name, val: ex[e.name], unit: e.unit }));
+  const runs = data.sport.runs.filter(r => r.date === iso);
+  const note = (data.journal[iso] || "").trim();
+  return { todos, habits, exList, runs, note,
+    any: todos.length || habits.length || exList.length || runs.length || note };
+}
+
+function renderReviewCal(el) {
+  const y = reviewDate.getFullYear(), m = reviewDate.getMonth();
+  const startOff = (new Date(y, m, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayIso = todayStr();
+
+  let cells = "";
+  for (let i = 0; i < startOff; i++) cells += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = isoDate(new Date(y, m, d));
+    const r = dayRecord(iso);
+    const cls = ["cal-cell"];
+    if (iso === todayIso) cls.push("today");
+    if (r.any) cls.push("active");
+    if (iso > todayIso) cls.push("future");
+    const dots = (r.todos.length ? '<span class="dot todo"></span>' : "")
+      + (r.habits.length ? '<span class="dot habit"></span>' : "")
+      + ((r.exList.length || r.runs.length) ? '<span class="dot cali"></span>' : "")
+      + (r.note ? '<span class="dot note"></span>' : "");
+    cells += `<div class="${cls.join(" ")}" data-iso="${iso}"><span>${d}</span><span class="cal-dots">${dots}</span></div>`;
+  }
+
+  el.innerHTML = `
+    <div class="cal">
+      <div class="cal-head">
+        <button class="cal-nav" data-nav="-1">‹</button>
+        <span class="cal-title">${MONTHS[m]} ${y}</span>
+        <button class="cal-nav" data-nav="1">›</button>
+      </div>
+      <div class="cal-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+      <div class="cal-grid">${cells}</div>
+      <div class="review-legend">
+        <span><i style="background:var(--todo)"></i>Aufgaben</span>
+        <span><i style="background:var(--habit)"></i>Gewohnheiten</span>
+        <span><i style="background:var(--sport)"></i>Sport</span>
+        <span><i style="background:var(--media)"></i>Notiz</span>
+      </div>
+    </div>`;
+  el.querySelectorAll(".cal-nav").forEach(b => b.addEventListener("click", () => {
+    reviewDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1);
+    renderReviewCal(el);
+  }));
+  // Jeder vergangene Tag lässt sich öffnen – auch leere, zum Schreiben
+  el.querySelectorAll(".cal-cell:not(.empty):not(.future)").forEach(c =>
+    c.addEventListener("click", () => openReviewDay(c.dataset.iso)));
+}
+
+function openReviewDay(iso) {
+  const r = dayRecord(iso);
+  const rows = []
+    .concat(r.todos.map(t => `<div class="kv"><span class="k">✓ ${esc(t.title)}</span><span class="v" style="color:var(--todo)">Aufgabe</span></div>`))
+    .concat(r.habits.map(h => `<div class="kv"><span class="k">✓ ${esc(h.title)}</span><span class="v" style="color:var(--habit)">Gewohnheit</span></div>`))
+    .concat(r.exList.map(e => `<div class="kv"><span class="k">${esc(e.name)}</span><span class="v" style="color:var(--sport)">${e.val} ${e.unit}</span></div>`))
+    .concat(r.runs.map(x => `<div class="kv"><span class="k">🏃 Lauf</span><span class="v" style="color:var(--run)">${x.km.toFixed(2).replace(".", ",")} km · ${fmtDur(x.durSec)}</span></div>`))
+    .join("");
+
+  const { sheet, close } = openSheet(`
+    <h3>${fmtNice(iso)}</h3>
+    <div class="sub">${fmtDate(iso)}</div>
+    ${rows || '<div class="answer blank">An dem Tag ist nichts eingetragen.</div>'}
+    <label>Notiz zum Tag</label>
+    <textarea id="rv-note" placeholder="Wofür warst du dankbar? Was ist hängengeblieben?">${esc(data.journal[iso] || "")}</textarea>
+    <div class="hint" style="margin-top:8px">Wird automatisch gespeichert. Je konkreter, desto mehr bringt's.</div>
+    <div class="sheet-actions">
+      <button class="primary" data-act="done">Fertig</button>
+    </div>`, { accent: "var(--media)" });
+
+  sheet.querySelector("#rv-note").addEventListener("input", e => {
+    const v = e.target.value;
+    if (v.trim()) data.journal[iso] = v; else delete data.journal[iso];
+    save();
+  });
+  sheet.querySelector('[data-act="done"]').addEventListener("click", () => { renderToday(); close(); });
 }
 
 /* ================================================================
@@ -1100,12 +1320,15 @@ function todoRow(t, i, today) {
   row.className = "row" + (t.done ? " done" : "");
   row.style.animationDelay = (i * .03) + "s";
   const meta = [];
-  if (t.deadline) meta.push((overdue ? '<span class="overdue">' : "<span>") + fmtNice(t.deadline) + (overdue ? " · überfällig</span>" : "</span>"));
+  if (t.deadline) {
+    const pre = t.kind === "on" ? "am " : "bis ";
+    meta.push((overdue ? '<span class="overdue">' : "<span>") + pre + fmtNice(t.deadline) + (overdue ? " · überfällig</span>" : "</span>"));
+  }
   if (t.deadlineTime) meta.push("<span>" + t.deadlineTime + " Uhr</span>");
   row.innerHTML = `
     <button class="ring-check ${t.done ? "on" : ""}" style="${t.done ? "background:var(--todo);border-color:var(--todo)" : ""}">${t.done ? "✓" : ""}</button>
     <div class="grow"><div class="t">${esc(t.title)}</div>${meta.length ? '<div class="s">' + meta.join("") + "</div>" : ""}</div>`;
-  const toggle = () => { t.done = !t.done; save(); rerenderAll(); };
+  const toggle = () => { markTodo(t, !t.done); save(); rerenderAll(); };
   row.querySelector(".ring-check").addEventListener("click", toggle);
   enableSwipe(row, {
     onRight: toggle,
@@ -1119,7 +1342,12 @@ function openTodoSheet() {
     <h3>Neue Aufgabe</h3>
     <div class="sub">Was willst du erledigen?</div>
     <input type="text" id="sh-todo-title" placeholder="z.B. Zimmer aufräumen" autocomplete="off">
-    <label>Frist (optional)</label>
+    <label>Termin</label>
+    <div class="seg" id="sh-todo-kind" style="margin:0 0 10px">
+      <button data-kind="until" class="on" style="--seg-accent: var(--todo)">Bis wann</button>
+      <button data-kind="on" style="--seg-accent: var(--todo)">An diesem Tag</button>
+    </div>
+    <div class="hint" id="sh-kind-hint" style="margin:0 2px 10px"></div>
     <div class="pickers">
       <div class="pick" id="pick-date"><span>📅</span><span id="pick-date-l">Datum</span><input type="date" id="sh-todo-date"></div>
       <div class="pick" id="pick-time"><span>🕐</span><span id="pick-time-l">Uhrzeit</span><input type="time" id="sh-todo-time"></div>
@@ -1128,6 +1356,20 @@ function openTodoSheet() {
       <button class="quiet" data-act="cancel">Abbrechen</button>
       <button class="primary" data-act="save">Hinzufügen</button>
     </div>`, { accent: "var(--todo)" });
+
+  let kind = "until";
+  const hint = sheet.querySelector("#sh-kind-hint");
+  const paintKind = () => {
+    hint.textContent = kind === "until"
+      ? "Kann früher erledigt werden – steht ab dem Tag im Tagesplan."
+      : "Fester Termin. Taucht zwei Tage vorher als Vorwarnung auf.";
+  };
+  sheet.querySelectorAll("#sh-todo-kind button").forEach(b => b.addEventListener("click", () => {
+    kind = b.dataset.kind;
+    sheet.querySelectorAll("#sh-todo-kind button").forEach(x => x.classList.toggle("on", x === b));
+    paintKind();
+  }));
+  paintKind();
   const dateI = sheet.querySelector("#sh-todo-date"), timeI = sheet.querySelector("#sh-todo-time");
   const upd = () => {
     sheet.querySelector("#pick-date-l").textContent = dateI.value ? fmtNice(dateI.value) : "Datum";
@@ -1141,7 +1383,7 @@ function openTodoSheet() {
   sheet.querySelector('[data-act="save"]').addEventListener("click", () => {
     const title = sheet.querySelector("#sh-todo-title").value.trim();
     if (!title) return;
-    data.todos.push({ id: uid(), title, deadline: dateI.value, deadlineTime: timeI.value, done: false });
+    data.todos.push({ id: uid(), title, kind, deadline: dateI.value, deadlineTime: timeI.value, done: false });
     save(); close(); rerenderAll();
   });
   setTimeout(() => sheet.querySelector("#sh-todo-title").focus(), 350);
@@ -1311,7 +1553,7 @@ document.querySelectorAll("#media-seg button").forEach(b => {
   b.addEventListener("click", () => {
     mediaView = b.dataset.media; booksView = null;
     document.querySelectorAll("#media-seg button").forEach(x => x.classList.toggle("on", x.dataset.media === mediaView));
-    renderMedia();
+    renderMedia(); updateFab();
   });
 });
 
@@ -1326,6 +1568,7 @@ function tierBadge(t) {
 
 function renderMedia() {
   document.querySelectorAll("#media-seg button").forEach(x => x.classList.toggle("on", x.dataset.media === mediaView));
+  if (mediaView === "vocab") { renderVocab(); return; }
   const box = $("media-body");
   const cfg = M();
   box.innerHTML = "";
@@ -1844,6 +2087,283 @@ async function openTipsSheet() {
     try { await fetchTips(); close(); openTipsSheet(); }
     catch (err) { alert("Das hat nicht geklappt: " + err.message); ev.target.disabled = false; ev.target.textContent = "Neue Vorschläge"; }
   });
+}
+
+/* ================================================================
+   VOKABELN — englische Wörter beim Lesen sammeln und wiederholen
+   ================================================================ */
+let vocabFilter = "";   // "" = alle, sonst Buchtitel
+
+function vocabDue() {
+  const t = todayStr();
+  return data.vocab.filter(v => (v.due || t) <= t);
+}
+function bookTitlesWithVocab() {
+  return [...new Set(data.vocab.map(v => v.book).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
+}
+
+async function lookupWord(word, sentence) {
+  return callClaude({
+    system: "Du bist ein Wörterbuch Englisch → Deutsch für einen deutschen Leser. "
+      + "Korrigiere Tippfehler und gib die Grundform an. "
+      + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences: "
+      + '{"word":"<englisches Wort, Grundform>","type":"<Wortart auf Deutsch>","trans":"<1 bis 3 deutsche Übersetzungen, mit Komma getrennt>","meaning":"<ein kurzer deutscher Satz: was es bedeutet>","example":"<ein kurzer englischer Beispielsatz>"}. '
+      + "Wenn ein Satz mitgeliefert wird, beziehe dich auf DIESE Bedeutung im Satz, nicht auf die häufigste.",
+    userText: sentence ? word + "\n\nIm Satz: " + sentence : word,
+    maxTokens: 260
+  });
+}
+
+function renderVocab() {
+  const box = $("media-body");
+  box.innerHTML = "";
+  const all = data.vocab;
+  const due = vocabDue();
+
+  if (!all.length) {
+    box.innerHTML = '<div class="empty-state">Noch keine Vokabeln.<br>Beim Lesen ein unbekanntes Wort über + eintragen – Claude erklärt es dir.</div>';
+    return;
+  }
+
+  const learned = all.filter(v => v.box >= VOCAB_BOXES.length).length;
+  box.insertAdjacentHTML("beforeend", `
+    <div class="stat-grid">
+      <div class="stat"><div class="v">${all.length}</div><div class="l">Wörter</div></div>
+      <div class="stat"><div class="v" style="color:${due.length ? "var(--media)" : "var(--muted)"}">${due.length}</div><div class="l">fällig</div></div>
+      <div class="stat"><div class="v" style="color:var(--todo)">${learned}</div><div class="l">sitzen</div></div>
+    </div>
+    <div class="duo">
+      <button class="solid" id="vc-quiz" style="--duo-accent: var(--media)" ${due.length ? "" : "disabled"}>
+        ${due.length ? "▶ Abfrage · " + due.length + " fällig" : "Heute nichts fällig"}
+      </button>
+    </div>`);
+  const qb = $("vc-quiz");
+  if (due.length) qb.addEventListener("click", () => startQuiz(due));
+  else { qb.style.background = "var(--surface2)"; qb.style.color = "var(--faint)"; qb.style.cursor = "default"; }
+
+  // Filter nach Buch
+  const books = bookTitlesWithVocab();
+  if (books.length > 1 || (books.length === 1 && all.some(v => !v.book))) {
+    const f = document.createElement("div");
+    f.className = "vc-filter";
+    const chips = [["", "Alle"]].concat(books.map(b => [b, b.split(" – ")[0]]));
+    if (all.some(v => !v.book)) chips.push(["__none", "Ohne Buch"]);
+    f.innerHTML = chips.map(([k, l]) =>
+      `<button class="vc-chip ${vocabFilter === k ? "on" : ""}" data-f="${esc(k)}">${esc(l)}</button>`).join("");
+    f.querySelectorAll(".vc-chip").forEach(c => c.addEventListener("click", () => {
+      vocabFilter = c.dataset.f; renderVocab();
+    }));
+    box.appendChild(f);
+  }
+
+  let list = all;
+  if (vocabFilter === "__none") list = all.filter(v => !v.book);
+  else if (vocabFilter) list = all.filter(v => v.book === vocabFilter);
+  list = [...list].sort((a, b) => (b.created || 0) - (a.created || 0));
+
+  box.insertAdjacentHTML("beforeend", '<div class="hint">Antippen für Details · nach links wischen = löschen</div>');
+  const today = todayStr();
+  list.forEach((v, i) => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.style.cursor = "pointer";
+    row.style.animationDelay = (i * .03) + "s";
+    const ripe = (v.due || today) <= today;
+    row.innerHTML = `
+      <div class="grow">
+        <div class="vc-word">${esc(v.word)}</div>
+        <div class="vc-trans">${v.busy ? "Claude schlägt nach …" : esc(v.trans || "")}</div>
+      </div>
+      <span class="vc-box ${ripe ? "ripe" : ""}" title="Fach ${v.box}">${v.box}</span>
+      <span style="color:var(--faint)">›</span>`;
+    row.addEventListener("click", () => openVocabDetail(v));
+    enableSwipe(row, {
+      onDelete: () => { data.vocab = data.vocab.filter(x => x.id !== v.id); save(); renderVocab(); }
+    });
+    box.appendChild(row);
+  });
+}
+
+function openVocabSheet() {
+  const books = data.books.filter(b => (b.media || "book") === "book");
+  const opts = books.map(b => `<option value="${esc(b.question)}">${esc(b.question)}</option>`).join("");
+  const { sheet, close } = openSheet(`
+    <h3>Neues Wort</h3>
+    <div class="sub">Claude übersetzt und erklärt es dir – im Zusammenhang, wenn du den Satz mitgibst.</div>
+    <input type="text" id="vc-word" placeholder="z.B. reluctant" autocomplete="off" autocapitalize="none" spellcheck="false">
+    <label>Satz aus dem Buch (optional)</label>
+    <textarea id="vc-sent" placeholder="„She was reluctant to leave the house.“" style="min-height:80px"></textarea>
+    <div class="hint" style="margin-top:8px">Lohnt sich bei Wörtern mit mehreren Bedeutungen.</div>
+    <label>Buch</label>
+    <select id="vc-book"><option value="">Kein Buch</option>${opts}</select>
+    <div class="sheet-actions">
+      <button class="quiet" data-act="cancel">Abbrechen</button>
+      <button class="primary" data-act="save">Nachschlagen</button>
+    </div>`, { accent: "var(--media)" });
+
+  sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="save"]').addEventListener("click", async ev => {
+    const word = sheet.querySelector("#vc-word").value.trim();
+    if (!word) return;
+    const sentence = sheet.querySelector("#vc-sent").value.trim();
+    const book = sheet.querySelector("#vc-book").value;
+    const v = {
+      id: uid(), word, sentence, book,
+      trans: "", type: "", meaning: "", example: "",
+      box: 1, due: todayStr(), created: Date.now()
+    };
+    data.vocab.push(v);
+    save(); close(); renderVocab();
+
+    if (!getApiKey()) return;
+    v.busy = true; renderVocab();
+    try {
+      const r = await lookupWord(word, sentence);
+      if (r) {
+        const o = jsonFrom(r.text);
+        if (o) {
+          if (o.word) v.word = String(o.word).trim();
+          v.trans = String(o.trans || "").trim();
+          v.type = String(o.type || "").trim();
+          v.meaning = String(o.meaning || "").trim();
+          v.example = String(o.example || "").trim();
+        }
+      }
+    } catch {
+      // Wort bleibt drin, Übersetzung kann man später nachholen
+    } finally {
+      delete v.busy;
+      save(); renderVocab();
+    }
+  });
+  setTimeout(() => sheet.querySelector("#vc-word").focus(), 350);
+}
+
+function openVocabDetail(v) {
+  const { sheet, close } = openSheet(`
+    <h3>${esc(v.word)}</h3>
+    <div class="sub">${esc(v.type || "")}${v.book ? (v.type ? " · " : "") + esc(v.book.split(" – ")[0]) : ""}</div>
+    <label>Übersetzung</label>
+    <div class="answer ${v.trans ? "" : "blank"}" id="vc-d-trans">${v.trans ? esc(v.trans) : "Noch nicht nachgeschlagen."}</div>
+    ${v.meaning ? '<label>Bedeutung</label><div class="answer" id="vc-d-mean">' + esc(v.meaning) + "</div>" : ""}
+    ${v.example ? '<label>Beispiel</label><div class="answer" style="font-style:italic" id="vc-d-ex">' + esc(v.example) + "</div>" : ""}
+    ${v.sentence ? '<label>Dein Satz</label><div class="answer" style="font-style:italic">' + esc(v.sentence) + "</div>" : ""}
+    <label>Karteikasten</label>
+    <div class="kv"><span class="k">Fach</span><span class="v">${v.box} von ${VOCAB_BOXES.length}</span></div>
+    <div class="kv"><span class="k">Nächste Abfrage</span><span class="v">${(v.due || todayStr()) <= todayStr() ? "jetzt fällig" : fmtNice(v.due)}</span></div>
+    <button class="tips-btn" id="vc-again" style="color:var(--media);margin-top:12px">🪄 ${v.trans ? "Neu nachschlagen" : "Jetzt nachschlagen"}</button>
+    <div class="sheet-actions">
+      <button class="danger" data-act="del">🗑</button>
+      <button class="primary" data-act="done">Fertig</button>
+    </div>`, { accent: "var(--media)" });
+
+  sheet.querySelector("#vc-again").addEventListener("click", async e => {
+    const lbl = e.target.textContent;
+    e.target.disabled = true; e.target.textContent = "Claude schlägt nach …";
+    try {
+      const r = await lookupWord(v.word, v.sentence);
+      const o = r && jsonFrom(r.text);
+      if (o) {
+        if (o.word) v.word = String(o.word).trim();
+        v.trans = String(o.trans || "").trim();
+        v.type = String(o.type || "").trim();
+        v.meaning = String(o.meaning || "").trim();
+        v.example = String(o.example || "").trim();
+        save(); renderVocab();
+        close(); openVocabDetail(v);
+        return;
+      }
+    } catch (err) { alert("Das hat nicht geklappt: " + err.message); }
+    e.target.disabled = false; e.target.textContent = lbl;
+  });
+  sheet.querySelector('[data-act="done"]').addEventListener("click", close);
+  sheet.querySelector('[data-act="del"]').addEventListener("click", () => {
+    if (!confirm("„" + v.word + "“ löschen?")) return;
+    data.vocab = data.vocab.filter(x => x.id !== v.id);
+    save(); close(); renderVocab();
+  });
+}
+
+/* ---- Abfrage ---- */
+function startQuiz(words) {
+  let queue = [...words].sort(() => Math.random() - 0.5);
+  const total = queue.length;
+  let done = 0, right = 0, i = 0;
+
+  const el = document.createElement("div");
+  el.className = "quiz";
+  el.innerHTML = `
+    <div class="quiz-top">
+      <span class="quiz-count" id="q-count"></span>
+      <button class="sheet-x" style="position:static" id="q-close">✕</button>
+    </div>
+    <div class="quiz-bar"><span id="q-bar" style="width:0%"></span></div>
+    <div class="quiz-mid">
+      <div class="quiz-w" id="q-word"></div>
+      <div class="quiz-src" id="q-src"></div>
+      <div class="quiz-a" id="q-answer"></div>
+    </div>
+    <div class="quiz-btns" id="q-btns"></div>`;
+  document.body.appendChild(el);
+
+  const close = () => { el.remove(); renderVocab(); rerenderAll(); };
+  $("q-close").addEventListener("click", close);
+
+  const show = () => {
+    if (!queue.length) { finish(); return; }
+    const v = queue[0];
+    el.classList.remove("open");
+    $("q-count").textContent = done + " von " + total;
+    $("q-bar").style.width = (total ? done / total * 100 : 0) + "%";
+    $("q-word").textContent = v.word;
+    $("q-src").textContent = v.book ? v.book.split(" – ")[0] : "";
+    $("q-answer").innerHTML = `
+      <div class="quiz-t">${esc(v.trans || "–")}</div>
+      ${v.meaning ? '<div class="quiz-m">' + esc(v.meaning) + "</div>" : ""}
+      ${v.example ? '<div class="quiz-e">„' + esc(v.example) + "“</div>" : ""}`;
+    $("q-btns").innerHTML = '<button class="quiz-reveal" id="q-reveal">Aufdecken</button>';
+    $("q-reveal").addEventListener("click", () => {
+      el.classList.add("open");
+      $("q-btns").innerHTML = '<button class="quiz-again" id="q-again">Nochmal</button><button class="quiz-got" id="q-got">Gewusst</button>';
+      $("q-again").addEventListener("click", () => grade(false));
+      $("q-got").addEventListener("click", () => grade(true));
+    });
+  };
+
+  const grade = ok => {
+    const v = queue.shift();
+    const firstTry = !v.__retried;
+    if (ok) {
+      v.box = Math.min(VOCAB_BOXES.length, (v.box || 1) + 1);
+      v.due = addDaysIso(todayStr(), VOCAB_BOXES[v.box - 1]);
+      if (firstTry) right++;      // nur beim ersten Anlauf zählt es als gewusst
+      done++;
+    } else {
+      v.box = 1;
+      v.due = todayStr();
+      if (firstTry) { v.__retried = true; queue.push(v); }  // in dieser Runde nochmal
+      else done++;
+    }
+    save();
+    show();
+  };
+
+  const finish = () => {
+    data.vocab.forEach(v => { delete v.__retried; });
+    save();
+    el.classList.remove("open");
+    $("q-count").textContent = "fertig";
+    $("q-bar").style.width = "100%";
+    el.querySelector(".quiz-mid").innerHTML = `
+      <div class="quiz-done">
+        <div class="qd-big">${right} von ${total}</div>
+        <div class="quiz-m">${right === total ? "Alles gesessen. Stark." : right === 0 ? "Kommt wieder. Öfter ist besser als länger." : "Der Rest kommt bald nochmal."}</div>
+      </div>`;
+    $("q-btns").innerHTML = '<button class="quiz-got" id="q-fin">Fertig</button>';
+    $("q-fin").addEventListener("click", close);
+  };
+
+  show();
 }
 
 /* ================================================================
@@ -2367,8 +2887,9 @@ function pendingItems() {
   const out = [];
 
   data.todos.forEach(t => {
-    if (t.done || !t.deadline || t.deadline > today) return;
-    const days = daysBetweenIso(t.deadline, today);
+    if (t.done) return;
+    if (t.deadline && t.deadline > today) return;      // liegt noch in der Zukunft
+    const days = t.deadline ? daysBetweenIso(t.deadline, today) : 0;
     // Heute fällig mit Uhrzeit: erst ab der Uhrzeit nerven
     if (days === 0 && t.deadlineTime) {
       const [h, m] = t.deadlineTime.split(":").map(Number);
@@ -2533,7 +3054,7 @@ function openNagWall(items) {
   sheet.querySelectorAll(".row").forEach(row => {
     row.querySelector(".ring-check").addEventListener("click", () => {
       const it = items[parseInt(row.dataset.i, 10)];
-      if (it.kind === "todo") { it.ref.done = true; save(); }
+      if (it.kind === "todo") { markTodo(it.ref, true); save(); }
       else if (it.kind === "habit") toggleDailyHabit(it.ref);
       else { sportView = "training"; switchTab("sport"); close(); return; }
       row.classList.add("done");
