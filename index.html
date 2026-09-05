@@ -194,8 +194,6 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
   background: var(--surface2); color: var(--muted);
 }
 .mini-ex .me.on { background: color-mix(in srgb, var(--sport) 22%, transparent); color: var(--sport); }
-.linklike { border: none; background: none; color: var(--muted); font-size: 13.5px; font-weight: 600; cursor: pointer; padding: 8px 2px; font-family: var(--sans); }
-.linklike b { color: var(--text); }
 
 /* ---------- Medien: Ordner-Kacheln ---------- */
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -209,12 +207,6 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
 .tile .c { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 .media-total { font-family: var(--serif); font-size: 17px; margin: 4px 2px 14px; color: var(--muted); }
 .media-total b { color: var(--media); font-weight: 600; }
-.tips-btn {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-  border: 1px solid var(--hairline); background: var(--surface); color: var(--media);
-  border-radius: 14px; padding: 13px; font-size: 14.5px; font-weight: 700; cursor: pointer;
-  font-family: var(--sans); margin-bottom: 14px;
-}
 .back-row { border: none; background: none; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; padding: 2px 2px 12px; font-family: var(--sans); }
 .cat-title { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 0 2px 12px; }
 
@@ -224,14 +216,6 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
   display: inline-grid; place-items: center;
   font-size: 14px; font-weight: 800; color: #16130d; font-family: var(--sans);
 }
-.tier-row { display: flex; gap: 8px; }
-.tier-row button {
-  flex: 1; height: 48px; border-radius: 12px; border: 1px solid var(--hairline);
-  background: var(--surface2); color: var(--muted);
-  font-size: 17px; font-weight: 800; cursor: pointer; font-family: var(--sans);
-  transition: background .15s, color .15s;
-}
-.tier-row button.on { color: #16130d; border-color: transparent; }
 .tl-row { display: flex; gap: 12px; align-items: flex-start; padding: 11px 6px; border-bottom: 1px solid var(--hairline); border-radius: 12px; }
 .tl-row:last-of-type { border-bottom: none; }
 .tl-items { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; min-height: 27px; }
@@ -275,51 +259,123 @@ main { padding: 14px 18px 0; max-width: 640px; margin: 0 auto; }
 .stat .v { font-family: var(--serif); font-size: 21px; font-weight: 600; }
 .stat .l { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
 
-.duo { display: flex; gap: 9px; margin-bottom: 12px; }
-.duo button {
-  flex: 1; border: none; border-radius: 14px; padding: 13px 6px;
-  font-size: 14.5px; font-weight: 700; cursor: pointer; font-family: var(--sans);
+/* ---------- Knöpfe: drei Stufen, eine Höhe ---------- */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; min-height: 52px; border-radius: 14px; padding: 0 16px;
+  font-family: var(--sans); font-size: 15.5px; font-weight: 700;
+  border: 1px solid transparent; cursor: pointer;
+  transition: transform .12s ease, background .2s;
 }
-.duo .solid { background: var(--duo-accent, var(--sport)); color: var(--ink-on-accent); }
-.duo .ghost { background: var(--surface); border: 1px solid var(--hairline); color: var(--text); }
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 2; }
+.btn:active { transform: scale(.975); }
+.btn-primary { background: var(--accent, var(--text)); color: var(--ink-on-accent); }
+.btn-primary[disabled] { background: var(--surface2); color: var(--faint); cursor: default; }
+.btn-primary[disabled]:active { transform: none; }
+.btn-secondary { background: var(--surface); border-color: var(--border); color: var(--text); }
+.btn-quiet {
+  background: none; color: var(--muted); font-weight: 600; font-size: 14.5px;
+  min-height: 44px; justify-content: space-between; padding: 0 4px;
+}
+.btn-quiet:active { transform: none; opacity: .6; }
+.btn-row { display: flex; gap: 9px; margin-bottom: 10px; }
+.btn-row .btn { width: auto; flex: 1; }
+.btn + .btn, .btn-row + .btn { margin-top: 10px; }
+.btn-row .btn + .btn { margin-top: 0; }   /* sonst wächst die ganze Reihe mit */
 
-/* Kalender */
-.cal-toggle {
-  width: 100%; display: flex; align-items: center; justify-content: space-between;
-  border: 1px solid var(--hairline); background: var(--surface); color: var(--text);
-  border-radius: 14px; padding: 13px 15px; font-size: 14.5px; font-weight: 700;
-  cursor: pointer; font-family: var(--sans); margin-bottom: 10px;
+/* S–D zum Antippen im Eintrag */
+.tier-row { display: flex; gap: 8px; }
+.tier-row button {
+  flex: 1; height: 48px; border-radius: 12px; border: 1px solid var(--hairline);
+  background: var(--surface2); color: var(--muted);
+  font-size: 17px; font-weight: 800; cursor: pointer; font-family: var(--sans);
+  transition: background .15s, color .15s;
 }
-.cal-toggle .chev { color: var(--faint); transition: transform .25s; }
-.cal-toggle.open .chev { transform: rotate(90deg); }
-.cal { margin-bottom: 12px; }
-.cal-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 10px; }
-.cal-title { font-family: var(--serif); font-size: 18px; font-weight: 600; }
-.cal-nav {
+.tier-row button.on { color: #16130d; border-color: transparent; }
+
+/* ---------- Tierlist: Blöcke zum Reinziehen ---------- */
+.tl-row {
+  display: flex; border-radius: 12px; overflow: hidden;
+  margin-bottom: 6px; min-height: 60px;
+}
+.tl-lab {
+  flex: 0 0 54px; display: grid; place-items: center;
+  font-family: var(--serif); font-size: 24px; font-weight: 700; color: #17140f;
+}
+.tl-items {
+  flex: 1; background: var(--surface); display: flex; flex-wrap: wrap;
+  gap: 6px; align-items: center; padding: 9px 11px; min-width: 0;
+}
+.tl-item {
+  font-size: 12.5px; font-weight: 600; background: var(--surface2);
+  border-radius: 7px; padding: 6px 10px; cursor: grab;
+  user-select: none; -webkit-user-select: none; touch-action: none;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tl-empty { font-size: 12.5px; color: var(--faint); font-style: italic; }
+.tl-pool {
+  display: flex; flex-wrap: wrap; gap: 6px; min-height: 46px; padding: 10px;
+  border: 1px dashed var(--border); border-radius: 12px;
+}
+.tl-over { box-shadow: 0 0 0 2px var(--media) inset; }
+.tl-dragging { opacity: .3; }
+.tl-ghost {
+  position: fixed; z-index: 300; pointer-events: none;
+  transform: translate(-50%, -140%) rotate(2.5deg); box-shadow: var(--shadow);
+}
+
+/* ---------- Rückblick: Wochenstreifen ---------- */
+.rev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.rev-title { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+.rev-nav {
   width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--hairline);
   background: var(--surface); color: var(--muted); font-size: 17px; cursor: pointer;
+  font-family: var(--sans); flex-shrink: 0;
 }
-.cal-dow { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; margin-bottom: 4px; }
-.cal-dow span { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--faint); text-transform: uppercase; }
-.cal-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
-.cal-cell {
-  height: 46px; min-width: 0;
-  border-radius: 10px; border: 1px solid var(--hairline); background: var(--surface);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  font-size: 13px; font-weight: 600; color: var(--muted); font-family: var(--serif);
+.rev-nav[disabled] { opacity: .3; cursor: default; }
+.rev-day {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 14px; padding: 11px 13px; margin-bottom: 6px; min-height: 58px;
+  animation: rowIn .28s ease backwards;
 }
-.cal-cell.train { border-color: color-mix(in srgb, var(--sport) 55%, transparent); }
-.cal-cell.today { color: var(--text); box-shadow: 0 0 0 2px var(--text) inset; }
-.cal-cell.active { cursor: pointer; color: var(--text); }
-.cal-cell.empty { visibility: hidden; }
-.cal-dots { display: flex; gap: 3px; height: 5px; }
-.cal-dots .dot { width: 5px; height: 5px; border-radius: 50%; }
-.dot.cali { background: var(--sport); } .dot.run { background: var(--run); }
-.dot.todo { background: var(--todo); } .dot.habit { background: var(--habit); } .dot.note { background: var(--media); }
-.cal-cell.future { opacity: .3; }
-.review-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; font-size: 11.5px; color: var(--faint); }
-.review-legend span { display: flex; align-items: center; gap: 5px; }
-.review-legend i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.rev-day.today { border-color: var(--text); }
+.rev-day.future { opacity: .3; cursor: default; }
+.rev-date { flex: 0 0 48px; display: flex; align-items: baseline; gap: 5px; }
+.rev-dow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--faint); }
+.rev-num { font-family: var(--serif); font-size: 19px; font-weight: 600; }
+.rev-body { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.rev-quiet { font-size: 13px; color: var(--faint); }
+.pill {
+  font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.pill.todo  { background: color-mix(in srgb, var(--todo) 18%, transparent);  color: var(--todo); }
+.pill.habit { background: color-mix(in srgb, var(--habit) 18%, transparent); color: var(--habit); }
+.pill.sport { background: color-mix(in srgb, var(--sport) 18%, transparent); color: var(--sport); }
+.pill.run   { background: color-mix(in srgb, var(--run) 18%, transparent);   color: var(--run); }
+.pill.note  { background: color-mix(in srgb, var(--media) 18%, transparent); color: var(--media); }
+
+/* ---------- Sport-Woche ---------- */
+.spw { background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px; padding: 6px 14px; margin-bottom: 12px; }
+.spw-dow { display: flex; gap: 4px; justify-content: flex-end; padding: 8px 0 2px; }
+.spw-dow span { width: 22px; text-align: center; font-size: 9.5px; font-weight: 700; color: var(--faint); text-transform: uppercase; }
+.spw-dow .spw-pad { flex: 1; }
+.spw-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--hairline); }
+.spw-row:last-child { border-bottom: none; }
+.spw-name { flex: 1; font-size: 14.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spw-week { display: flex; gap: 4px; flex-shrink: 0; }
+.spw-week i {
+  width: 22px; height: 27px; border-radius: 6px; display: grid; place-items: center;
+  background: var(--surface2); font-size: 10px; font-weight: 700; color: var(--faint);
+  font-style: normal; font-family: var(--sans);
+}
+.spw-week i.on { background: var(--sport); color: var(--ink-on-accent); }
+.spw-week i.rest { opacity: .32; }
+.spw-week i.today { box-shadow: 0 0 0 1.5px var(--text); }
+.spw-sum { flex: 0 0 42px; text-align: right; font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--sport); }
+
+/* Kalender */
 
 .step-row { cursor: pointer; }
 .step-row .ring-check { pointer-events: none; }
@@ -479,6 +535,18 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
   border-radius: 999px; padding: 7px 13px; font-size: 13px; cursor: pointer; font-family: var(--sans);
 }
 .vc-chip.on { background: var(--media); border-color: var(--media); color: var(--ink-on-accent); font-weight: 700; }
+.tag-eng {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .04em; padding: 2px 6px;
+  border-radius: 5px; margin-left: 6px; vertical-align: 2px;
+  background: color-mix(in srgb, var(--run) 20%, transparent); color: var(--run);
+}
+.k-tag {
+  font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 5px; vertical-align: 4px; margin-left: 4px;
+}
+.k-eng { background: color-mix(in srgb, var(--run) 20%, transparent); color: var(--run); }
+.k-de  { background: color-mix(in srgb, var(--sport) 20%, transparent); color: var(--sport); }
+#tab-books li.reading, .row.reading { border-color: color-mix(in srgb, var(--media) 42%, transparent); }
 .vc-word { font-size: 17px; font-weight: 700; }
 .vc-trans { font-size: 14px; color: var(--muted); margin-top: 1px; }
 .vc-box {
@@ -602,6 +670,31 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
    Helfer
    ================================================================ */
 const $ = id => document.getElementById(id);
+
+/* Icons – überall dieselbe Strichstärke, statt Emoji in Knöpfen */
+const ICO = {
+  plus:   '<path d="M12 5v14M5 12h14"/>',
+  chart:  '<path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/>',
+  cal:    '<rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  spark:  '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  trophy: '<path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3M9 20h6M12 14v6"/>',
+  camera: '<rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8.5 5l1.5-2h4l1.5 2"/>',
+  play:   '<path d="M7 5l11 7-11 7z"/>',
+  bell:   '<path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
+  wand:   '<path d="M15 4V2M15 10V8M12.5 6h-2M19.5 6h-2M4 20l9-9M13.5 4.5l1 1"/>',
+  bulb:   '<path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.5.4.8 1 .8 1.6V17h5.4v-1.5c0-.6.3-1.2.8-1.6A6 6 0 0012 3z"/>',
+  book:   '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>'
+};
+function ico(name) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' + (ICO[name] || "") + "</svg>";
+}
+function btnHTML(level, id, icon, label, opts = {}) {
+  const cls = "btn btn-" + level;
+  const style = opts.accent ? ' style="--accent:' + opts.accent + '"' : "";
+  const dis = opts.disabled ? " disabled" : "";
+  if (level === "quiet") return `<button class="${cls}" id="${id}"${dis}><span>${label}</span><span>›</span></button>`;
+  return `<button class="${cls}" id="${id}"${style}${dis}>${icon ? ico(icon) : ""}<span>${label}</span></button>`;
+}
 function isoDate(d) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
@@ -700,7 +793,12 @@ function normalizeData() {
     if (!Array.isArray(sk.done)) sk.done = [];
   });
   // Medien: Typ-Kennung + Sterne (1–5) in Tiers (S–D) überführen
-  data.books.forEach(b => { if (!b.media) b.media = "book"; });
+  data.books.forEach(b => {
+    if (!b.media) b.media = "book";
+    if (typeof b.eng !== "boolean") b.eng = false;
+    if (typeof b.reading !== "boolean") b.reading = false;
+  });
+  data.vocab.forEach(v => { if (v.kind !== "term") v.kind = "word"; });
   // Filme & Serien gibt es nicht mehr (läuft über Letterboxd)
   data.books = data.books.filter(b => b.media !== "screen");
   if (data.mediaTips && typeof data.mediaTips === "object") delete data.mediaTips.screen;
@@ -774,30 +872,40 @@ function openSheet(html, { accent } = {}) {
   backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
   sheet.querySelector(".sheet-x").addEventListener("click", close);
 
-  // Runterwischen zum Schließen – am Griff immer, sonst nur wenn oben angekommen
-  let sy = 0, dy = 0, drag = false, pid = null;
+  /* Runterwischen: greift von überall, solange das Fenster oben steht.
+     Ein schneller Schnipser genügt – die Strecke ist zweitrangig. */
+  const SPRING = "transform .42s cubic-bezier(.2,.9,.25,1)";
+  let sy = 0, dy = 0, drag = false, pid = null, lastY = 0, lastT = 0, vel = 0;
+
   sheet.addEventListener("pointerdown", e => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     const onGrab = !!e.target.closest(".grab-zone");
-    const onControl = !!e.target.closest("input, textarea, select, button, .tl-item, .trail-chip, .row");
-    if (!onGrab && (sheet.scrollTop > 0 || onControl)) return;
-    sy = e.clientY; dy = 0; drag = true; pid = e.pointerId;
+    // Eingabefelder und Textbereiche gehören dem Finger, nicht der Geste
+    const onInput = !!e.target.closest("input, textarea, select");
+    if (!onGrab && (sheet.scrollTop > 0 || onInput)) return;
+    sy = lastY = e.clientY; lastT = e.timeStamp; dy = 0; vel = 0;
+    drag = true; pid = e.pointerId;
     sheet.style.transition = "none";
   });
+
   sheet.addEventListener("pointermove", e => {
     if (!drag || e.pointerId !== pid) return;
     dy = e.clientY - sy;
-    if (dy < 0) dy /= 5;                       // nach oben spürbarer Widerstand
-    if (dy > 4) { try { sheet.setPointerCapture(pid); } catch {} }
-    sheet.style.transform = "translateY(" + dy + "px)";
-    if (dy > 0) backdrop.style.opacity = String(Math.max(0.15, 1 - dy / 480));
+    const dt = e.timeStamp - lastT;
+    if (dt > 0) vel = (e.clientY - lastY) / dt;      // Pixel je Millisekunde
+    lastY = e.clientY; lastT = e.timeStamp;
+    if (dy > 3) { try { sheet.setPointerCapture(pid); } catch {} }
+    const shown = dy < 0 ? dy / 4 : dy;              // Widerstand nach oben
+    sheet.style.transform = "translateY(" + shown + "px)";
+    if (dy > 0) backdrop.style.opacity = String(Math.max(0.12, 1 - dy / 460));
   });
+
   const endDrag = () => {
     if (!drag) return;
     drag = false;
-    sheet.style.transition = "";
-    if (dy > 110) { close(); return; }
-    sheet.style.transform = "";
+    if (vel > 0.45 || dy > 110) { close(); return; }
+    sheet.style.transition = SPRING;
+    sheet.style.transform = "translateY(0)";
     backdrop.style.opacity = "";
   };
   sheet.addEventListener("pointerup", endDrag);
@@ -1156,8 +1264,8 @@ function renderToday() {
   const otherOpen = data.todos.filter(t => !t.done && t.deadline && t.deadline > today && !todoSoon(t, today));
   if (otherOpen.length) {
     const link = document.createElement("button");
-    link.className = "linklike";
-    link.innerHTML = `<b>${otherOpen.length}</b> weitere offene ${otherOpen.length === 1 ? "Aufgabe" : "Aufgaben"} ansehen →`;
+    link.className = "btn btn-quiet";
+    link.innerHTML = `<span>${otherOpen.length} weitere offene ${otherOpen.length === 1 ? "Aufgabe" : "Aufgaben"}</span><span>›</span>`;
     link.addEventListener("click", () => switchTab("todo"));
     box.appendChild(link);
   }
@@ -1180,23 +1288,21 @@ function renderToday() {
     box.appendChild(strip);
   }
 
-  // Rückblick
-  const toggle = document.createElement("button");
-  toggle.className = "cal-toggle" + (reviewOpen ? " open" : "");
-  toggle.style.marginTop = "24px";
-  toggle.innerHTML = '<span>📖 Rückblick</span><span class="chev">›</span>';
-  toggle.addEventListener("click", () => { reviewOpen = !reviewOpen; renderToday(); });
-  box.appendChild(toggle);
+  // Rückblick – steht offen da, kein Aufklappen mehr
+  const sect = document.createElement("div");
+  sect.className = "sect";
+  sect.style.marginTop = "26px";
+  sect.innerHTML = '<span class="tick" style="background:var(--media)"></span><h2>Rückblick</h2>';
+  box.appendChild(sect);
   const slot = document.createElement("div");
   box.appendChild(slot);
-  if (reviewOpen) renderReviewCal(slot);
+  renderReviewWeek(slot);
 }
 
 /* ================================================================
    RÜCKBLICK — was war an einem Tag, und was du dazu schreibst
    ================================================================ */
-let reviewOpen = false;
-let reviewDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let reviewWeek = 0;   // 0 = diese Woche, -1 = vorige …
 
 function dayRecord(iso) {
   const todos = data.todos.filter(t => t.doneAt === iso);
@@ -1209,51 +1315,84 @@ function dayRecord(iso) {
     any: todos.length || habits.length || exList.length || runs.length || note };
 }
 
-function renderReviewCal(el) {
-  const y = reviewDate.getFullYear(), m = reviewDate.getMonth();
-  const startOff = (new Date(y, m, 1).getDay() + 6) % 7;
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
+function renderReviewWeek(el) {
   const todayIso = todayStr();
+  const mon = mondayOf(new Date());
+  mon.setDate(mon.getDate() + reviewWeek * 7);
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(isoDate(addD(mon, i)));
 
-  let cells = "";
-  for (let i = 0; i < startOff; i++) cells += '<div class="cal-cell empty"></div>';
-  for (let d = 1; d <= daysInMonth; d++) {
-    const iso = isoDate(new Date(y, m, d));
-    const r = dayRecord(iso);
-    const cls = ["cal-cell"];
-    if (iso === todayIso) cls.push("today");
-    if (r.any) cls.push("active");
-    if (iso > todayIso) cls.push("future");
-    const dots = (r.todos.length ? '<span class="dot todo"></span>' : "")
-      + (r.habits.length ? '<span class="dot habit"></span>' : "")
-      + ((r.exList.length || r.runs.length) ? '<span class="dot cali"></span>' : "")
-      + (r.note ? '<span class="dot note"></span>' : "");
-    cells += `<div class="${cls.join(" ")}" data-iso="${iso}"><span>${d}</span><span class="cal-dots">${dots}</span></div>`;
-  }
+  const first = days[0], last = days[6];
+  const label = reviewWeek === 0 ? "Diese Woche"
+    : reviewWeek === -1 ? "Vorige Woche"
+    : fmtShort(first) + " – " + fmtShort(last);
 
   el.innerHTML = `
-    <div class="cal">
-      <div class="cal-head">
-        <button class="cal-nav" data-nav="-1">‹</button>
-        <span class="cal-title">${MONTHS[m]} ${y}</span>
-        <button class="cal-nav" data-nav="1">›</button>
-      </div>
-      <div class="cal-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
-      <div class="cal-grid">${cells}</div>
-      <div class="review-legend">
-        <span><i style="background:var(--todo)"></i>Aufgaben</span>
-        <span><i style="background:var(--habit)"></i>Gewohnheiten</span>
-        <span><i style="background:var(--sport)"></i>Sport</span>
-        <span><i style="background:var(--media)"></i>Notiz</span>
-      </div>
-    </div>`;
-  el.querySelectorAll(".cal-nav").forEach(b => b.addEventListener("click", () => {
-    reviewDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1);
-    renderReviewCal(el);
+    <div class="rev-head">
+      <button class="rev-nav" data-nav="-1">‹</button>
+      <span class="rev-title">${esc(label)}</span>
+      <button class="rev-nav" data-nav="1" ${reviewWeek >= 0 ? "disabled" : ""}>›</button>
+    </div>
+    <div id="rev-days"></div>`;
+
+  const list = el.querySelector("#rev-days");
+  days.forEach((iso, i) => {
+    const r = dayRecord(iso);
+    const future = iso > todayIso;
+    const d = new Date(iso + "T00:00:00");
+    const row = document.createElement("div");
+    row.className = "rev-day" + (iso === todayIso ? " today" : "") + (future ? " future" : "");
+    row.style.animationDelay = (i * .03) + "s";
+
+    // Klartext statt Farbcode
+    const pills = [];
+    if (r.todos.length) {
+      pills.push(r.todos.length === 1
+        ? '<span class="pill todo">' + esc(shorten(r.todos[0].title, 22)) + "</span>"
+        : '<span class="pill todo">' + r.todos.length + " Aufgaben</span>");
+    }
+    r.habits.slice(0, 2).forEach(h => pills.push('<span class="pill habit">' + esc(shorten(h.title, 18)) + "</span>"));
+    if (r.habits.length > 2) pills.push('<span class="pill habit">+' + (r.habits.length - 2) + "</span>");
+    if (r.exList.length) {
+      const top = r.exList[0];
+      pills.push('<span class="pill sport">' + (r.exList.length === 1 ? top.val + " " + esc(top.name) : "Training") + "</span>");
+    }
+    r.runs.forEach(x => pills.push('<span class="pill run">' + x.km.toFixed(1).replace(".", ",") + " km</span>"));
+    if (r.note) pills.push('<span class="pill note">Notiz</span>');
+
+    const body = pills.length ? pills.join("")
+      : future ? '<span class="rev-quiet">—</span>'
+      : iso === todayIso ? '<span class="rev-quiet">Heute – noch nichts eingetragen</span>'
+      : '<span class="rev-quiet">nichts</span>';
+
+    row.innerHTML = `
+      <span class="rev-date"><span class="rev-dow">${WD_SHORT[d.getDay()]}</span><span class="rev-num">${d.getDate()}</span></span>
+      <span class="rev-body">${body}</span>`;
+    if (!future) row.addEventListener("click", () => openReviewDay(iso));
+    list.appendChild(row);
+  });
+
+  el.querySelectorAll(".rev-nav").forEach(b => b.addEventListener("click", () => {
+    if (b.disabled) return;
+    reviewWeek += parseInt(b.dataset.nav, 10);
+    if (reviewWeek > 0) reviewWeek = 0;
+    renderReviewWeek(el);
   }));
-  // Jeder vergangene Tag lässt sich öffnen – auch leere, zum Schreiben
-  el.querySelectorAll(".cal-cell:not(.empty):not(.future)").forEach(c =>
-    c.addEventListener("click", () => openReviewDay(c.dataset.iso)));
+}
+
+function fmtShort(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.getDate() + ". " + MONTHS_SHORT[d.getMonth()];
+}
+function shorten(s, n) {
+  s = String(s);
+  // Autor abschneiden, Reihentitel auf den Haupttitel vor dem Doppelpunkt kürzen
+  const cut = s.split(" – ")[0].split(": ")[0];
+  if (cut.length <= n) return cut;
+  // an der letzten Wortgrenze trennen, nicht mitten im Wort
+  const head = cut.slice(0, n);
+  const sp = head.lastIndexOf(" ");
+  return (sp > n * 0.55 ? head.slice(0, sp) : head).trimEnd() + "…";
 }
 
 function openReviewDay(iso) {
@@ -1544,8 +1683,10 @@ const MEDIA = {
     icons: { "Fantasy": "🐉", "Sci-Fi": "🚀", "Action & Abenteuer": "🗺️", "Horror & Thriller": "🔪", "Mystery & Krimi": "🕵️", "Drama & Story": "🎭", "Open World": "🌍", "Sonstiges": "🎮" }
   }
 };
-function M() { return MEDIA[mediaView]; }
+// Vokabeln sind kein Medientyp – dort fällt M() auf Bücher zurück
+function M() { return MEDIA[mediaView] || MEDIA.book; }
 function catOf(b) { return b.cat || "Sonstiges"; }
+function authorOf(b) { const p = String(b.question).split(" – "); return p.length > 1 ? p[p.length - 1] : ""; }
 function iconOf(cat, media = mediaView) { return MEDIA[media].icons[cat] || MEDIA[media].defaultIcon; }
 function itemsOfMedia() { return data.books.filter(b => (b.media || "book") === mediaView); }
 
@@ -1561,6 +1702,8 @@ document.querySelectorAll("#media-seg button").forEach(b => {
 const TIERS = ["S", "A", "B", "C", "D"];
 const TIER_COLOR = { S: "#e8796a", A: "#e0a458", B: "#d9bc5a", C: "#8fc178", D: "#7aa5f0" };
 function tierRank(t) { const i = TIERS.indexOf(t); return i === -1 ? 99 : i; }
+function engTag(b) { return b.eng ? '<span class="tag-eng">ENG</span>' : ""; }
+function readingBooks() { return data.books.filter(b => b.reading && (b.media || "book") === mediaView); }
 function tierBadge(t) {
   if (!t || !TIER_COLOR[t]) return "";
   return `<span class="tier-badge" style="background:${TIER_COLOR[t]}">${t}</span>`;
@@ -1582,9 +1725,9 @@ function renderMedia() {
 
   // Tipps + Tierlist
   box.insertAdjacentHTML("beforeend", `
-    <div class="duo">
-      <button class="ghost" id="media-tips" style="color:var(--media)">✨ Tipps</button>
-      <button class="ghost" id="media-tierlist">🏆 Tierlist</button>
+    <div class="btn-row">
+      ${btnHTML("secondary", "media-tips", "spark", "Tipps")}
+      ${btnHTML("secondary", "media-tierlist", "trophy", "Tierlist")}
     </div>`);
   $("media-tips").addEventListener("click", openTipsSheet);
   $("media-tierlist").addEventListener("click", openTierlistSheet);
@@ -1592,15 +1735,35 @@ function renderMedia() {
   // Nachtragen, wenn irgendwo Autor oder Beschreibung fehlt
   const missing = items.filter(needsEnrich).length;
   if (missing) {
-    const fix = document.createElement("button");
-    fix.className = "tips-btn";
-    fix.style.color = "var(--media)";
-    fix.textContent = "🪄 " + missing + " " + (missing === 1 ? "Eintrag" : "Einträge") + " nachtragen (Titel, " + cfg.who + ", Beschreibung)";
-    fix.addEventListener("click", () => enrichAllMissing(fix));
-    box.appendChild(fix);
+    box.insertAdjacentHTML("beforeend", btnHTML("primary", "media-fix", "wand",
+      missing + " " + (missing === 1 ? "Eintrag" : "Einträge") + " nachtragen", { accent: "var(--media)" }));
+    $("media-fix").addEventListener("click", e => enrichAllMissing(e.currentTarget));
   }
 
   if (booksView === null) {
+    // Was gerade läuft, steht oben
+    const reading = items.filter(b => b.reading);
+    if (reading.length) {
+      const sect = document.createElement("div");
+      sect.className = "sect";
+      sect.innerHTML = '<span class="tick" style="background:var(--media)"></span><h2>Am Lesen</h2><span class="chip-badge">' + reading.length + "</span>";
+      box.appendChild(sect);
+      reading.forEach((b, i) => {
+        const n = data.vocab.filter(v => v.book === b.question).length;
+        const row = document.createElement("div");
+        row.className = "row reading";
+        row.style.cursor = "pointer";
+        row.style.animationDelay = (i * .03) + "s";
+        row.innerHTML = `
+          <div class="grow">
+            <div class="t">${esc(shorten(b.question, 30))}${engTag(b)}</div>
+            <div class="s"><span>${esc(authorOf(b))}${n ? " · " + n + (n === 1 ? " Wort" : " Wörter") : ""}</span></div>
+          </div>${tierBadge(b.tier)}<span style="color:var(--faint)">›</span>`;
+        row.addEventListener("click", () => openMediaDetail(b));
+        box.appendChild(row);
+      });
+      box.insertAdjacentHTML("beforeend", '<div class="sect"><span class="tick" style="background:var(--faint)"></span><h2>Kategorien</h2></div>');
+    }
     box.insertAdjacentHTML("beforeend",
       `<div class="media-total">Insgesamt ${cfg.verb}: <b>${items.length} ${items.length === 1 ? cfg.one : cfg.many}</b></div>`);
     const cats = [...new Set(items.map(catOf))].sort((a, b) => a.localeCompare(b, "de"));
@@ -1640,7 +1803,7 @@ function renderMedia() {
       : (b.desc || (b.answer || "").split("\n")[0]).trim();
     row.innerHTML = `
       <div class="grow">
-        <div class="t">${esc(b.question)}</div>
+        <div class="t">${esc(b.question)}${engTag(b)}</div>
         ${preview ? '<div class="s"><span class="prev">' + esc(preview) + "</span></div>" : ""}
       </div>${tierBadge(b.tier)}<span style="color:var(--faint)">›</span>`;
     row.addEventListener("click", () => openMediaDetail(b));
@@ -1655,7 +1818,7 @@ function renderMedia() {
 function openTierlistSheet() {
   const cfg = M();
   const { sheet, close } = openSheet(`
-    <h3>🏆 Tierlist · ${esc(cfg.label)}</h3>
+    <h3>Tierlist · ${esc(cfg.label)}</h3>
     <div class="sub">Zieh einen Eintrag in eine Reihe. S = Highlight · D = gefällt mir nicht.</div>
     <div id="tl-wrap"></div>
     <label>Ohne Wertung</label>
@@ -1669,7 +1832,7 @@ function openTierlistSheet() {
     const wrap = sheet.querySelector("#tl-wrap");
     wrap.innerHTML = TIERS.map(t => `
       <div class="tl-row" data-tier="${t}">
-        <span class="tier-badge" style="background:${TIER_COLOR[t]}">${t}</span>
+        <span class="tl-lab" style="background:${TIER_COLOR[t]}">${t}</span>
         <div class="tl-items"></div>
       </div>`).join("");
     TIERS.forEach(t => {
@@ -1690,7 +1853,8 @@ function openTierlistSheet() {
 function makeTierChip(b, sheet, rebuild) {
   const chip = document.createElement("span");
   chip.className = "tl-item";
-  chip.textContent = b.question;
+  chip.textContent = shorten(b.question, 26);
+  chip.title = b.question;
   chip.style.touchAction = "none";
   chip.addEventListener("pointerdown", e => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -1749,10 +1913,13 @@ function jsonFrom(text) {
   if (c >= 0 && d > c) { try { return JSON.parse(t.slice(c, d + 1)); } catch {} }
   return null;
 }
-function enrichSystem(cfg) {
-  return "Du bist ein sorgfältiger Katalog für " + cfg.things + ". "
+function enrichSystem(cfg, eng) {
+  const lang = eng
+    ? "Der Nutzer liest auf ENGLISCH: gib den englischen Originaltitel, nicht die deutsche Ausgabe. "
+    : "Gib die offizielle deutsche Fassung des Titels (falls es keine gibt, den Originaltitel). ";
+  return "Du bist ein sorgfältiger Katalog für " + cfg.things + ". " + lang
     + "Der Nutzer tippt Titel oft falsch, unvollständig oder klein geschrieben. "
-    + "Erkenne, welches " + cfg.thing + " gemeint ist, und korrigiere die Schreibweise auf die offizielle deutsche Fassung (falls es keine gibt, den Originaltitel). "
+    + "Erkenne, welches " + cfg.thing + " gemeint ist, und korrigiere die Schreibweise. "
     + "Hänge hinten mit „ – “ den " + cfg.who + " an, z.B. „… – " + cfg.whoEx + "“. "
     + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences, im Format: "
     + '{"title":"<Titel> – <' + cfg.who + '>","cat":"<Kategorie>","desc":"<genau ein Satz>"}. '
@@ -1776,7 +1943,7 @@ async function enrichMedia(b) {
   b.busy = true; renderMedia();
   try {
     const r = await callClaude({
-      system: enrichSystem(cfg),
+      system: enrichSystem(cfg, b.eng),
       userText: b.question,
       maxTokens: 220
     });
@@ -1809,7 +1976,7 @@ async function enrichAllMissing(btn) {
       btn.textContent = "Claude arbeitet … " + Math.min(i + CHUNK, todo.length) + "/" + todo.length;
       const list = part.map((b, n) => (n + 1) + ". " + b.question).join("\n");
       const r = await callClaude({
-        system: enrichSystem(cfg).replace(
+        system: enrichSystem(cfg, part[0] && part[0].eng).replace(
           'Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences, im Format: {"title"',
           'Du bekommst eine nummerierte Liste. Antworte AUSSCHLIESSLICH mit einem JSON-Array in genau dieser Reihenfolge und Länge, ohne Code-Fences, Elemente im Format: {"title"'
         ),
@@ -1830,6 +1997,13 @@ async function enrichAllMissing(btn) {
   }
 }
 
+/* „englisch" aus der Eingabe ziehen – das Wort selbst fliegt aus dem Titel */
+function parseEnglish(input) {
+  const m = String(input).match(/\s*\b(auf\s+)?(englisch|english|eng)\b\s*$/i);
+  if (!m) return { text: String(input).trim(), eng: false };
+  return { text: String(input).slice(0, m.index).trim(), eng: true };
+}
+
 /* ---- Ganze Reihe: „Der Herr der Ringe 1-“ oder „… 1-3“ ---- */
 function parseSeries(input) {
   const m = String(input).match(/^(.*?[^\d\s])\s*(\d+)\s*-\s*(\d+)?\s*$/);
@@ -1840,12 +2014,13 @@ function parseSeries(input) {
   return { base: m[1].trim(), from, to };
 }
 
-async function askSeries(base, from, to, cfg) {
+async function askSeries(base, from, to, cfg, eng) {
   const range = to ? ("Band " + from + " bis " + to) : ("ab Band " + from + " alle erschienenen Bände");
   const r = await callClaude({
     system: "Du bist ein sorgfältiger Katalog für " + cfg.things + ". Der Nutzer nennt eine Reihe, oft falsch geschrieben. "
       + "Erkenne die Reihe und liste die einzelnen Bände in Erscheinungsreihenfolge auf. "
-      + "Jeder Titel offiziell deutsch geschrieben, hinten mit „ – “ den " + cfg.who + " angehängt. "
+      + (eng ? "Die Titel in der englischen Originalfassung. " : "Jeder Titel offiziell deutsch geschrieben. ")
+      + "Hinten mit „ – “ den " + cfg.who + " angehängt. "
       + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences: "
       + '{"series":"<Reihenname>","items":[{"title":"<Bandtitel> – <' + cfg.who + '>","cat":"<Kategorie>","desc":"<genau ein Satz, max. 20 Wörter>"}]}. '
       + "cat ist genau eine dieser Kategorien: " + cfg.cats.join(", ") + ". "
@@ -1859,7 +2034,7 @@ async function askSeries(base, from, to, cfg) {
   return o;
 }
 
-function openSeriesConfirm(o, cfg) {
+function openSeriesConfirm(o, cfg, eng) {
   const have = new Set(itemsOfMedia().map(b => b.question.toLowerCase()));
   const rows = o.items.map((it, i) => {
     const dup = have.has(String(it.title || "").toLowerCase());
@@ -1891,7 +2066,7 @@ function openSeriesConfirm(o, cfg) {
     if (!picked.length) { close(); return; }
     picked.forEach(it => {
       data.books.push({
-        id: uid(), media: mediaView, question: String(it.title || "").trim(),
+        id: uid(), media: mediaView, question: String(it.title || "").trim(), eng: !!eng, reading: false,
         cat: cfg.cats.includes(it.cat) ? it.cat : "", autoCat: true,
         desc: typeof it.desc === "string" ? it.desc.trim() : "",
         answer: "", cost: 0, tier: "", enriched: true
@@ -1910,7 +2085,7 @@ function openMediaSheet() {
     <h3>${esc(cfg.label)}: Neuer Eintrag</h3>
     <div class="sub">Tipp einfach drauflos – Claude korrigiert den Titel, hängt den ${esc(cfg.who)} an und sortiert ein.</div>
     <input type="text" id="sh-media-title" placeholder="${esc(cfg.placeholder)}" autocomplete="off">
-    <div class="hint" style="margin-top:8px">Ganze Reihe: „Titel 1-“ für alle Bände, „Titel 1-3“ für Band 1 bis 3.</div>
+    <div class="hint" style="margin-top:8px">Ganze Reihe: „Titel 1-“ für alle Bände. Auf Englisch gelesen? Schreib „englisch“ dahinter.</div>
     <label>Kategorie</label>
     <select id="sh-media-cat">
       <option value="Auto" selected>Auto (Claude wählt)</option>${catOpts}
@@ -1919,6 +2094,9 @@ function openMediaSheet() {
     <div class="tier-row" id="sh-add-tier">${tierBtns}</div>
     <label>Meine Notizen (optional)</label>
     <textarea id="sh-add-notes" placeholder="Was du dazu festhalten willst …"></textarea>
+    <div class="toggle-row"><span>Gerade am Lesen</span>
+      <span class="switch"><input type="checkbox" id="sh-add-reading"><span class="knob"></span></span>
+    </div>
     <div class="sheet-actions">
       <button class="quiet" data-act="cancel">Abbrechen</button>
       <button class="primary" data-act="save">Hinzufügen</button>
@@ -1936,17 +2114,20 @@ function openMediaSheet() {
 
   sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
   sheet.querySelector('[data-act="save"]').addEventListener("click", async ev => {
-    const title = sheet.querySelector("#sh-media-title").value.trim();
+    const raw = sheet.querySelector("#sh-media-title").value.trim();
+    if (!raw) return;
+    const { text: title, eng } = parseEnglish(raw);
     if (!title) return;
     const sel = sheet.querySelector("#sh-media-cat").value;
+    const reading = sheet.querySelector("#sh-add-reading").checked;
 
     // Reihen-Schreibweise erkannt? Dann erst Bände holen und nachfragen.
     const ser = parseSeries(title);
     if (ser && getApiKey()) {
       ev.target.disabled = true; ev.target.textContent = "Claude sucht die Bände …";
       try {
-        const o = await askSeries(ser.base, ser.from, ser.to, cfg);
-        if (o) { close(); openSeriesConfirm(o, cfg); return; }
+        const o = await askSeries(ser.base, ser.from, ser.to, cfg, eng);
+        if (o) { close(); openSeriesConfirm(o, cfg, eng); return; }
         alert("Dazu habe ich keine Reihe gefunden – ich trage es als einzelnen Eintrag ein.");
       } catch (err) {
         alert("Das hat nicht geklappt: " + err.message);
@@ -1955,7 +2136,7 @@ function openMediaSheet() {
     }
 
     const b = {
-      id: uid(), media: mediaView, question: title,
+      id: uid(), media: mediaView, question: title, eng, reading,
       cat: sel === "Auto" ? "" : sel, autoCat: sel === "Auto",
       desc: "", answer: sheet.querySelector("#sh-add-notes").value.trim(),
       cost: 0, tier: chosenTier
@@ -1973,13 +2154,16 @@ function openMediaDetail(b) {
     `<button data-tier="${t}" class="${b.tier === t ? "on" : ""}" style="${b.tier === t ? "background:" + TIER_COLOR[t] : ""}">${t}</button>`).join("");
   const { sheet, close } = openSheet(`
     <h3>${esc(b.question)}</h3>
-    <div class="sub">${esc(catOf(b))}</div>
+    <div class="sub">${esc(catOf(b))}${b.eng ? " · Englisch" : ""}</div>
+    <div class="toggle-row"><span>Gerade am Lesen</span>
+      <span class="switch"><input type="checkbox" id="sh-reading" ${b.reading ? "checked" : ""}><span class="knob"></span></span>
+    </div>
     <label>Meine Wertung</label>
     <div class="tier-row" id="sh-tier">${tierBtns}</div>
     <div class="hint" style="margin-top:8px">S = Highlight · D = gefällt mir nicht · nochmal tippen = entfernen</div>
     <label>Worum es geht</label>
     <div class="answer ${b.desc ? "" : "blank"}" id="sh-desc">${b.desc ? esc(b.desc) : "Noch keine Beschreibung."}</div>
-    <button class="tips-btn" id="sh-redesc" style="color:var(--media);margin-top:10px">🪄 ${b.desc ? "Neu holen" : "Von Claude holen"}</button>
+    <button class="btn btn-secondary" id="sh-redesc" style="margin-top:10px">${ico("wand")}<span>${b.desc ? "Neu holen" : "Von Claude holen"}</span></button>
     <label>Meine Notizen</label>
     <textarea id="sh-notes" placeholder="Was du dazu festhalten willst …">${esc(b.answer || "")}</textarea>
     <div class="hint" style="margin-top:8px">Wird automatisch gespeichert.</div>
@@ -2011,6 +2195,10 @@ function openMediaDetail(b) {
     });
     renderMedia();
   }));
+
+  sheet.querySelector("#sh-reading").addEventListener("change", e => {
+    b.reading = e.target.checked; save(); renderMedia();
+  });
 
   // Notizen: direkt tippen, automatisch speichern
   sheet.querySelector("#sh-notes").addEventListener("input", e => {
@@ -2102,16 +2290,35 @@ function bookTitlesWithVocab() {
   return [...new Set(data.vocab.map(v => v.book).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
 }
 
-async function lookupWord(word, sentence) {
+async function lookupWord(word, sentence, book) {
   return callClaude({
-    system: "Du bist ein Wörterbuch Englisch → Deutsch für einen deutschen Leser. "
+    system: "Du hilfst einem deutschen Leser bei einem Wort aus seiner Lektüre. "
+      + "Entscheide selbst, was gebraucht wird:\n"
+      + "· Fremdsprachiges Wort (meist Englisch) → übersetzen. kind = \"word\".\n"
+      + "· Deutscher Fachbegriff aus Philosophie, Wissenschaft o.ä. → in normalem Deutsch erklären, NICHT übersetzen. "
+      + "trans ist dann eine kurze Umschreibung in zwei bis vier Wörtern. kind = \"term\".\n"
       + "Korrigiere Tippfehler und gib die Grundform an. "
       + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences: "
-      + '{"word":"<englisches Wort, Grundform>","type":"<Wortart auf Deutsch>","trans":"<1 bis 3 deutsche Übersetzungen, mit Komma getrennt>","meaning":"<ein kurzer deutscher Satz: was es bedeutet>","example":"<ein kurzer englischer Beispielsatz>"}. '
-      + "Wenn ein Satz mitgeliefert wird, beziehe dich auf DIESE Bedeutung im Satz, nicht auf die häufigste.",
+      + '{"word":"<Wort, Grundform>","kind":"word"|"term","type":"<Wortart auf Deutsch>","trans":"<Übersetzung bzw. kurze Umschreibung>","meaning":"<ein bis zwei kurze deutsche Sätze: was es bedeutet>","example":"<ein kurzer Beispielsatz>"}. '
+      + "Wenn ein Satz mitgeliefert wird, beziehe dich auf DIESE Bedeutung im Satz, nicht auf die häufigste."
+      + (book ? " Der Begriff stammt aus „" + book + "“ – erkläre ihn so, wie dieser Autor ihn verwendet." : ""),
     userText: sentence ? word + "\n\nIm Satz: " + sentence : word,
-    maxTokens: 260
+    maxTokens: 300
   });
+}
+function applyWord(v, o) {
+  if (!o) return;
+  if (o.word) v.word = String(o.word).trim();
+  v.kind = o.kind === "term" ? "term" : "word";
+  v.trans = String(o.trans || "").trim();
+  v.type = String(o.type || "").trim();
+  v.meaning = String(o.meaning || "").trim();
+  v.example = String(o.example || "").trim();
+}
+function kindTag(v) {
+  return v.kind === "term"
+    ? '<span class="k-tag k-de">Fachbegriff</span>'
+    : '<span class="k-tag k-eng">Englisch</span>';
 }
 
 function renderVocab() {
@@ -2132,14 +2339,10 @@ function renderVocab() {
       <div class="stat"><div class="v" style="color:${due.length ? "var(--media)" : "var(--muted)"}">${due.length}</div><div class="l">fällig</div></div>
       <div class="stat"><div class="v" style="color:var(--todo)">${learned}</div><div class="l">sitzen</div></div>
     </div>
-    <div class="duo">
-      <button class="solid" id="vc-quiz" style="--duo-accent: var(--media)" ${due.length ? "" : "disabled"}>
-        ${due.length ? "▶ Abfrage · " + due.length + " fällig" : "Heute nichts fällig"}
-      </button>
-    </div>`);
-  const qb = $("vc-quiz");
-  if (due.length) qb.addEventListener("click", () => startQuiz(due));
-  else { qb.style.background = "var(--surface2)"; qb.style.color = "var(--faint)"; qb.style.cursor = "default"; }
+    ${btnHTML("primary", "vc-quiz", "play",
+      due.length ? "Abfrage · " + due.length + " fällig" : "Heute nichts fällig",
+      { accent: "var(--media)", disabled: !due.length })}`);
+  if (due.length) $("vc-quiz").addEventListener("click", () => startQuiz(due));
 
   // Filter nach Buch
   const books = bookTitlesWithVocab();
@@ -2185,30 +2388,41 @@ function renderVocab() {
 }
 
 function openVocabSheet() {
-  const books = data.books.filter(b => (b.media || "book") === "book");
-  const opts = books.map(b => `<option value="${esc(b.question)}">${esc(b.question)}</option>`).join("");
+  // Laufende Bücher zuerst, das zuletzt benutzte vorausgewählt
+  const reading = data.books.filter(b => b.reading);
+  const last = data.vocab.length ? data.vocab[data.vocab.length - 1].book : "";
+  let picked = reading.some(b => b.question === last) ? last : (reading[0] ? reading[0].question : "");
+  const chips = reading.map(b =>
+    `<span class="vc-chip ${b.question === picked ? "on" : ""}" data-book="${esc(b.question)}">${esc(shorten(b.question, 20))}</span>`).join("")
+    + `<span class="vc-chip ${picked ? "" : "on"}" data-book="">Kein Buch</span>`;
+
   const { sheet, close } = openSheet(`
     <h3>Neues Wort</h3>
-    <div class="sub">Claude übersetzt und erklärt es dir – im Zusammenhang, wenn du den Satz mitgibst.</div>
-    <input type="text" id="vc-word" placeholder="z.B. reluctant" autocomplete="off" autocapitalize="none" spellcheck="false">
+    <div class="sub">Englische Wörter werden übersetzt, deutsche Fachbegriffe erklärt.</div>
+    <input type="text" id="vc-word" placeholder="z.B. reluctant oder Apperzeption" autocomplete="off" autocapitalize="none" spellcheck="false">
     <label>Satz aus dem Buch (optional)</label>
     <textarea id="vc-sent" placeholder="„She was reluctant to leave the house.“" style="min-height:80px"></textarea>
     <div class="hint" style="margin-top:8px">Lohnt sich bei Wörtern mit mehreren Bedeutungen.</div>
     <label>Buch</label>
-    <select id="vc-book"><option value="">Kein Buch</option>${opts}</select>
+    <div class="vc-filter" id="vc-books">${chips}</div>
     <div class="sheet-actions">
       <button class="quiet" data-act="cancel">Abbrechen</button>
       <button class="primary" data-act="save">Nachschlagen</button>
     </div>`, { accent: "var(--media)" });
+
+  sheet.querySelectorAll("#vc-books .vc-chip").forEach(c => c.addEventListener("click", () => {
+    picked = c.dataset.book;
+    sheet.querySelectorAll("#vc-books .vc-chip").forEach(x => x.classList.toggle("on", x === c));
+  }));
 
   sheet.querySelector('[data-act="cancel"]').addEventListener("click", close);
   sheet.querySelector('[data-act="save"]').addEventListener("click", async ev => {
     const word = sheet.querySelector("#vc-word").value.trim();
     if (!word) return;
     const sentence = sheet.querySelector("#vc-sent").value.trim();
-    const book = sheet.querySelector("#vc-book").value;
+    const book = picked;
     const v = {
-      id: uid(), word, sentence, book,
+      id: uid(), word, sentence, book, kind: "word",
       trans: "", type: "", meaning: "", example: "",
       box: 1, due: todayStr(), created: Date.now()
     };
@@ -2218,17 +2432,8 @@ function openVocabSheet() {
     if (!getApiKey()) return;
     v.busy = true; renderVocab();
     try {
-      const r = await lookupWord(word, sentence);
-      if (r) {
-        const o = jsonFrom(r.text);
-        if (o) {
-          if (o.word) v.word = String(o.word).trim();
-          v.trans = String(o.trans || "").trim();
-          v.type = String(o.type || "").trim();
-          v.meaning = String(o.meaning || "").trim();
-          v.example = String(o.example || "").trim();
-        }
-      }
+      const r = await lookupWord(word, sentence, book);
+      if (r) applyWord(v, jsonFrom(r.text));
     } catch {
       // Wort bleibt drin, Übersetzung kann man später nachholen
     } finally {
@@ -2241,9 +2446,9 @@ function openVocabSheet() {
 
 function openVocabDetail(v) {
   const { sheet, close } = openSheet(`
-    <h3>${esc(v.word)}</h3>
-    <div class="sub">${esc(v.type || "")}${v.book ? (v.type ? " · " : "") + esc(v.book.split(" – ")[0]) : ""}</div>
-    <label>Übersetzung</label>
+    <h3>${esc(v.word)} ${kindTag(v)}</h3>
+    <div class="sub">${esc(v.type || "")}${v.book ? (v.type ? " · " : "") + esc(shorten(v.book, 24)) : ""}</div>
+    <label>${v.kind === "term" ? "Kurz gesagt" : "Übersetzung"}</label>
     <div class="answer ${v.trans ? "" : "blank"}" id="vc-d-trans">${v.trans ? esc(v.trans) : "Noch nicht nachgeschlagen."}</div>
     ${v.meaning ? '<label>Bedeutung</label><div class="answer" id="vc-d-mean">' + esc(v.meaning) + "</div>" : ""}
     ${v.example ? '<label>Beispiel</label><div class="answer" style="font-style:italic" id="vc-d-ex">' + esc(v.example) + "</div>" : ""}
@@ -2251,7 +2456,7 @@ function openVocabDetail(v) {
     <label>Karteikasten</label>
     <div class="kv"><span class="k">Fach</span><span class="v">${v.box} von ${VOCAB_BOXES.length}</span></div>
     <div class="kv"><span class="k">Nächste Abfrage</span><span class="v">${(v.due || todayStr()) <= todayStr() ? "jetzt fällig" : fmtNice(v.due)}</span></div>
-    <button class="tips-btn" id="vc-again" style="color:var(--media);margin-top:12px">🪄 ${v.trans ? "Neu nachschlagen" : "Jetzt nachschlagen"}</button>
+    <button class="btn btn-secondary" id="vc-again" style="margin-top:12px">${ico("wand")}<span>${v.trans ? "Neu nachschlagen" : "Jetzt nachschlagen"}</span></button>
     <div class="sheet-actions">
       <button class="danger" data-act="del">🗑</button>
       <button class="primary" data-act="done">Fertig</button>
@@ -2261,14 +2466,10 @@ function openVocabDetail(v) {
     const lbl = e.target.textContent;
     e.target.disabled = true; e.target.textContent = "Claude schlägt nach …";
     try {
-      const r = await lookupWord(v.word, v.sentence);
+      const r = await lookupWord(v.word, v.sentence, v.book);
       const o = r && jsonFrom(r.text);
       if (o) {
-        if (o.word) v.word = String(o.word).trim();
-        v.trans = String(o.trans || "").trim();
-        v.type = String(o.type || "").trim();
-        v.meaning = String(o.meaning || "").trim();
-        v.example = String(o.example || "").trim();
+        applyWord(v, o);
         save(); renderVocab();
         close(); openVocabDetail(v);
         return;
@@ -2379,8 +2580,7 @@ function allEx() {
   return SPORT_EX.filter(e => !data.sport.removedEx.includes(e.name)).concat(data.sport.customEx);
 }
 function isCustomEx(name) { return data.sport.customEx.some(e => e.name === name); }
-let calDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-let calOpen = false;
+let sportWeek = 0;   // 0 = diese Woche, -1 = vorige …
 
 document.querySelectorAll("#sport-seg button").forEach(b => {
   b.addEventListener("click", () => {
@@ -2431,15 +2631,14 @@ function renderTraining(box) {
   const isTrain = data.sport.trainingDays.includes(new Date().getDay());
 
   box.insertAdjacentHTML("beforeend", `
-    <div class="duo" style="--duo-accent: var(--sport)">
-      <button class="ghost" id="btn-progress">📈 Fortschritt</button>
-      <button class="ghost cal-toggle-btn ${calOpen ? "open" : ""}" id="btn-cal">📅 Kalender</button>
+    <div class="btn-row">
+      ${btnHTML("secondary", "btn-progress", "chart", "Fortschritt")}
+      ${btnHTML("secondary", "btn-week", "cal", sportWeek === 0 ? "Diese Woche" : "Woche")}
     </div>
-    <div id="cal-slot"></div>
+    <div id="week-slot"></div>
     <div class="sect"><span class="tick" style="background:var(--sport)"></span>
       <h2>Heute · ${fmtNice(todayIso)}</h2>
       ${isTrain ? "" : '<span class="chip-badge">Ruhetag</span>'}
-      <button class="sect-act" id="btn-days">Tage ›</button>
     </div>`);
 
   allEx().forEach((ex, i) => {
@@ -2477,10 +2676,66 @@ function renderTraining(box) {
     box.insertAdjacentHTML("beforeend", '<div class="empty-state">Keine Übungen.<br>Füge über + welche hinzu.</div>');
   }
 
+  box.insertAdjacentHTML("beforeend", btnHTML("quiet", "btn-days", "", "Trainingstage ändern"));
+
   $("btn-progress").addEventListener("click", openProgressSheet);
-  $("btn-cal").addEventListener("click", () => { calOpen = !calOpen; renderSport(); });
+  $("btn-week").addEventListener("click", () => { sportWeek = 0; renderSport(); });
   $("btn-days").addEventListener("click", openTrainingDaysSheet);
-  if (calOpen) renderCalendar($("cal-slot"));
+  renderSportWeek($("week-slot"));
+}
+
+/* Die Woche als Zeile je Übung – echte Zahlen statt Häkchen */
+function renderSportWeek(el) {
+  const todayIso = todayStr();
+  const mon = mondayOf(new Date());
+  mon.setDate(mon.getDate() + sportWeek * 7);
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(isoDate(addD(mon, i)));
+  const ex = allEx();
+
+  if (!ex.length) { el.innerHTML = ""; return; }
+
+  const label = sportWeek === 0 ? "Diese Woche"
+    : sportWeek === -1 ? "Vorige Woche"
+    : fmtShort(days[0]) + " – " + fmtShort(days[6]);
+
+  const rows = ex.map(e => {
+    let sum = 0;
+    const cells = days.map(iso => {
+      const v = (data.sport.log[iso] || {})[e.name];
+      if (v) sum += v;
+      const d = new Date(iso + "T00:00:00");
+      const isTrainDay = data.sport.trainingDays.includes(d.getDay());
+      const cls = ["", v ? "on" : "", (!v && !isTrainDay) ? "rest" : "", iso === todayIso ? "today" : ""]
+        .filter(Boolean).join(" ");
+      return `<i class="${cls}">${v ? v : "·"}</i>`;
+    }).join("");
+    return `<div class="spw-row">
+      <span class="spw-name">${esc(e.name)}</span>
+      <span class="spw-week">${cells}</span>
+      <span class="spw-sum">${sum || "–"}</span>
+    </div>`;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="rev-head">
+      <button class="rev-nav" data-nav="-1">‹</button>
+      <span class="rev-title">${esc(label)}</span>
+      <button class="rev-nav" data-nav="1" ${sportWeek >= 0 ? "disabled" : ""}>›</button>
+    </div>
+    <div class="spw">
+      <div class="spw-dow"><span class="spw-pad"></span>${days.map(iso => {
+        const d = new Date(iso + "T00:00:00");
+        return "<span>" + WD_SHORT[d.getDay()] + "</span>";
+      }).join("")}<span style="width:42px"></span></div>
+      ${rows}
+    </div>`;
+  el.querySelectorAll(".rev-nav").forEach(b => b.addEventListener("click", () => {
+    if (b.disabled) return;
+    sportWeek += parseInt(b.dataset.nav, 10);
+    if (sportWeek > 0) sportWeek = 0;
+    renderSportWeek(el);
+  }));
 }
 
 /* Eigene Übung hinzufügen */
@@ -2557,43 +2812,6 @@ function openTrainingDaysSheet() {
 }
 
 /* ---- Kalender ---- */
-function renderCalendar(el) {
-  const y = calDate.getFullYear(), m = calDate.getMonth();
-  const startOff = (new Date(y, m, 1).getDay() + 6) % 7;
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const todayIso = todayStr();
-
-  let cells = "";
-  for (let i = 0; i < startOff; i++) cells += '<div class="cal-cell empty"></div>';
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dt = new Date(y, m, day), iso = isoDate(dt);
-    const logged = data.sport.log[iso] && Object.keys(data.sport.log[iso]).length > 0;
-    const ran = data.sport.runs.some(r => r.date === iso);
-    const cls = ["cal-cell"];
-    if (data.sport.trainingDays.includes(dt.getDay())) cls.push("train");
-    if (iso === todayIso) cls.push("today");
-    if (logged || ran) cls.push("active");
-    const dots = (logged ? '<span class="dot cali"></span>' : "")
-      + (ran ? '<span class="dot run"></span>' : "");
-    cells += `<div class="${cls.join(" ")}" data-iso="${iso}"><span>${day}</span><span class="cal-dots">${dots}</span></div>`;
-  }
-
-  el.innerHTML = `
-    <div class="cal">
-      <div class="cal-head">
-        <button class="cal-nav" data-nav="-1">‹</button>
-        <span class="cal-title">${MONTHS[m]} ${y}</span>
-        <button class="cal-nav" data-nav="1">›</button>
-      </div>
-      <div class="cal-dow"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
-      <div class="cal-grid">${cells}</div>
-    </div>`;
-  el.querySelectorAll(".cal-nav").forEach(b => b.addEventListener("click", () => {
-    calDate = new Date(y, m + parseInt(b.dataset.nav, 10), 1); renderCalendar(el);
-  }));
-  el.querySelectorAll(".cal-cell.active").forEach(c => c.addEventListener("click", () => openDaySheet(c.dataset.iso)));
-}
-
 function openDaySheet(iso) {
   const day = data.sport.log[iso] || {};
   const runs = data.sport.runs.filter(r => r.date === iso);
@@ -2641,10 +2859,8 @@ function renderRuns(box) {
   const mSec = month.reduce((s, r) => s + r.durSec, 0);
 
   box.insertAdjacentHTML("beforeend", `
-    <div class="duo" style="--duo-accent: var(--run)">
-      <button class="solid" id="run-add">＋ Lauf eintragen</button>
-      <button class="ghost" id="run-import">📷 Screenshot</button>
-    </div>
+    ${btnHTML("primary", "run-add", "plus", "Lauf eintragen", { accent: "var(--run)" })}
+    ${btnHTML("secondary", "run-import", "camera", "Aus Screenshot lesen")}
     <div class="stat-grid">
       <div class="stat"><div class="v">${month.length}</div><div class="l">Läufe</div></div>
       <div class="stat"><div class="v">${mKm.toFixed(1).replace(".", ",")}</div><div class="l">km / Monat</div></div>
@@ -2800,10 +3016,9 @@ function renderSkills(box) {
     });
 
     const btn = document.createElement("button");
-    btn.className = "tips-btn";
-    btn.style.color = "var(--skill)";
+    btn.className = "btn btn-secondary";
     btn.style.marginTop = "6px";
-    btn.textContent = "💡 Claude-Tipp zur aktuellen Etappe";
+    btn.innerHTML = ico("bulb") + "<span>Claude-Tipp zur Etappe</span>";
     btn.addEventListener("click", () => skillTip(sk, btn));
     box.appendChild(btn);
   });
@@ -2857,7 +3072,7 @@ async function skillTip(sk, btn) {
   const stufe = nextIdx === -1
     ? "Ich beherrsche den Skill schon – gib mir einen Tipp zum Verfeinern."
     : "Meine aktuelle Etappe: " + sk.steps[nextIdx];
-  btn.disabled = true; btn.textContent = "Claude denkt nach…";
+  btn.disabled = true; btn.innerHTML = "<span>Claude denkt nach…</span>";
   try {
     const r = await callClaude({
       system: "Du bist ein Coach für den Skill „" + sk.name + "“ (Calisthenics/Körperbeherrschung). Gib einen kurzen, konkreten Tipp auf Deutsch (maximal 4 Sätze): eine passende Übung oder Technik, worauf man achten sollte, und ein häufiger Fehler. Kein Vorwort.",
@@ -2872,7 +3087,7 @@ async function skillTip(sk, btn) {
   } catch (err) {
     alert("Das hat nicht geklappt: " + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = "💡 Claude-Tipp zur aktuellen Etappe";
+    btn.disabled = false; btn.innerHTML = ico("bulb") + "<span>Claude-Tipp zur Etappe</span>";
   }
 }
 
@@ -3117,7 +3332,7 @@ $("btn-settings").addEventListener("click", () => {
     <div class="toggle-row"><span>Nachtruhe (22–7 Uhr)</span>
       <span class="switch"><input type="checkbox" id="sh-night" ${data.notify.night ? "checked" : ""}><span class="knob"></span></span>
     </div>
-    <button class="tips-btn" id="sh-notify-test" style="color:var(--avoid)">🔔 Testmitteilung senden</button>
+    <button class="btn btn-secondary" id="sh-notify-test" style="margin-top:12px">${ico("bell")}<span>Testmitteilung senden</span></button>
 
     <label>Design</label>
     <div class="toggle-row"><span>Dark Mode</span>
