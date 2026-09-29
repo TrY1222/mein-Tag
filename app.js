@@ -176,8 +176,9 @@ function normalizeData() {
   // Aussprache: Akzent der Vorlese-Stimme, und ob beim Aufdecken vorgelesen wird
   if (!["en-GB", "en-US"].includes(data.vocabAccent)) data.vocabAccent = "en-GB";
   if (typeof data.vocabSpeak !== "boolean") data.vocabSpeak = true;
-  // Stimmung: 1–5 je Tag
-  if (!data.mood || typeof data.mood !== "object") data.mood = {};
+  // Vokabel-Serie: je Übungstag der Tag, an dem danach wieder etwas fällig war
+  if (!data.vocabLog || typeof data.vocabLog !== "object") data.vocabLog = {};
+  if (typeof data.vocabRemind !== "boolean") data.vocabRemind = true;
   // Bücher: Anlegedatum, für die Jahresübersicht
   data.books.forEach(b => { if (!b.created) { const t = idTime(b.id); if (t) b.created = t; } });
   // Vokabeln
@@ -570,41 +571,6 @@ function freqLabel(h) {
   return "Alle " + n + " Tage";
 }
 
-/* ---- Stimmung: ein Tipp am Tag, 1 (mies) bis 5 (super) ---- */
-const MOODS = [
-  { v: 1, e: "😣", l: "mies" },
-  { v: 2, e: "😕", l: "naja" },
-  { v: 3, e: "😐", l: "okay" },
-  { v: 4, e: "🙂", l: "gut" },
-  { v: 5, e: "😄", l: "super" }
-];
-function moodOf(iso) { return MOODS.find(m => m.v === data.mood[iso]) || null; }
-function moodPicker(iso) {
-  const cur = data.mood[iso];
-  return '<div class="mood-row">' + MOODS.map(m =>
-    `<button class="mood-btn ${cur === m.v ? "on" : ""}" data-mood="${m.v}" aria-label="${m.l}">${m.e}<small>${m.l}</small></button>`
-  ).join("") + "</div>";
-}
-function wireMood(root, iso, after) {
-  root.querySelectorAll("[data-mood]").forEach(b => b.addEventListener("click", () => {
-    const n = parseInt(b.dataset.mood, 10);
-    if (data.mood[iso] === n) delete data.mood[iso]; else data.mood[iso] = n;   // nochmal tippen = zurücknehmen
-    save();
-    root.querySelectorAll("[data-mood]").forEach(x => x.classList.toggle("on", data.mood[iso] === parseInt(x.dataset.mood, 10)));
-    if (after) after();
-  }));
-}
-function moodTrendHtml(days = 14) {
-  const list = [];
-  for (let i = days - 1; i >= 0; i--) list.push(addDaysIso(todayStr(), -i));
-  if (list.filter(d => data.mood[d]).length < 3) return "";
-  const bars = list.map(d => {
-    const m = data.mood[d];
-    return `<span title="${fmtNice(d)}${m ? " · " + moodOf(d).l : ""}" style="height:${m ? 6 + m * 7.5 : 4}px;${m ? "background:color-mix(in srgb, var(--media) " + (30 + m * 14) + "%, var(--surface2))" : ""}"></span>`;
-  }).join("");
-  return `<div class="mood-dots">${bars}</div><div class="pg-foot"><span>vor 2 Wochen</span><span>heute</span></div>`;
-}
-
 /* Direkt zu den Vokabeln – vom Heute-Bildschirm und vom App-Symbol aus */
 function goVocab() {
   mediaView = "vocab"; booksView = null;
@@ -653,12 +619,12 @@ function renderToday() {
     </div>`;
 
   // Schnellzugriff
-  const vAll = data.vocab.length, vDueNow = vocabDue().length;
+  const vAll = data.vocab.length, vDueNow = vocabDue().length, vStreak = vocabStreak();
   html += `
     <div class="quick-grid">
       <button class="quick" id="qk-vocab" style="--c:var(--media)">
         <span class="q-ic">${ico("cards")}</span>
-        <span><span class="q-t" style="display:block">Vokabeln</span><span class="q-s">${vDueNow ? vDueNow + " fällig" : vAll ? vAll + (vAll === 1 ? " Wort" : " Wörter") : "noch leer"}</span></span>
+        <span><span class="q-t" style="display:block">Vokabeln</span><span class="q-s">${vDueNow ? vDueNow + " fällig" : vAll ? vAll + (vAll === 1 ? " Wort" : " Wörter") : "noch leer"}${vStreak ? " · 🔥 " + vStreak : ""}</span></span>
       </button>
       <button class="quick" id="qk-word" style="--c:var(--run)">
         <span class="q-ic">${ico("pen")}</span>
@@ -666,28 +632,11 @@ function renderToday() {
       </button>
     </div>`;
 
-  // Stimmung
-  const md = moodOf(today);
-  html += `
-    <div class="card" id="mood-card" style="margin-top:10px">
-      <div class="mood-q">${md ? "Heute: " + md.e + " " + md.l : "Wie geht's dir heute?"}</div>
-      ${moodPicker(today)}
-      ${moodTrendHtml()}
-    </div>`;
-
   // Fällig heute
   html += `<div class="sect"><span class="tick" style="background:var(--todo)"></span><h2>Fällig heute</h2></div>`;
   box.innerHTML = html;
   $("qk-vocab").addEventListener("click", goVocab);
   $("qk-word").addEventListener("click", () => { goVocab(); openVocabSheet(); });
-  wireMood($("mood-card"), today, () => {
-    const m = moodOf(today);
-    $("mood-card").querySelector(".mood-q").textContent = m ? "Heute: " + m.e + " " + m.l : "Wie geht's dir heute?";
-    const old = $("mood-card").querySelector(".mood-dots");
-    if (old) { old.nextElementSibling.remove(); old.remove(); }
-    $("mood-card").insertAdjacentHTML("beforeend", moodTrendHtml());
-    renderReviewWeek(document.getElementById("rev-days").parentElement);
-  });
 
   const planWrap = document.createElement("div");
   if (!dueTodos.length && !planHabits.length && !isTrainDay) {
@@ -910,9 +859,8 @@ function dayRecord(iso) {
   const exList = allEx().filter(e => ex[e.name]).map(e => ({ name: e.name, val: ex[e.name], unit: e.unit }));
   const runs = data.sport.runs.filter(r => r.date === iso);
   const note = (data.journal[iso] || "").trim();
-  const mood = moodOf(iso);
-  return { todos, habits, exList, runs, note, mood,
-    any: todos.length || habits.length || exList.length || runs.length || note || mood };
+  return { todos, habits, exList, runs, note,
+    any: todos.length || habits.length || exList.length || runs.length || note };
 }
 
 function renderReviewWeek(el) {
@@ -946,7 +894,6 @@ function renderReviewWeek(el) {
 
     // Klartext statt Farbcode
     const pills = [];
-    if (r.mood) pills.push('<span class="pill note" title="' + r.mood.l + '">' + r.mood.e + "</span>");
     if (r.todos.length) {
       pills.push(r.todos.length === 1
         ? '<span class="pill todo">' + esc(shorten(r.todos[0].title, 22)) + "</span>"
@@ -1035,7 +982,7 @@ function downloadBackup() {
   data.lastBackup = Date.now(); save();
 }
 
-/* Sicherung zurückholen: ersetzt ALLES (Vokabeln, Tagebuch, Stimmung … eingeschlossen) */
+/* Sicherung zurückholen: ersetzt ALLES (Vokabeln, Tagebuch … eingeschlossen) */
 function importBackup(text) {
   let imported;
   try { imported = JSON.parse(text); } catch { imported = null; }
@@ -1105,8 +1052,6 @@ function openWeekReview() {
   const words = data.vocab.filter(v => v.created && inWeek(isoDate(new Date(v.created)))).length;
   const notes = days.filter(d => (data.journal[d] || "").trim()).length;
   const books = data.books.filter(b => b.reading).length;
-  const moods = days.map(d => data.mood[d]).filter(Boolean);
-  const moodAvg = moods.length ? MOODS[Math.round(moods.reduce((a, b) => a + b, 0) / moods.length) - 1] : null;
 
   const stat = (v, l, c) => `<div class="stat"><div class="v"${c ? ' style="color:' + c + '"' : ""}>${v}</div><div class="l">${l}</div></div>`;
   const rows = [
@@ -1115,8 +1060,7 @@ function openWeekReview() {
     trainDays ? stat(trainDays, trainDays === 1 ? "Trainingstag" : "Trainingstage", "var(--sport)") : "",
     runs.length ? stat(km.toFixed(1).replace(".", ",") + " km", "gelaufen", "var(--run)") : "",
     words ? stat(words, words === 1 ? "Wort" : "Wörter", "var(--media)") : "",
-    notes ? stat(notes, notes === 1 ? "Notiz" : "Notizen", "var(--media)") : "",
-    moodAvg ? stat(moodAvg.e, "Stimmung: " + moodAvg.l) : ""
+    notes ? stat(notes, notes === 1 ? "Notiz" : "Notizen", "var(--media)") : ""
   ].filter(Boolean);
 
   const grid = [];
@@ -1162,8 +1106,6 @@ function openReviewDay(iso) {
     <h3>${fmtNice(iso)}</h3>
     <div class="sub">${fmtDate(iso)}</div>
     ${rows || '<div class="answer blank">An dem Tag ist nichts eingetragen.</div>'}
-    <label>Stimmung</label>
-    <div id="rv-mood">${moodPicker(iso)}</div>
     <label>Notiz zum Tag</label>
     <textarea id="rv-note" placeholder="Wofür warst du dankbar? Was ist hängengeblieben?">${esc(data.journal[iso] || "")}</textarea>
     <div class="hint" style="margin-top:8px">Wird automatisch gespeichert. Je konkreter, desto mehr bringt's.</div>
@@ -1171,7 +1113,6 @@ function openReviewDay(iso) {
       <button class="primary" data-act="done">Fertig</button>
     </div>`, { accent: "var(--media)" });
 
-  wireMood(sheet.querySelector("#rv-mood"), iso);
   sheet.querySelector("#rv-note").addEventListener("input", e => {
     const v = e.target.value;
     if (v.trim()) data.journal[iso] = v; else delete data.journal[iso];
@@ -2076,6 +2017,31 @@ function vocabDue() {
   const t = todayStr();
   return data.vocab.filter(v => (v.due || t) <= t);
 }
+/* ---- Serie: Tage in Folge, an denen du geübt hast ----
+   Ein Tag ohne Übung bricht die Serie nur, wenn an dem Tag auch etwas fällig war. */
+function vocabPracticed() {
+  const today = todayStr();
+  // Wann wird nach dieser Runde wieder etwas fällig? (Heute noch Offenes zählt nicht – heute ist ja geübt.)
+  const next = data.vocab.map(v => v.due || today).filter(d => d > today).sort()[0] || "9999-12-31";
+  data.vocabLog[today] = next;
+}
+function vocabStreak() {
+  const log = data.vocabLog;
+  const days = Object.keys(log).sort();
+  if (!days.length) return 0;
+  const today = todayStr();
+  let streak = 0;
+  for (let d = today, i = 0; i < 1000 && d >= days[0]; i++, d = addDaysIso(d, -1)) {
+    if (log[d]) { streak++; continue; }
+    if (d === today) continue;                       // heute ist noch nicht vorbei
+    const before = days.filter(x => x < d).pop();    // letzter Übungstag davor
+    if (before && log[before] > d) continue;         // an dem Tag war nichts fällig – zählt nicht, bricht nicht
+    break;
+  }
+  return streak;
+}
+function vocabPracticedToday() { return !!data.vocabLog[todayStr()]; }
+
 function bookTitlesWithVocab() {
   return [...new Set(data.vocab.map(v => v.book).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
 }
@@ -2214,6 +2180,15 @@ function openDirSheet() {
   sheet.querySelector('[data-act="done"]').addEventListener("click", () => { renderVocab(); close(); });
 }
 
+function vocabStreakLine() {
+  const n = vocabStreak();
+  const done = vocabPracticedToday();
+  const txt = n === 0 ? "Übe heute, dann startet deine Serie."
+    : done ? "🔥 " + n + (n === 1 ? " Tag" : " Tage") + " in Folge geübt – heute erledigt."
+    : "🔥 " + n + (n === 1 ? " Tag" : " Tage") + " in Folge – heute noch üben, sonst reißt die Serie.";
+  return '<div class="hint vc-streak" style="margin:-2px 2px 12px">' + txt + "</div>";
+}
+
 function renderVocab() {
   const box = $("media-body");
   box.innerHTML = "";
@@ -2232,6 +2207,7 @@ function renderVocab() {
       <div class="stat"><div class="v" style="color:${due.length ? "var(--media)" : "var(--muted)"}">${due.length}</div><div class="l">fällig</div></div>
       <div class="stat"><div class="v" style="color:var(--todo)">${learned}</div><div class="l">sitzen</div></div>
     </div>
+    ${vocabStreakLine()}
     ${btnHTML("primary", "vc-quiz", "play",
       due.length ? "Abfrage · " + due.length + " fällig" : "Heute nichts fällig",
       { accent: "var(--media)", disabled: !due.length })}
@@ -2507,6 +2483,28 @@ function openPagePick(items) {
 }
 
 /* ---- Abfrage ---- */
+/* Getipptes Wort prüfen: Groß/klein, Satzzeichen und „to …" bei Verben sind egal,
+   ein einzelner Tippfehler bei längeren Wörtern gilt als „fast". */
+function normWord(s) {
+  return String(s).toLowerCase().normalize("NFC")
+    .replace(/[’`´]/g, "'").replace(/[.,!?;:"“”„()]/g, " ")
+    .replace(/^\s*to\s+/, "").replace(/\s+/g, " ").trim();
+}
+function editDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function typedResult(typed, word) {
+  const a = normWord(typed), b = normWord(word);
+  if (!a) return "wrong";
+  if (a === b) return "right";
+  return b.length >= 5 && editDistance(a, b) <= 1 ? "close" : "wrong";
+}
+
 function startQuiz(words) {
   let queue = [...words].sort(() => Math.random() - 0.5);
   const total = queue.length;
@@ -2544,6 +2542,9 @@ function startQuiz(words) {
     $("q-count").textContent = done + " von " + total;
     $("q-bar").style.width = (total ? done / total * 100 : 0) + "%";
 
+    // Nicht gewusst → beim zweiten Anlauf wird das Wort geschrieben statt nur aufgedeckt
+    if (v.__retried) { showTyping(v); return; }
+
     // Richtung: gefragt wird entweder das Wort oder seine Bedeutung
     const rueckwaerts = data.vocabDir === "toEn"
       || (data.vocabDir === "mixed" && (v.__flip !== undefined ? v.__flip : (v.__flip = Math.random() < 0.5)));
@@ -2573,6 +2574,45 @@ function startQuiz(words) {
     });
   };
 
+  /* Schreib-Abfrage: Bedeutung sehen, Wort eintippen */
+  const showTyping = v => {
+    const canSay = speechSupported();
+    const front = v.trans || v.meaning || "–";
+    $("q-word").textContent = front;
+    $("q-word").style.fontSize = front.length > 22 ? "27px" : "";
+    $("q-src").textContent = "Nicht gewusst – schreib das Wort";
+    $("q-say").innerHTML = `<input type="text" class="quiz-input" id="q-input" placeholder="Wort eintippen"
+      autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done">`;
+    $("q-answer").innerHTML = "";
+    $("q-btns").innerHTML = '<button class="quiz-again" id="q-skip">Weiß ich nicht</button><button class="quiz-reveal" id="q-check">Prüfen</button>';
+    const input = $("q-input");
+    setTimeout(() => input.focus(), 50);
+
+    const check = skipped => {
+      const res = skipped ? "wrong" : typedResult(input.value, v.word);
+      input.disabled = true;
+      input.classList.add(res === "wrong" ? "bad" : "good");
+      const msg = res === "right" ? "Richtig geschrieben!"
+        : res === "close" ? "Fast – nur ein Tippfehler. Zählt."
+        : skipped ? "So schreibt man es:" : "Leider nicht. So schreibt man es:";
+      $("q-answer").innerHTML = `
+        <div class="quiz-verdict ${res === "wrong" ? "bad" : "good"}">${msg}</div>
+        <div class="quiz-t">${esc(v.word)}</div>
+        ${v.ipa ? '<div class="quiz-ipa">/' + esc(v.ipa) + "/" + (v.say ? " · " + esc(v.say) : "") + "</div>" : ""}
+        ${canSay ? '<div style="margin-top:12px">' + sayBtn("big") + "</div>" : ""}
+        ${v.example ? '<div class="quiz-e">„' + esc(v.example) + "“</div>" : ""}`;
+      const sb = el.querySelector("#q-answer .say-btn");
+      if (sb) sb.addEventListener("click", () => speak(v, sb));
+      el.classList.add("open");
+      if (canSay && data.vocabSpeak) speak(v, sb);
+      $("q-btns").innerHTML = '<button class="quiz-got" id="q-next">Weiter</button>';
+      $("q-next").addEventListener("click", () => grade(res !== "wrong"));
+    };
+    $("q-check").addEventListener("click", () => { if (input.value.trim()) check(false); else input.focus(); });
+    $("q-skip").addEventListener("click", () => check(true));
+    input.addEventListener("keydown", e => { if (e.key === "Enter" && input.value.trim()) { e.preventDefault(); check(false); } });
+  };
+
   const grade = ok => {
     const v = queue.shift();
     const firstTry = !v.__retried;
@@ -2587,6 +2627,7 @@ function startQuiz(words) {
       if (firstTry) { v.__retried = true; queue.push(v); }  // in dieser Runde nochmal
       else done++;
     }
+    vocabPracticed();
     save();
     show();
   };
@@ -3451,6 +3492,12 @@ function pendingItems() {
     out.push({ key: "training:" + today, kind: "training", title: "Training", days: 0 });
   }
 
+  // Vokabeln: ab 17 Uhr, wenn heute noch nicht geübt wurde
+  if (data.vocabRemind && now.getHours() >= 17 && !vocabPracticedToday()) {
+    const n = vocabDue().length;
+    if (n) out.push({ key: "vocab:" + today, kind: "vocab", title: n + (n === 1 ? " Vokabel" : " Vokabeln"), days: 0, streak: vocabStreak() });
+  }
+
   return out.sort((a, b) => b.days - a.days);
 }
 
@@ -3462,17 +3509,20 @@ function nagLine(item, level) {
     sanft: {
       todo: [`„${t}“ steht noch offen.`],
       habit: [`Heute dran: ${t}`],
-      training: [`Heute ist Trainingstag.`]
+      training: [`Heute ist Trainingstag.`],
+      vocab: [`${t} warten auf dich.`]
     },
     normal: {
       todo: [`„${t}“ wartet noch auf dich.`, `Noch nicht erledigt: „${t}“.`],
       habit: [`${t} steht heute an.`, `Dranbleiben: ${t}`],
-      training: [`Dein Training wartet noch.`, `Trainingstag – noch nichts eingetragen.`]
+      training: [`Dein Training wartet noch.`, `Trainingstag – noch nichts eingetragen.`],
+      vocab: [`${t} sind heute fällig.`, item.streak > 0 ? `Deine Vokabel-Serie: ${item.streak} Tage. Halt sie am Leben.` : `Ein paar Minuten Vokabeln?`]
     },
     penetrant: {
       todo: [`„${t}“. Immer noch.`, `Wir beide wissen, dass „${t}“ offen ist.`, `„${t}“ – jetzt wäre ein guter Moment.`],
       habit: [`${t}. Heute. Nicht morgen.`, `Deine Streak bei „${t}“ steht auf dem Spiel.`],
-      training: [`Trainingstag, null Wiederholungen. Auffällig.`, `Dein Körper wartet. Immer noch.`]
+      training: [`Trainingstag, null Wiederholungen. Auffällig.`, `Dein Körper wartet. Immer noch.`],
+      vocab: [`${t}. Fünf Minuten. Los.`, item.streak > 0 ? `${item.streak} Tage Vokabel-Serie – heute noch nichts.` : `Die Wörter vergessen sich nicht von allein. Doch, tun sie.`]
     },
     gnadenlos: {
       todo: [
@@ -3481,7 +3531,8 @@ function nagLine(item, level) {
         overdue ? `„${t}“ – ${overdue} überfällig. Das ist eine Entscheidung, die du triffst.` : `„${t}“. Heute. Jetzt.`
       ],
       habit: [`„${t}“. Jeden Tag dieselbe Diskussion.`, `${item.streak > 0 ? item.streak + " Tage Streak. Heute wirfst du sie weg?" : "„" + t + "“. Wieder nicht."}`],
-      training: [`Kein Training eingetragen. Der Tag läuft ab.`, `Dips machen sich nicht von allein.`]
+      training: [`Kein Training eingetragen. Der Tag läuft ab.`, `Dips machen sich nicht von allein.`],
+      vocab: [item.streak > 0 ? `${item.streak} Tage Serie. Heute wirfst du sie weg?` : `${t}. Immer noch.`, `Du hast Zeit, das hier zu lesen. Also auch für ${t}.`]
     }
   };
   const arr = (M[level] || M.normal)[item.kind] || [t];
@@ -3579,7 +3630,7 @@ function openNagWall(items) {
     <div class="row" data-i="${i}">
       <button class="ring-check"></button>
       <div class="grow"><div class="t">${esc(it.title)}</div>
-        <div class="s"><span>${it.kind === "todo" ? "Aufgabe" : it.kind === "habit" ? "Gewohnheit" : "Sport"}${it.days > 0 ? " · " + it.days + (it.days === 1 ? " Tag" : " Tage") + " überfällig" : ""}</span></div>
+        <div class="s"><span>${it.kind === "todo" ? "Aufgabe" : it.kind === "habit" ? "Gewohnheit" : it.kind === "vocab" ? "Vokabeln" : "Sport"}${it.days > 0 ? " · " + it.days + (it.days === 1 ? " Tag" : " Tage") + " überfällig" : ""}</span></div>
       </div>
     </div>`).join("");
   const { sheet, close } = openSheet(`
@@ -3596,6 +3647,7 @@ function openNagWall(items) {
       const it = items[parseInt(row.dataset.i, 10)];
       if (it.kind === "todo") { markTodo(it.ref, true); save(); }
       else if (it.kind === "habit") toggleDailyHabit(it.ref);
+      else if (it.kind === "vocab") { close(); goVocab(); startQuiz(vocabDue()); return; }
       else { sportView = "training"; switchTab("sport"); close(); return; }
       row.classList.add("done");
       row.querySelector(".ring-check").textContent = "✓";
@@ -3747,6 +3799,10 @@ $("btn-settings").addEventListener("click", () => {
     </div>
 
     <label>Vokabeln</label>
+    <div class="toggle-row"><span>Abends an fällige Vokabeln erinnern</span>
+      <span class="switch"><input type="checkbox" id="sh-vremind" ${data.vocabRemind ? "checked" : ""}><span class="knob"></span></span>
+    </div>
+    <div class="hint">Ab 17 Uhr, wenn du heute noch nicht geübt hast. Kommt über „Erinnerungen“ oben.</div>
     <div class="toggle-row"><span>Beim Aufdecken vorlesen</span>
       <span class="switch"><input type="checkbox" id="sh-autospeak" ${data.vocabSpeak ? "checked" : ""}><span class="knob"></span></span>
     </div>
@@ -3822,6 +3878,9 @@ $("btn-settings").addEventListener("click", () => {
     applyTheme();
     sheet.querySelectorAll("#sh-theme [data-theme-mode]").forEach(x => x.classList.toggle("on", x === b));
   }));
+  sheet.querySelector("#sh-vremind").addEventListener("change", e => {
+    data.vocabRemind = e.target.checked; save(); updateBadge();
+  });
   sheet.querySelector("#sh-autospeak").addEventListener("change", e => {
     data.vocabSpeak = e.target.checked; save();
   });

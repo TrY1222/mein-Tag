@@ -646,6 +646,17 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 .say-ipa { font-family: "Lucida Sans Unicode", "Arial Unicode MS", var(--sans); font-size: 16px; }
 .say-de { font-size: 14px; color: var(--muted); margin-top: 2px; }
 .vc-ipa { font-size: 12.5px; color: var(--faint); margin-left: 6px; font-weight: 400; }
+.quiz-input {
+  width: min(320px, 100%); text-align: center; font-size: 22px; font-weight: 600; font-family: var(--sans);
+  padding: 13px 14px; border-radius: 14px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text); outline: none;
+}
+.quiz-input:focus { border-color: var(--media); }
+.quiz-input.good { border-color: var(--todo); color: var(--todo); }
+.quiz-input.bad { border-color: var(--avoid); color: var(--avoid); text-decoration: line-through; }
+.quiz-verdict { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.quiz-verdict.good { color: var(--todo); }
+.quiz-verdict.bad { color: var(--avoid); }
 .quiz-ipa { font-size: 15px; color: var(--muted); margin-top: 6px; }
 
 /* Schnellzugriff auf „Heute" */
@@ -663,19 +674,6 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 .quick .q-t { font-size: 14.5px; font-weight: 700; line-height: 1.2; }
 .quick .q-s { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
 
-/* Stimmung */
-.mood-row { display: flex; justify-content: space-between; gap: 6px; }
-.mood-btn {
-  flex: 1; border: 1px solid var(--hairline); background: var(--surface2); border-radius: 14px;
-  padding: 9px 0 7px; cursor: pointer; font-size: 24px; line-height: 1; filter: grayscale(.85); opacity: .7;
-  transition: transform .15s, filter .15s, opacity .15s;
-}
-.mood-btn.on { filter: none; opacity: 1; transform: scale(1.06); border-color: var(--media);
-  background: color-mix(in srgb, var(--media) 18%, var(--surface2)); }
-.mood-btn small { display: block; font-size: 10.5px; color: var(--muted); margin-top: 5px; font-family: var(--sans); font-weight: 600; }
-.mood-q { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-.mood-dots { display: flex; gap: 4px; align-items: flex-end; height: 44px; margin-top: 10px; }
-.mood-dots span { flex: 1; border-radius: 4px 4px 2px 2px; background: var(--surface2); min-height: 4px; }
 
 /* Abfrage */
 .quiz {
