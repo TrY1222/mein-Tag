@@ -666,6 +666,16 @@ nav.tabs button.on[data-tab="sport"]  { color: var(--sport); }
 .quiz-input.bad { border-color: var(--avoid); animation: shake .32s ease; }
 @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 .copy-answer { font-size: 26px; }
+/* Abdecken: Lösung bleibt im Layout, ist aber unsichtbar – nichts springt */
+.copy-box { position: relative; }
+.copy-cover {
+  display: none; position: absolute; inset: -6px -10px; border-radius: 14px;
+  border: 1.5px dashed var(--border); background: var(--surface);
+  color: var(--faint); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  align-items: center; justify-content: center;
+}
+.copy-box.covered .copy-cover { display: flex; }
+.copy-box.covered > :not(.copy-cover) { visibility: hidden; }
 .copy-dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
 .copy-dots i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); display: block; transition: background .2s, border-color .2s; }
 .copy-dots i.on { background: var(--todo); border-color: var(--todo); }

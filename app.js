@@ -91,10 +91,13 @@ const DEFAULT_HANDSTAND_STEPS = [
 
 /* Vokabeln lernen: jedes fällige Wort einmal pro Runde.
    3× in Folge gewusst (Englisch → Deutsch), danach 1× andersrum (Deutsch → Englisch) → das Wort sitzt.
-   Falsch → Lösung 3× abschreiben, morgen kommt das Wort wieder, die Serie beginnt von vorn. */
+   Was sitzt, wird nach ≈1 Monat (vorwärts) und ≈3 Monaten (andersrum) noch einmal aufgefrischt.
+   Falsch → Lösung 1× abschreiben und 2× aus dem Kopf schreiben; morgen kommt das Wort wieder,
+   die Serie beginnt von vorn. */
 const VOCAB_STEPS = 3;
-const VOCAB_GAPS = [1, 3, 7];   // Tage bis zur nächsten Abfrage nach dem 1., 2. und 3. Treffer
-const VOCAB_COPIES = 3;
+const VOCAB_GAPS = [1, 3, 7];     // Tage bis zur nächsten Abfrage nach dem 1., 2. und 3. Treffer
+const VOCAB_REFRESH = [30, 60];   // Tage bis zur 1. Auffrischung (nach „sitzt") und von dort bis zur 2.
+const VOCAB_COPIES = 3;           // davon das erste Mal mit sichtbarer Lösung, die übrigen aus dem Kopf
 
 /* Eskalationsstufen der Erinnerungen */
 const NAG_LEVELS = {
@@ -198,8 +201,19 @@ function normalizeData() {
     v.hits = Math.max(0, Math.min(VOCAB_STEPS, Math.floor(v.hits) || 0));
     v.learned = v.learned === true;
     delete v.box; delete v.__retried; delete v.__flip;
-    if (v.learned) delete v.due;
-    else if (!v.due) v.due = todayStr();
+    if (v.learned) {
+      // Wörter, die schon vor der Auffrischung saßen, bekommen ihren Termin nachträglich
+      if (typeof v.refresh !== "number") {
+        v.refresh = 0;
+        if (!v.due) v.due = addDaysIso(v.learnedAt || todayStr(), VOCAB_REFRESH[0]);
+      }
+      v.refresh = Math.max(0, Math.min(VOCAB_REFRESH.length, Math.floor(v.refresh) || 0));
+      if (v.refresh >= VOCAB_REFRESH.length) delete v.due;
+      else if (!v.due) v.due = todayStr();
+    } else {
+      delete v.refresh;
+      if (!v.due) v.due = todayStr();
+    }
   });
 }
 normalizeData();
@@ -2027,13 +2041,15 @@ let vocabFilter = "";   // "" = alle, sonst Buchtitel
 
 function vocabDue() {
   const t = todayStr();
-  return data.vocab.filter(v => !v.learned && (v.due || t) <= t);
+  return data.vocab.filter(v => v.due && v.due <= t);   // ohne Termin = fertig gelernt
 }
 
 /* ---- Lernstand eines Worts ---- */
 function vocabReverse(v) { return !v.learned && v.hits >= VOCAB_STEPS; }   // fehlt nur noch „andersrum"
+function vocabAskReverse(v) { return vocabReverse(v) || (v.learned && v.refresh === 1); }   // 2. Auffrischung auch andersrum
 function vocabStage(v) {
-  if (v.learned) return "Sitzt ✓";
+  if (v.learned) return v.due ? "Sitzt ✓ · Auffrischung " + (v.refresh + 1) + " von " + VOCAB_REFRESH.length + " steht noch aus"
+    : "Sitzt ✓ · alle Auffrischungen geschafft";
   if (vocabReverse(v)) return "Als Nächstes: " + (v.kind === "term" ? "Bedeutung → Begriff" : "Deutsch → Englisch");
   return v.hits + " von " + VOCAB_STEPS + " in Folge gewusst";
 }
@@ -2045,8 +2061,20 @@ function vocabSteps(v) {
 }
 function gradeVocab(v, ok) {
   const today = todayStr();
+  if (v.learned) {                            // Auffrischung
+    if (ok) {
+      v.refresh = (v.refresh || 0) + 1;
+      if (v.refresh < VOCAB_REFRESH.length) v.due = addDaysIso(today, VOCAB_REFRESH[v.refresh]);
+      else delete v.due;                      // fertig – kommt nicht mehr
+    } else {
+      v.learned = false; v.hits = 0;          // vergessen: wie jedes „Falsch" – von vorn
+      delete v.refresh; delete v.learnedAt;
+      v.due = addDaysIso(today, 1);
+    }
+    return;
+  }
   if (vocabReverse(v)) {
-    if (ok) { v.learned = true; v.learnedAt = today; delete v.due; }
+    if (ok) { v.learned = true; v.learnedAt = today; v.refresh = 0; v.due = addDaysIso(today, VOCAB_REFRESH[0]); }
     else v.due = addDaysIso(today, 1);        // andersrum klappt noch nicht: morgen wieder andersrum
   } else if (ok) {
     v.hits = Math.min(VOCAB_STEPS, v.hits + 1);
@@ -2061,7 +2089,7 @@ function gradeVocab(v, ok) {
 function vocabPracticed() {
   const today = todayStr();
   // Wann wird nach dieser Runde wieder etwas fällig? (Heute noch Offenes zählt nicht – heute ist ja geübt.)
-  const next = data.vocab.filter(v => !v.learned).map(v => v.due || today).filter(d => d > today).sort()[0] || "9999-12-31";
+  const next = data.vocab.map(v => v.due).filter(d => d && d > today).sort()[0] || "9999-12-31";
   data.vocabLog[today] = next;
 }
 function vocabStreak() {
@@ -2221,7 +2249,7 @@ function renderVocab() {
       due.length ? "Abfrage · " + due.length + " fällig" : "Heute nichts fällig",
       { accent: "var(--media)", disabled: !due.length })}
     ${btnHTML("secondary", "vc-photo", "camera", "Seite fotografieren")}
-    <div class="hint vc-how">Jedes Wort einmal pro Runde · 3× in Folge gewusst, dann 1× andersrum ⇄ → sitzt. Falsch: 3× abschreiben, morgen wieder.</div>`);
+    <div class="hint vc-how">Jedes Wort einmal pro Runde · 3× in Folge gewusst, dann 1× andersrum ⇄ → sitzt. Auffrischung nach 1 und 3 Monaten. Falsch: 1× abschreiben, 2× aus dem Kopf, morgen wieder.</div>`);
   $("vc-photo").addEventListener("click", () => $("vocab-photo").click());
   if (due.length) $("vc-quiz").addEventListener("click", () => startQuiz(due));
   const noIpa = all.filter(v => !v.ipa).length;
@@ -2258,7 +2286,7 @@ function renderVocab() {
     row.className = "row";
     row.style.cursor = "pointer";
     row.style.animationDelay = (i * .03) + "s";
-    const ripe = !v.learned && (v.due || today) <= today;
+    const ripe = !!v.due && v.due <= today;
     row.innerHTML = `
       <div class="grow">
         <div class="vc-word">${esc(v.word)}${v.ipa ? '<span class="vc-ipa">/' + esc(v.ipa) + "/</span>" : ""}</div>
@@ -2354,7 +2382,7 @@ function openVocabDetail(v) {
     ${v.sentence ? '<label>Dein Satz</label><div class="answer" style="font-style:italic">' + esc(v.sentence) + "</div>" : ""}
     <label>Lernstand</label>
     <div class="kv"><span class="k">${vocabSteps(v)}</span><span class="v">${esc(vocabStage(v))}</span></div>
-    <div class="kv"><span class="k">Nächste Abfrage</span><span class="v">${v.learned ? "keine mehr" : (v.due || todayStr()) <= todayStr() ? "jetzt fällig" : fmtNice(v.due)}</span></div>
+    <div class="kv"><span class="k">${v.learned ? "Auffrischung" : "Nächste Abfrage"}</span><span class="v">${!v.due ? "keine mehr" : v.due <= todayStr() ? "jetzt fällig" : fmtNice(v.due)}</span></div>
     ${v.learned ? '<button class="btn btn-quiet" id="vc-relearn"><span>Doch nochmal lernen</span><span>›</span></button>' : ""}
     <button class="btn btn-secondary" id="vc-again" style="margin-top:12px">${ico("wand")}<span>${v.trans ? "Neu nachschlagen" : "Jetzt nachschlagen"}</span></button>
     <div class="sheet-actions">
@@ -2364,7 +2392,7 @@ function openVocabDetail(v) {
 
   const rl = sheet.querySelector("#vc-relearn");
   if (rl) rl.addEventListener("click", () => {
-    v.learned = false; v.hits = 0; v.due = todayStr(); delete v.learnedAt;
+    v.learned = false; v.hits = 0; v.due = todayStr(); delete v.learnedAt; delete v.refresh;
     save(); renderVocab(); close(); openVocabDetail(v);
   });
   const dsb = sheet.querySelector(".say-row .say-btn");
@@ -2562,16 +2590,18 @@ function startQuiz(words) {
     $("q-count").textContent = done + " von " + total;
     $("q-bar").style.width = (total ? done / total * 100 : 0) + "%";
 
-    // Erst dreimal Englisch → Deutsch, zum Schluss einmal andersrum
-    const reverse = vocabReverse(v);
+    // Erst dreimal Englisch → Deutsch, dann einmal andersrum; Auffrischung: erst vorwärts, dann andersrum
+    const reverse = vocabAskReverse(v);
     const front = reverse ? (v.trans || v.meaning || v.word) : v.word;
     const back = reverse ? v.word : (v.trans || v.meaning || "–");
 
     $("q-steps").innerHTML = vocabSteps(v);
     $("q-word").textContent = front;
     $("q-word").style.fontSize = front.length > 22 ? "27px" : "";
-    $("q-src").textContent = reverse
-      ? "Letzter Schritt: " + (v.kind === "term" ? "Wie heißt der Begriff?" : "Wie heißt es auf Englisch?")
+    const askEn = v.kind === "term" ? "Wie heißt der Begriff?" : "Wie heißt es auf Englisch?";
+    $("q-src").textContent = v.learned
+      ? "Auffrischung " + (v.refresh + 1) + " von " + VOCAB_REFRESH.length + " · " + (reverse ? askEn : "Weißt du's noch?")
+      : reverse ? "Letzter Schritt: " + askEn
       : (v.book ? bookLabel(v.book, 22) : "");
     // Vorlese-Knopf: vorwärts gleich da, andersrum erst nach dem Aufdecken (sonst verrät er die Lösung)
     const canSay = speechSupported();
@@ -2597,68 +2627,89 @@ function startQuiz(words) {
 
   const grade = ok => {
     const v = queue[0];
-    const reverse = vocabReverse(v);
+    const reverse = vocabAskReverse(v);
+    const wasLearned = v.learned;
     gradeVocab(v, ok);          // sofort speichern – auch wenn du danach abbrichst
     vocabPracticed();
     save();
     if (ok) {
       right++;
-      if (v.learned) { learnedNow++; cheer("„" + v.word + "“ sitzt jetzt!"); }
+      if (!wasLearned && v.learned) { learnedNow++; cheer("„" + v.word + "“ sitzt jetzt!"); }
       next();
     } else {
       startCopy(v, reverse);
     }
   };
 
-  /* Falsch → die Lösung dreimal abschreiben, dann geht's weiter */
+  /* Falsch → Abschreiben, Abdecken, Vergleichen:
+     1× mit sichtbarer Lösung abschreiben, dann 2× aus dem Kopf. Wer's nicht mehr weiß (falsch oder leer),
+     sieht die Lösung zum Vergleichen – sobald wieder getippt wird, ist sie wieder verdeckt. */
   const startCopy = (v, reverse) => {
     const answer = reverse ? v.word : (v.trans || v.meaning || "");
     if (!answer.trim()) { next(); return; }
-    let copies = 0;
+    let copies = 0, peek = false;
     const canSay = speechSupported();
     const dots = () => Array.from({ length: VOCAB_COPIES }, (_, k) => `<i class="${k < copies ? "on" : ""}"></i>`).join("");
     $("q-steps").innerHTML = vocabSteps(v);
-    $("q-src").textContent = "Falsch – schreib die Lösung " + VOCAB_COPIES + "× ab";
     $("q-say").innerHTML = "";
     $("q-answer").innerHTML = `
-      <div class="quiz-t copy-answer">${esc(answer)}</div>
-      ${reverse && v.ipa ? '<div class="quiz-ipa">/' + esc(v.ipa) + "/" + (v.say ? " · " + esc(v.say) : "") + "</div>" : ""}
-      ${reverse && canSay ? '<div style="margin-top:10px">' + sayBtn() + "</div>" : ""}
+      <div class="copy-box" id="q-box">
+        <div class="quiz-t copy-answer">${esc(answer)}</div>
+        ${reverse && v.ipa ? '<div class="quiz-ipa">/' + esc(v.ipa) + "/" + (v.say ? " · " + esc(v.say) : "") + "</div>" : ""}
+        ${reverse && canSay ? '<div style="margin-top:10px">' + sayBtn() + "</div>" : ""}
+        <div class="copy-cover">verdeckt</div>
+      </div>
       <input type="text" class="quiz-input" id="q-input" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done">
-      <div class="copy-dots" id="q-dots">${dots()}</div>
+      <div class="copy-dots" id="q-dots"></div>
       <div class="copy-hint" id="q-hint"></div>`;
     el.classList.add("open");
-    const sb = el.querySelector("#q-answer .say-btn");
+    const box = $("q-box"), input = $("q-input"), hint = $("q-hint");
+    const sb = box.querySelector(".say-btn");
     if (sb) sb.addEventListener("click", () => speak(v, sb));
-    const input = $("q-input"), hint = $("q-hint");
-    const setPh = () => { input.placeholder = "Abschreiben (" + (copies + 1) + " von " + VOCAB_COPIES + ")"; };
-    setPh();
+    const paint = () => {
+      const fromMemory = copies > 0;
+      box.classList.toggle("covered", fromMemory && !peek);
+      $("q-src").textContent = fromMemory ? "Jetzt aus dem Kopf" : "Falsch – schreib die Lösung ab";
+      input.placeholder = (fromMemory ? "Aus dem Kopf" : "Abschreiben") + " (" + (copies + 1) + " von " + VOCAB_COPIES + ")";
+      $("q-dots").innerHTML = dots();
+    };
+    paint();
     $("q-btns").innerHTML = '<button class="quiz-reveal" id="q-ok">OK</button>';
     setTimeout(() => input.focus(), 50);
 
+    const showToCompare = text => { peek = true; paint(); hint.textContent = text; };
     const check = () => {
       if (copies >= VOCAB_COPIES) return;
-      if (!input.value.trim()) { input.focus(); return; }
+      const fromMemory = copies > 0;
+      if (!input.value.trim()) {
+        if (fromMemory) showToCompare("So heißt es. Präg es dir ein – beim Tippen wird es wieder verdeckt.");
+        input.focus();
+        return;
+      }
       if (!copyMatches(input.value, answer)) {
-        hint.textContent = "Nicht ganz – schau genau hin.";
         input.classList.remove("bad"); void input.offsetWidth; input.classList.add("bad");
+        if (fromMemory) showToCompare("Nicht ganz – vergleiche. Beim Tippen wird es wieder verdeckt.");
+        else hint.textContent = "Nicht ganz – schau genau hin.";
         input.select();
         return;
       }
       copies++;
+      peek = false;
       input.classList.remove("bad");
       input.value = "";
-      $("q-dots").innerHTML = dots();
       if (copies < VOCAB_COPIES) {
-        hint.textContent = "";
-        setPh(); input.focus();
+        hint.textContent = copies === 1 ? "Gut. Jetzt ist es verdeckt – schreib es aus dem Kopf." : "";
+        paint(); input.focus();
         return;
       }
+      $("q-dots").innerHTML = dots();
+      box.classList.remove("covered");        // zum Abschluss noch einmal zeigen
       hint.textContent = "Eingeprägt. Morgen kommt es wieder.";
       input.disabled = true;
       $("q-ok").disabled = true;
-      setTimeout(next, 700);
+      setTimeout(next, 800);
     };
+    input.addEventListener("input", () => { if (peek) { peek = false; paint(); } });
     $("q-ok").addEventListener("click", check);
     input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); check(); } });
   };
