@@ -89,8 +89,12 @@ const DEFAULT_HANDSTAND_STEPS = [
   "Freier Handstand 15+ Sek."
 ];
 
-/* Karteikasten: Pause bis zur nächsten Abfrage, je Fach */
-const VOCAB_BOXES = [1, 3, 7, 14, 30];
+/* Vokabeln lernen: jedes fällige Wort einmal pro Runde.
+   3× in Folge gewusst (Englisch → Deutsch), danach 1× andersrum (Deutsch → Englisch) → das Wort sitzt.
+   Falsch → Lösung 3× abschreiben, morgen kommt das Wort wieder, die Serie beginnt von vorn. */
+const VOCAB_STEPS = 3;
+const VOCAB_GAPS = [1, 3, 7];   // Tage bis zur nächsten Abfrage nach dem 1., 2. und 3. Treffer
+const VOCAB_COPIES = 3;
 
 /* Eskalationsstufen der Erinnerungen */
 const NAG_LEVELS = {
@@ -172,7 +176,7 @@ function normalizeData() {
   if (typeof data.notify.night !== "boolean") data.notify.night = true;
   if (!data.notify.lastFire || typeof data.notify.lastFire !== "object") data.notify.lastFire = {};
   if (typeof data.lastBackup !== "number") data.lastBackup = 0;
-  if (!["toDe", "toEn", "mixed"].includes(data.vocabDir)) data.vocabDir = "toDe";
+  delete data.vocabDir;   // Richtung ergibt sich jetzt aus dem Lernstand
   // Aussprache: Akzent der Vorlese-Stimme, und ob beim Aufdecken vorgelesen wird
   if (!["en-GB", "en-US"].includes(data.vocabAccent)) data.vocabAccent = "en-GB";
   if (typeof data.vocabSpeak !== "boolean") data.vocabSpeak = true;
@@ -185,9 +189,17 @@ function normalizeData() {
   if (!Array.isArray(data.vocab)) data.vocab = [];
   data.vocab.forEach(v => {
     if (v.kind !== "term") v.kind = "word";
-    if (typeof v.box !== "number" || v.box < 1) v.box = 1;
-    if (v.box > VOCAB_BOXES.length) v.box = VOCAB_BOXES.length;
-    if (!v.due) v.due = todayStr();
+    if (typeof v.hits !== "number") {
+      // Alter Karteikasten: Fach 1 = neu bzw. falsch, jedes weitere Fach = ein Treffer mehr in Folge.
+      // Wer schon weit war, muss nur noch die Abfrage andersrum bestehen.
+      const box = typeof v.box === "number" ? v.box : 1;
+      v.hits = box - 1;
+    }
+    v.hits = Math.max(0, Math.min(VOCAB_STEPS, Math.floor(v.hits) || 0));
+    v.learned = v.learned === true;
+    delete v.box; delete v.__retried; delete v.__flip;
+    if (v.learned) delete v.due;
+    else if (!v.due) v.due = todayStr();
   });
 }
 normalizeData();
@@ -792,7 +804,7 @@ function openYearSheet() {
   const words = data.vocab.filter(v => v.created && new Date(v.created).getFullYear() === year);
   const notes = Object.keys(data.journal).filter(d => inYear(d) && (data.journal[d] || "").trim());
   const booksY = data.books.filter(b => b.created && new Date(b.created).getFullYear() === year);
-  const sitzen = data.vocab.filter(v => v.box >= VOCAB_BOXES.length).length;
+  const sitzen = data.vocab.filter(v => v.learned).length;
 
   // Aktivität je Monat: an wie vielen Tagen war überhaupt etwas
   const perMonth = new Array(12).fill(0);
@@ -2015,14 +2027,41 @@ let vocabFilter = "";   // "" = alle, sonst Buchtitel
 
 function vocabDue() {
   const t = todayStr();
-  return data.vocab.filter(v => (v.due || t) <= t);
+  return data.vocab.filter(v => !v.learned && (v.due || t) <= t);
+}
+
+/* ---- Lernstand eines Worts ---- */
+function vocabReverse(v) { return !v.learned && v.hits >= VOCAB_STEPS; }   // fehlt nur noch „andersrum"
+function vocabStage(v) {
+  if (v.learned) return "Sitzt ✓";
+  if (vocabReverse(v)) return "Als Nächstes: " + (v.kind === "term" ? "Bedeutung → Begriff" : "Deutsch → Englisch");
+  return v.hits + " von " + VOCAB_STEPS + " in Folge gewusst";
+}
+function vocabBadge(v) { return v.learned ? "✓" : vocabReverse(v) ? "⇄" : v.hits + "/" + VOCAB_STEPS; }
+function vocabSteps(v) {
+  let dots = "";
+  for (let i = 0; i < VOCAB_STEPS; i++) dots += `<i class="${v.learned || i < v.hits ? "on" : ""}"></i>`;
+  return `<span class="vc-steps" title="${esc(vocabStage(v))}">${dots}<b class="${v.learned ? "on" : vocabReverse(v) ? "next" : ""}">⇄</b></span>`;
+}
+function gradeVocab(v, ok) {
+  const today = todayStr();
+  if (vocabReverse(v)) {
+    if (ok) { v.learned = true; v.learnedAt = today; delete v.due; }
+    else v.due = addDaysIso(today, 1);        // andersrum klappt noch nicht: morgen wieder andersrum
+  } else if (ok) {
+    v.hits = Math.min(VOCAB_STEPS, v.hits + 1);
+    v.due = addDaysIso(today, VOCAB_GAPS[v.hits - 1]);
+  } else {
+    v.hits = 0;                               // Serie beginnt von vorn
+    v.due = addDaysIso(today, 1);             // morgen wieder – heute ist die Runde für dieses Wort vorbei
+  }
 }
 /* ---- Serie: Tage in Folge, an denen du geübt hast ----
    Ein Tag ohne Übung bricht die Serie nur, wenn an dem Tag auch etwas fällig war. */
 function vocabPracticed() {
   const today = todayStr();
   // Wann wird nach dieser Runde wieder etwas fällig? (Heute noch Offenes zählt nicht – heute ist ja geübt.)
-  const next = data.vocab.map(v => v.due || today).filter(d => d > today).sort()[0] || "9999-12-31";
+  const next = data.vocab.filter(v => !v.learned).map(v => v.due || today).filter(d => d > today).sort()[0] || "9999-12-31";
   data.vocabLog[today] = next;
 }
 function vocabStreak() {
@@ -2150,36 +2189,6 @@ async function fillPronunciations(btn) {
   }
 }
 
-const DIR_LABEL = {
-  toDe: "Wort → Bedeutung",
-  toEn: "Bedeutung → Wort",
-  mixed: "gemischt"
-};
-function openDirSheet() {
-  const opts = [
-    ["toDe", "Wort → Bedeutung", "Du siehst „reluctant“ und sagst, was es heißt. Der leichtere Weg – gut zum Wiedererkennen beim Lesen."],
-    ["toEn", "Bedeutung → Wort", "Du siehst „widerwillig, zögernd“ und musst auf „reluctant“ kommen. Deutlich schwerer – das brauchst du beim Sprechen und Schreiben."],
-    ["mixed", "Gemischt", "Mal so, mal so. Hält wach und deckt beide Richtungen ab."]
-  ];
-  const { sheet, close } = openSheet(`
-    <h3>Abfrage-Richtung</h3>
-    <div class="sub">Gilt für die nächste Runde.</div>
-    <div class="lvl-list">
-      ${opts.map(([k, n, d]) => `
-        <button class="lvl ${data.vocabDir === k ? "on" : ""}" data-dir="${k}">
-          <span class="dot-sel"></span>
-          <span><span class="n">${esc(n)}</span><span class="d">${esc(d)}</span></span>
-        </button>`).join("")}
-    </div>
-    <div class="sheet-actions"><button class="primary" data-act="done">Fertig</button></div>`,
-    { accent: "var(--media)" });
-  sheet.querySelectorAll("[data-dir]").forEach(b => b.addEventListener("click", () => {
-    data.vocabDir = b.dataset.dir; save();
-    sheet.querySelectorAll("[data-dir]").forEach(x => x.classList.toggle("on", x === b));
-  }));
-  sheet.querySelector('[data-act="done"]').addEventListener("click", () => { renderVocab(); close(); });
-}
-
 function vocabStreakLine() {
   const n = vocabStreak();
   const done = vocabPracticedToday();
@@ -2200,7 +2209,7 @@ function renderVocab() {
     return;
   }
 
-  const learned = all.filter(v => v.box >= VOCAB_BOXES.length).length;
+  const learned = all.filter(v => v.learned).length;
   box.insertAdjacentHTML("beforeend", `
     <div class="stat-grid">
       <div class="stat"><div class="v">${all.length}</div><div class="l">Wörter</div></div>
@@ -2212,10 +2221,9 @@ function renderVocab() {
       due.length ? "Abfrage · " + due.length + " fällig" : "Heute nichts fällig",
       { accent: "var(--media)", disabled: !due.length })}
     ${btnHTML("secondary", "vc-photo", "camera", "Seite fotografieren")}
-    ${btnHTML("quiet", "vc-dir", "", "Richtung: " + DIR_LABEL[data.vocabDir])}`);
+    <div class="hint vc-how">Jedes Wort einmal pro Runde · 3× in Folge gewusst, dann 1× andersrum ⇄ → sitzt. Falsch: 3× abschreiben, morgen wieder.</div>`);
   $("vc-photo").addEventListener("click", () => $("vocab-photo").click());
   if (due.length) $("vc-quiz").addEventListener("click", () => startQuiz(due));
-  $("vc-dir").addEventListener("click", openDirSheet);
   const noIpa = all.filter(v => !v.ipa).length;
   if (noIpa && getApiKey()) {
     box.insertAdjacentHTML("beforeend", btnHTML("quiet", "vc-ipa-fill", "",
@@ -2250,14 +2258,14 @@ function renderVocab() {
     row.className = "row";
     row.style.cursor = "pointer";
     row.style.animationDelay = (i * .03) + "s";
-    const ripe = (v.due || today) <= today;
+    const ripe = !v.learned && (v.due || today) <= today;
     row.innerHTML = `
       <div class="grow">
         <div class="vc-word">${esc(v.word)}${v.ipa ? '<span class="vc-ipa">/' + esc(v.ipa) + "/</span>" : ""}</div>
         <div class="vc-trans">${v.busy ? "Claude schlägt nach …" : esc(v.trans || "")}</div>
       </div>
       ${speechSupported() ? sayBtn() : ""}
-      <span class="vc-box ${ripe ? "ripe" : ""}" title="Fach ${v.box}">${v.box}</span>
+      <span class="vc-box ${ripe ? "ripe" : ""} ${v.learned ? "done" : ""}" title="${esc(vocabStage(v))}">${vocabBadge(v)}</span>
       <span style="color:var(--faint)">›</span>`;
     row.addEventListener("click", () => openVocabDetail(v));
     const sb = row.querySelector(".say-btn");
@@ -2306,7 +2314,7 @@ function openVocabSheet() {
     const v = {
       id: uid(), word, sentence, book, kind: "word",
       trans: "", type: "", meaning: "", example: "",
-      box: 1, due: todayStr(), created: Date.now()
+      hits: 0, learned: false, due: todayStr(), created: Date.now()
     };
     data.vocab.push(v);
     save(); close(); renderVocab();
@@ -2344,15 +2352,21 @@ function openVocabDetail(v) {
     ${v.meaning ? '<label>Bedeutung</label><div class="answer" id="vc-d-mean">' + esc(v.meaning) + "</div>" : ""}
     ${v.example ? '<label>Beispiel</label><div class="answer" style="font-style:italic" id="vc-d-ex">' + esc(v.example) + "</div>" : ""}
     ${v.sentence ? '<label>Dein Satz</label><div class="answer" style="font-style:italic">' + esc(v.sentence) + "</div>" : ""}
-    <label>Karteikasten</label>
-    <div class="kv"><span class="k">Fach</span><span class="v">${v.box} von ${VOCAB_BOXES.length}</span></div>
-    <div class="kv"><span class="k">Nächste Abfrage</span><span class="v">${(v.due || todayStr()) <= todayStr() ? "jetzt fällig" : fmtNice(v.due)}</span></div>
+    <label>Lernstand</label>
+    <div class="kv"><span class="k">${vocabSteps(v)}</span><span class="v">${esc(vocabStage(v))}</span></div>
+    <div class="kv"><span class="k">Nächste Abfrage</span><span class="v">${v.learned ? "keine mehr" : (v.due || todayStr()) <= todayStr() ? "jetzt fällig" : fmtNice(v.due)}</span></div>
+    ${v.learned ? '<button class="btn btn-quiet" id="vc-relearn"><span>Doch nochmal lernen</span><span>›</span></button>' : ""}
     <button class="btn btn-secondary" id="vc-again" style="margin-top:12px">${ico("wand")}<span>${v.trans ? "Neu nachschlagen" : "Jetzt nachschlagen"}</span></button>
     <div class="sheet-actions">
       <button class="danger" data-act="del">🗑</button>
       <button class="primary" data-act="done">Fertig</button>
     </div>`, { accent: "var(--media)" });
 
+  const rl = sheet.querySelector("#vc-relearn");
+  if (rl) rl.addEventListener("click", () => {
+    v.learned = false; v.hits = 0; v.due = todayStr(); delete v.learnedAt;
+    save(); renderVocab(); close(); openVocabDetail(v);
+  });
   const dsb = sheet.querySelector(".say-row .say-btn");
   if (dsb) dsb.addEventListener("click", () => speak(v, dsb));
   sheet.querySelector("#vc-again").addEventListener("click", async e => {
@@ -2474,7 +2488,7 @@ function openPagePick(items) {
         trans: String(it.trans || "").trim(), type: String(it.type || "").trim(),
         meaning: String(it.meaning || "").trim(), example: String(it.example || "").trim(),
         ipa: String(it.ipa || "").replace(/^\/|\/$/g, "").trim(), say: String(it.say || "").trim(),
-        box: 1, due: todayStr(), created: Date.now()
+        hits: 0, learned: false, due: todayStr(), created: Date.now()
       });
     });
     save(); close(); renderVocab();
@@ -2483,8 +2497,9 @@ function openPagePick(items) {
 }
 
 /* ---- Abfrage ---- */
-/* Getipptes Wort prüfen: Groß/klein, Satzzeichen und „to …" bei Verben sind egal,
-   ein einzelner Tippfehler bei längeren Wörtern gilt als „fast". */
+/* Abschreiben prüfen: Groß/klein, Satzzeichen, Klammerzusätze und „to …" bei Verben sind egal.
+   Bei mehreren Übersetzungen („widerwillig, zögernd") reicht eine davon.
+   Ein einzelner Tippfehler bei längeren Wörtern geht durch. */
 function normWord(s) {
   return String(s).toLowerCase().normalize("NFC")
     .replace(/[’`´]/g, "'").replace(/[.,!?;:"“”„()]/g, " ")
@@ -2498,17 +2513,21 @@ function editDistance(a, b) {
       d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
   return d[a.length][b.length];
 }
-function typedResult(typed, word) {
-  const a = normWord(typed), b = normWord(word);
-  if (!a) return "wrong";
-  if (a === b) return "right";
-  return b.length >= 5 && editDistance(a, b) <= 1 ? "close" : "wrong";
+function copyMatches(typed, answer) {
+  const a = normWord(typed);
+  if (!a) return false;
+  const variants = [answer, String(answer).replace(/\([^)]*\)/g, " ")].concat(String(answer).split(/[,;\/]| oder /));
+  return variants.some(x => {
+    const b = normWord(x);
+    return b && (a === b || (b.length >= 5 && editDistance(a, b) <= 1));
+  });
 }
 
 function startQuiz(words) {
-  let queue = [...words].sort(() => Math.random() - 0.5);
+  // Jedes fällige Wort genau einmal – egal ob gewusst oder nicht
+  const queue = [...words].sort(() => Math.random() - 0.5);
   const total = queue.length;
-  let done = 0, right = 0, i = 0;
+  let done = 0, right = 0, learnedNow = 0;
 
   const el = document.createElement("div");
   el.className = "quiz";
@@ -2519,6 +2538,7 @@ function startQuiz(words) {
     </div>
     <div class="quiz-bar"><span id="q-bar" style="width:0%"></span></div>
     <div class="quiz-mid">
+      <div id="q-steps"></div>
       <div class="quiz-w" id="q-word"></div>
       <div class="quiz-src" id="q-src"></div>
       <div id="q-say"></div>
@@ -2542,106 +2562,117 @@ function startQuiz(words) {
     $("q-count").textContent = done + " von " + total;
     $("q-bar").style.width = (total ? done / total * 100 : 0) + "%";
 
-    // Nicht gewusst → beim zweiten Anlauf wird das Wort geschrieben statt nur aufgedeckt
-    if (v.__retried) { showTyping(v); return; }
+    // Erst dreimal Englisch → Deutsch, zum Schluss einmal andersrum
+    const reverse = vocabReverse(v);
+    const front = reverse ? (v.trans || v.meaning || v.word) : v.word;
+    const back = reverse ? v.word : (v.trans || v.meaning || "–");
 
-    // Richtung: gefragt wird entweder das Wort oder seine Bedeutung
-    const rueckwaerts = data.vocabDir === "toEn"
-      || (data.vocabDir === "mixed" && (v.__flip !== undefined ? v.__flip : (v.__flip = Math.random() < 0.5)));
-    const front = rueckwaerts ? (v.trans || v.meaning || v.word) : v.word;
-    const backT = rueckwaerts ? v.word : (v.trans || "–");
-
+    $("q-steps").innerHTML = vocabSteps(v);
     $("q-word").textContent = front;
     $("q-word").style.fontSize = front.length > 22 ? "27px" : "";
-    $("q-src").textContent = (rueckwaerts ? "Wie heißt es? " : "") + (v.book ? bookLabel(v.book, 22) : "");
-    // Vorlese-Knopf: bei „Wort → Bedeutung" gleich da, sonst erst nach dem Aufdecken (sonst verrät er die Lösung)
+    $("q-src").textContent = reverse
+      ? "Letzter Schritt: " + (v.kind === "term" ? "Wie heißt der Begriff?" : "Wie heißt es auf Englisch?")
+      : (v.book ? bookLabel(v.book, 22) : "");
+    // Vorlese-Knopf: vorwärts gleich da, andersrum erst nach dem Aufdecken (sonst verrät er die Lösung)
     const canSay = speechSupported();
-    $("q-say").innerHTML = canSay && !rueckwaerts ? sayBtn("big") : "";
+    $("q-say").innerHTML = canSay && !reverse ? sayBtn("big") : "";
     $("q-answer").innerHTML = `
-      <div class="quiz-t">${esc(backT)}</div>
+      <div class="quiz-t">${esc(back)}</div>
       ${v.ipa ? '<div class="quiz-ipa">/' + esc(v.ipa) + "/" + (v.say ? " · " + esc(v.say) : "") + "</div>" : ""}
-      ${canSay && rueckwaerts ? '<div style="margin-top:12px">' + sayBtn("big") + "</div>" : ""}
-      ${v.meaning && !rueckwaerts ? '<div class="quiz-m">' + esc(v.meaning) + "</div>" : ""}
+      ${canSay && reverse ? '<div style="margin-top:12px">' + sayBtn("big") + "</div>" : ""}
+      ${v.meaning && !reverse ? '<div class="quiz-m">' + esc(v.meaning) + "</div>" : ""}
       ${v.example ? '<div class="quiz-e">„' + esc(v.example) + "“</div>" : ""}`;
     el.querySelectorAll("#q-say .say-btn, #q-answer .say-btn").forEach(b => b.addEventListener("click", () => speak(v, b)));
     $("q-btns").innerHTML = '<button class="quiz-reveal" id="q-reveal">Aufdecken</button>';
     $("q-reveal").addEventListener("click", () => {
       el.classList.add("open");
       if (canSay && data.vocabSpeak) speak(v, el.querySelector("#q-say .say-btn, #q-answer .say-btn"));
-      $("q-btns").innerHTML = '<button class="quiz-again" id="q-again">Nochmal</button><button class="quiz-got" id="q-got">Gewusst</button>';
-      $("q-again").addEventListener("click", () => grade(false));
-      $("q-got").addEventListener("click", () => grade(true));
+      $("q-btns").innerHTML = '<button class="quiz-again" id="q-wrong">Falsch</button><button class="quiz-got" id="q-right">Richtig</button>';
+      $("q-wrong").addEventListener("click", () => grade(false));
+      $("q-right").addEventListener("click", () => grade(true));
     });
   };
 
-  /* Schreib-Abfrage: Bedeutung sehen, Wort eintippen */
-  const showTyping = v => {
-    const canSay = speechSupported();
-    const front = v.trans || v.meaning || "–";
-    $("q-word").textContent = front;
-    $("q-word").style.fontSize = front.length > 22 ? "27px" : "";
-    $("q-src").textContent = "Nicht gewusst – schreib das Wort";
-    $("q-say").innerHTML = `<input type="text" class="quiz-input" id="q-input" placeholder="Wort eintippen"
-      autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done">`;
-    $("q-answer").innerHTML = "";
-    $("q-btns").innerHTML = '<button class="quiz-again" id="q-skip">Weiß ich nicht</button><button class="quiz-reveal" id="q-check">Prüfen</button>';
-    const input = $("q-input");
-    setTimeout(() => input.focus(), 50);
-
-    const check = skipped => {
-      const res = skipped ? "wrong" : typedResult(input.value, v.word);
-      input.disabled = true;
-      input.classList.add(res === "wrong" ? "bad" : "good");
-      const msg = res === "right" ? "Richtig geschrieben!"
-        : res === "close" ? "Fast – nur ein Tippfehler. Zählt."
-        : skipped ? "So schreibt man es:" : "Leider nicht. So schreibt man es:";
-      $("q-answer").innerHTML = `
-        <div class="quiz-verdict ${res === "wrong" ? "bad" : "good"}">${msg}</div>
-        <div class="quiz-t">${esc(v.word)}</div>
-        ${v.ipa ? '<div class="quiz-ipa">/' + esc(v.ipa) + "/" + (v.say ? " · " + esc(v.say) : "") + "</div>" : ""}
-        ${canSay ? '<div style="margin-top:12px">' + sayBtn("big") + "</div>" : ""}
-        ${v.example ? '<div class="quiz-e">„' + esc(v.example) + "“</div>" : ""}`;
-      const sb = el.querySelector("#q-answer .say-btn");
-      if (sb) sb.addEventListener("click", () => speak(v, sb));
-      el.classList.add("open");
-      if (canSay && data.vocabSpeak) speak(v, sb);
-      $("q-btns").innerHTML = '<button class="quiz-got" id="q-next">Weiter</button>';
-      $("q-next").addEventListener("click", () => grade(res !== "wrong"));
-    };
-    $("q-check").addEventListener("click", () => { if (input.value.trim()) check(false); else input.focus(); });
-    $("q-skip").addEventListener("click", () => check(true));
-    input.addEventListener("keydown", e => { if (e.key === "Enter" && input.value.trim()) { e.preventDefault(); check(false); } });
-  };
+  const next = () => { queue.shift(); done++; show(); };
 
   const grade = ok => {
-    const v = queue.shift();
-    const firstTry = !v.__retried;
-    if (ok) {
-      v.box = Math.min(VOCAB_BOXES.length, (v.box || 1) + 1);
-      v.due = addDaysIso(todayStr(), VOCAB_BOXES[v.box - 1]);
-      if (firstTry) right++;      // nur beim ersten Anlauf zählt es als gewusst
-      done++;
-    } else {
-      v.box = 1;
-      v.due = todayStr();
-      if (firstTry) { v.__retried = true; queue.push(v); }  // in dieser Runde nochmal
-      else done++;
-    }
+    const v = queue[0];
+    const reverse = vocabReverse(v);
+    gradeVocab(v, ok);          // sofort speichern – auch wenn du danach abbrichst
     vocabPracticed();
     save();
-    show();
+    if (ok) {
+      right++;
+      if (v.learned) { learnedNow++; cheer("„" + v.word + "“ sitzt jetzt!"); }
+      next();
+    } else {
+      startCopy(v, reverse);
+    }
+  };
+
+  /* Falsch → die Lösung dreimal abschreiben, dann geht's weiter */
+  const startCopy = (v, reverse) => {
+    const answer = reverse ? v.word : (v.trans || v.meaning || "");
+    if (!answer.trim()) { next(); return; }
+    let copies = 0;
+    const canSay = speechSupported();
+    const dots = () => Array.from({ length: VOCAB_COPIES }, (_, k) => `<i class="${k < copies ? "on" : ""}"></i>`).join("");
+    $("q-steps").innerHTML = vocabSteps(v);
+    $("q-src").textContent = "Falsch – schreib die Lösung " + VOCAB_COPIES + "× ab";
+    $("q-say").innerHTML = "";
+    $("q-answer").innerHTML = `
+      <div class="quiz-t copy-answer">${esc(answer)}</div>
+      ${reverse && v.ipa ? '<div class="quiz-ipa">/' + esc(v.ipa) + "/" + (v.say ? " · " + esc(v.say) : "") + "</div>" : ""}
+      ${reverse && canSay ? '<div style="margin-top:10px">' + sayBtn() + "</div>" : ""}
+      <input type="text" class="quiz-input" id="q-input" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done">
+      <div class="copy-dots" id="q-dots">${dots()}</div>
+      <div class="copy-hint" id="q-hint"></div>`;
+    el.classList.add("open");
+    const sb = el.querySelector("#q-answer .say-btn");
+    if (sb) sb.addEventListener("click", () => speak(v, sb));
+    const input = $("q-input"), hint = $("q-hint");
+    const setPh = () => { input.placeholder = "Abschreiben (" + (copies + 1) + " von " + VOCAB_COPIES + ")"; };
+    setPh();
+    $("q-btns").innerHTML = '<button class="quiz-reveal" id="q-ok">OK</button>';
+    setTimeout(() => input.focus(), 50);
+
+    const check = () => {
+      if (copies >= VOCAB_COPIES) return;
+      if (!input.value.trim()) { input.focus(); return; }
+      if (!copyMatches(input.value, answer)) {
+        hint.textContent = "Nicht ganz – schau genau hin.";
+        input.classList.remove("bad"); void input.offsetWidth; input.classList.add("bad");
+        input.select();
+        return;
+      }
+      copies++;
+      input.classList.remove("bad");
+      input.value = "";
+      $("q-dots").innerHTML = dots();
+      if (copies < VOCAB_COPIES) {
+        hint.textContent = "";
+        setPh(); input.focus();
+        return;
+      }
+      hint.textContent = "Eingeprägt. Morgen kommt es wieder.";
+      input.disabled = true;
+      $("q-ok").disabled = true;
+      setTimeout(next, 700);
+    };
+    $("q-ok").addEventListener("click", check);
+    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); check(); } });
   };
 
   const finish = () => {
-    data.vocab.forEach(v => { delete v.__retried; delete v.__flip; });
-    save();
     el.classList.remove("open");
     $("q-count").textContent = "fertig";
     $("q-bar").style.width = "100%";
+    const wrong = total - right;
     el.querySelector(".quiz-mid").innerHTML = `
       <div class="quiz-done">
         <div class="qd-big">${right} von ${total}</div>
-        <div class="quiz-m">${right === total ? "Alles gesessen. Stark." : right === 0 ? "Kommt wieder. Öfter ist besser als länger." : "Der Rest kommt bald nochmal."}</div>
+        <div class="quiz-m">${wrong === 0 ? "Alles gewusst. Stark." : wrong + (wrong === 1 ? " Wort kommt" : " Wörter kommen") + " morgen wieder."}</div>
+        ${learnedNow ? '<div class="quiz-m" style="color:var(--todo);font-weight:700">' + learnedNow + (learnedNow === 1 ? " Wort sitzt" : " Wörter sitzen") + " jetzt.</div>" : ""}
       </div>`;
     $("q-btns").innerHTML = '<button class="quiz-got" id="q-fin">Fertig</button>';
     $("q-fin").addEventListener("click", close);
