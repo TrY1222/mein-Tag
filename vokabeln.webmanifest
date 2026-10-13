@@ -1,0 +1,31 @@
+{
+  "id": "vokabeln",
+  "name": "Vokabeln",
+  "short_name": "Vokabeln",
+  "description": "Wörter aus dem Lesen sammeln und behalten.",
+  "start_url": "vokabeln.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon-vokabeln-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-vokabeln.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-vokabeln.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

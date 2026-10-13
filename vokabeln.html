@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Vokabeln</title>
+<meta name="description" content="Wörter aus dem Lesen sammeln und behalten.">
+<link rel="manifest" href="vokabeln.webmanifest">
+<link rel="apple-touch-icon" href="apple-vokabeln.png">
+<link rel="icon" type="image/png" href="icon-vokabeln.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Vokabeln">
+<link rel="stylesheet" href="tw.css">
+<style>
+  :root { --accent: #6e56cf; --on-accent: #ffffff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #9e8cfc; --on-accent: #000000; } }
+  :root[data-theme="dark"] { --accent: #9e8cfc; --on-accent: #000000; }
+  .practice { margin-top: 16px; min-height: 58px; font-size: 18px; }
+  .all-done { text-align: center; padding: 18px 16px; }
+  .all-done .q { font-size: 17px; }
+  .pdots { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .book-line { font-size: 14px; color: var(--muted); margin: 2px 2px 0; display: flex; gap: 6px; align-items: center; }
+  .book-line b { color: var(--fg); font-weight: 600; }
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 2px; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filters .chip { flex-shrink: 0; }
+  .w-word { font-size: 19px; font-weight: 700; }
+  .w-ipa { font-size: 13px; color: var(--faint); font-weight: 400; margin-left: 6px; }
+  .w-trans { font-size: 15px; color: var(--muted); margin-top: 2px; }
+  .badge { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--muted); background: var(--soft); border-radius: 8px; padding: 3px 7px; min-width: 32px; text-align: center; }
+  .badge.ripe { color: var(--accent); }
+  .badge.done { color: var(--ok); }
+  .say-btn { width: 36px; height: 36px; border-radius: 50%; display: inline-grid; place-items: center; color: var(--accent); background: var(--soft); flex-shrink: 0; }
+  .say-btn svg { width: 18px; height: 18px; }
+  .say-btn.big { width: 54px; height: 54px; }
+  .say-btn.big svg { width: 25px; height: 25px; }
+  .say-btn.talking { transform: scale(1.08); }
+  .say-row { display: flex; align-items: center; gap: 14px; }
+  .say-ipa { font-size: 17px; }
+  .say-de { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .answer { font-size: 17px; line-height: 1.5; }
+  .answer.blank { color: var(--muted); font-style: italic; }
+  .k-tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; vertical-align: 4px; margin-left: 6px; }
+  /* Lernstand ● ● ● ⇄ */
+  .vc-steps { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+  .vc-steps i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--faint); display: block; }
+  .vc-steps i.on { background: var(--ok); border-color: var(--ok); }
+  .vc-steps b { font-size: 13px; font-weight: 800; color: var(--faint); margin-left: 3px; line-height: 1; }
+  .vc-steps b.next { color: var(--accent); }
+  .vc-steps b.on { color: var(--ok); }
+  /* Abfrage */
+  .quiz-w { font-family: var(--display); font-size: 40px; font-weight: 700; line-height: 1.1; letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .quiz-src { font-size: 14px; color: var(--muted); }
+  .quiz-a { display: none; }
+  .overlay.open .quiz-a { display: block; }
+  .quiz-t { font-size: 24px; font-weight: 700; color: var(--accent); }
+  .quiz-m { font-size: 16px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .quiz-e { font-size: 15px; font-style: italic; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+  .quiz-ipa { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .quiz-input { width: min(340px, 100%); text-align: center; font-size: 22px; font-weight: 600; padding: 13px 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--soft); outline: none; margin-top: 18px; }
+  .quiz-input:focus { border-color: var(--accent); }
+  .quiz-input.bad { border-color: var(--danger); animation: shake .32s ease; }
+  @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+  .copy-answer { font-size: 26px; }
+  .copy-box { position: relative; }
+  .copy-cover { display: none; position: absolute; inset: -6px -10px; border-radius: 14px; border: 1.5px dashed var(--faint); background: var(--bg); color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; align-items: center; justify-content: center; }
+  .copy-box.covered .copy-cover { display: flex; }
+  .copy-box.covered > :not(.copy-cover) { visibility: hidden; }
+  .copy-dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+  .copy-dots i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--faint); display: block; }
+  .copy-dots i.on { background: var(--ok); border-color: var(--ok); }
+  .copy-hint { font-size: 14px; color: var(--muted); margin-top: 10px; min-height: 20px; }
+  .qd-big { font-family: var(--display); font-size: 40px; font-weight: 800; }
+  .pick .tw-row { cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="tw-head">
+    <div>
+      <h1>Vokabeln</h1>
+      <p class="tw-sub" id="sub"></p>
+    </div>
+    <button class="tw-icon-btn" id="menu" aria-label="Menü"></button>
+  </header>
+  <div id="top"></div>
+  <form class="tw-add" id="add" autocomplete="off">
+    <input id="add-input" type="text" placeholder="Neues Wort …" enterkeyhint="done" autocapitalize="none" spellcheck="false" aria-label="Neues Wort">
+    <button type="button" class="tw-icon-btn" id="photo-btn" aria-label="Seite fotografieren"></button>
+  </form>
+  <div class="book-line" id="book-line"></div>
+  <div id="notes"></div>
+  <div id="filters"></div>
+  <ul class="tw-list" id="list"></ul>
+  <input type="file" id="photo" accept="image/*" hidden>
+</div>
+<script src="tw.js"></script>
+<script src="vokabeln.js"></script>
+</body>
+</html>

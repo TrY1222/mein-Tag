@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#131210">
+<title>Tagwerk (Archiv)</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Tagwerk Archiv">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a href="index.html" style="display:block;text-align:center;padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;font:600 14px -apple-system,BlinkMacSystemFont,sans-serif;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--hairline);text-decoration:none">Archiv – zurück zu den neuen Apps ›</a>
+
+<header class="top">
+  <div>
+    <div class="overline" id="greet"></div>
+    <h1 class="date" id="big-date"></h1>
+  </div>
+  <div class="head-btns">
+  <button class="gear" id="btn-search" title="Suchen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+  </button>
+  <button class="gear" id="btn-settings" title="Einstellungen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ HEUTE ============ -->
+  <section class="view visible" id="view-heute"></section>
+
+  <!-- ============ AUFGABEN ============ -->
+  <section class="view" id="view-todo"></section>
+
+  <!-- ============ GEWOHNHEITEN ============ -->
+  <section class="view" id="view-habits">
+    <div class="seg" id="habit-seg">
+      <button data-hview="daily" class="on" style="--seg-accent: var(--habit)">Dranbleiben</button>
+      <button data-hview="avoid" style="--seg-accent: var(--avoid)">Vermeiden</button>
+    </div>
+    <div id="habits-body"></div>
+  </section>
+
+  <!-- ============ MEDIEN ============ -->
+  <section class="view" id="view-media">
+    <div class="seg" id="media-seg" style="--seg-accent: var(--media)">
+      <button data-media="book" class="on">Bücher</button>
+      <button data-media="game">Spiele</button>
+      <button data-media="vocab">Vokabeln</button>
+    </div>
+    <div id="media-body"></div>
+  </section>
+
+  <!-- ============ SPORT ============ -->
+  <section class="view" id="view-sport">
+    <div class="seg" id="sport-seg">
+      <button data-sview="training" class="on" style="--seg-accent: var(--sport)">Training</button>
+      <button data-sview="runs" style="--seg-accent: var(--run)">Laufen</button>
+      <button data-sview="skills" style="--seg-accent: var(--skill)">Skills</button>
+    </div>
+    <div id="sport-body"></div>
+    <input type="file" id="run-photo" accept="image/*" hidden>
+    <input type="file" id="vocab-photo" accept="image/*" hidden>
+    <input type="file" id="backup-file" accept="application/json,.json,.txt" hidden>
+  </section>
+</main>
+
+<button id="fab" title="Hinzufügen">＋</button>
+
+<nav class="tabs">
+  <button data-tab="heute" class="on">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg>
+    <span>Heute</span>
+  </button>
+  <button data-tab="todo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5l2 2 4.5-4.5"/><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/></svg>
+    <span>Aufgaben</span>
+  </button>
+  <button data-tab="habits">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.7"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>
+    <span>Gewohnheiten</span>
+  </button>
+  <button data-tab="sport">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Körper</span>
+  </button>
+  <button data-tab="media">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span>Geist</span>
+  </button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
