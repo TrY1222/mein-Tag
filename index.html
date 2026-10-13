@@ -51,7 +51,7 @@
   <ul class="apps">
     <li><a class="app" href="aufgaben.html"><img src="icon-aufgaben.png" alt=""><div><div class="n">Aufgaben</div><div class="d">Heute · Morgen · Später</div></div><span class="go" data-chev></span></a></li>
     <li><a class="app" href="gewohnheiten.html"><img src="icon-gewohnheiten.png" alt=""><div><div class="n">Gewohnheiten</div><div class="d">Kleine Wenn-dann-Pläne, ein Tipp am Tag</div></div><span class="go" data-chev></span></a></li>
-    <li><a class="app" href="vokabeln.html"><img src="icon-vokabeln.png" alt=""><div><div class="n">Vokabeln</div><div class="d">Wörter aus dem Lesen behalten</div></div><span class="go" data-chev></span></a></li>
+    <li><a class="app" href="vokabeln.html"><img src="icon-vokabeln.png" alt=""><div><div class="n">Vokabeln</div><div class="d">Wörter aus dem Lesen · deine Bücher</div></div><span class="go" data-chev></span></a></li>
   </ul>
 
   <div class="tw-card" id="install">
@@ -119,9 +119,10 @@
     const openTodos = (L.todos || []).filter(x => x && !x.done).length;
     const habits = (L.dailies || []).length + (L.avoids || []).length;
     const words = (L.vocab || []).length;
+    const books = (L.books || []).filter(b => b && (b.media || "book") === "book").length;
     $("legacy").innerHTML = '<div class="tw-section">Deine Daten aus Tagwerk</div>'
-      + '<p class="stat">' + openTodos + " offene Aufgaben · " + habits + " Gewohnheiten · " + words + " Vokabeln</p>"
-      + '<p class="tw-hint" style="margin-top:4px">Kommen beim ersten Öffnen der Apps hier automatisch mit. Training, Läufe, Bücher, Tagebuch und alles andere bleibt im Archiv.</p>'
+      + '<p class="stat">' + openTodos + " offene Aufgaben · " + habits + " Gewohnheiten · " + words + " Vokabeln · " + books + " Bücher</p>"
+      + '<p class="tw-hint" style="margin-top:4px">Kommen beim ersten Öffnen der Apps hier automatisch mit, die Bücher in die Vokabel-App. Training, Läufe, Spiele, Tagebuch und alles andere bleibt im Archiv.</p>'
       + '<div class="stack">'
       + '<button class="btn full" id="file-data">' + ico("download") + "<span>Sicherung als Datei</span></button>"
       + '<a class="btn full" href="alt.html" style="text-decoration:none">' + ico("book") + "<span>Altes Tagwerk öffnen (Archiv)</span></a>"

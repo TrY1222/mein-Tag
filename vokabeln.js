@@ -16,16 +16,56 @@
   const MODEL = "claude-haiku-4-5";
 
   /* ---------- Daten ---------- */
+  const TIERS = ["S", "A", "B", "C", "D"];        // Wertung wie im alten Tagwerk: S = Highlight … D = gar nicht
+  const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  /* Bücher heißen „Titel – Autor“ (so hat sie auch das alte Tagwerk gespeichert) */
+  function splitTitle(title) {
+    const t = String(title || "").trim();
+    const m = /^(.*\S)\s+[–-]\s+(\S.*)$/.exec(t);
+    return m ? { name: m[1], author: m[2] } : { name: t, author: "" };
+  }
+  const isoDate = s => (/^\d{4}-\d\d-\d\d$/.test(s || "") ? s : null);
+  function booksFromLegacy(L) {
+    // Nur Bücher, keine Spiele. Wann ein Buch fertig war, hat das alte Tagwerk nicht gespeichert.
+    return (L.books || []).filter(x => x && (x.media || "book") === "book" && String(x.question || "").trim()).map(x => ({
+      id: x.id || TW.uid(), title: String(x.question).trim(), status: x.reading ? "lese" : "fertig",
+      started: x.reading && typeof x.created === "number" ? TW.iso(new Date(x.created)) : null, finished: null,
+      tier: TIERS.includes(x.tier) ? x.tier : "", desc: String(x.desc || "").trim(), notes: String(x.answer || "").trim(),
+      eng: x.eng === true, created: typeof x.created === "number" ? x.created : Date.now()
+    }));
+  }
+  /* Wörter und Bücher verbinden: Wörter mit nur dem Titel bekommen das passende Buch,
+     und Bücher, die es bisher nur als Angabe an Wörtern gab, kommen in die Liste */
+  function linkBooks(d) {
+    const fit = s => {
+      s = String(s || "").trim();
+      if (!s || d.books.some(b => same(b.title, s))) return s;
+      const hit = d.books.filter(b => same(splitTitle(b.title).name, s));
+      return hit.length === 1 ? hit[0].title : s;
+    };
+    d.words.forEach(v => { if (v.book) v.book = fit(v.book); });
+    d.lastBook = fit(d.lastBook);
+    const add = (title, status, created) => {
+      if (!title || d.books.some(b => same(b.title, title))) return;
+      d.books.push({ id: TW.uid(), title, status, started: null, finished: null, tier: "", desc: "", notes: "", eng: false, created: created || Date.now() });
+    };
+    add(d.lastBook, "lese");
+    d.words.slice().sort((a, b) => (a.created || 0) - (b.created || 0)).forEach(v => add(v.book, "fertig", v.created));
+  }
   function fromLegacy(L) {
     const words = (L.vocab || []).map(v => ({ ...v }));
-    // Buch für neue Wörter: das zuletzt benutzte, sonst das Buch, das gerade gelesen wird
+    const books = booksFromLegacy(L);
+    // Buch für neue Wörter, wie im alten Tagwerk: das zuletzt benutzte, wenn es noch gelesen wird, sonst das erste laufende
+    const reading = books.filter(b => b.status === "lese").map(b => b.title);
     const withBook = words.filter(v => v.book).sort((a, b) => (a.created || 0) - (b.created || 0)).pop();
-    const reading = (L.books || []).find(x => x && x.reading && (x.media || "book") === "book");
-    const lastBook = withBook ? withBook.book : reading ? String(reading.question || "") : "";
-    return {
-      v: 1, words, log: L.vocabLog || {}, accent: L.vocabAccent || "en-GB", speak: L.vocabSpeak !== false,
-      usage: L.usage || { input: 0, output: 0, cost: 0 }, lastBook, from: "tagwerk"
+    const last = withBook ? String(withBook.book).trim() : "";
+    const d = {
+      v: 1, words, books, log: L.vocabLog || {}, accent: L.vocabAccent || "en-GB", speak: L.vocabSpeak !== false,
+      usage: L.usage || { input: 0, output: 0, cost: 0 }, from: "tagwerk",
+      lastBook: reading.find(b => same(b, last) || same(splitTitle(b).name, last)) || reading[0] || last
     };
+    linkBooks(d);
+    return d;
   }
   function normalize(d) {
     if (!d || typeof d !== "object") d = {};
@@ -55,14 +95,29 @@
     if (typeof d.speak !== "boolean") d.speak = true;
     if (!d.usage || typeof d.usage !== "object") d.usage = { input: 0, output: 0, cost: 0 };
     if (typeof d.lastBook !== "string") d.lastBook = "";
+    const fresh = !Array.isArray(d.books);
+    d.books = (fresh ? [] : d.books).filter(b => b && String(b.title || "").trim()).map(b => ({
+      id: b.id || TW.uid(), title: String(b.title).trim(),
+      status: ["lese", "fertig", "abgebrochen"].includes(b.status) ? b.status : "lese",
+      started: isoDate(b.started), finished: isoDate(b.finished), tier: TIERS.includes(b.tier) ? b.tier : "",
+      desc: String(b.desc || ""), notes: String(b.notes || ""), eng: b.eng === true,
+      created: typeof b.created === "number" ? b.created : Date.now()
+    }));
+    if (fresh) {                 // Daten von vor der Bücherliste: einmal aufbauen
+      const L = TW.legacy();
+      if (L) d.books = booksFromLegacy(L);
+      linkBooks(d);
+    }
     d.v = 1;
     return d;
   }
 
   const booted = await TW.boot(KEY, fromLegacy);
+  const hadBooks = !!booted.data && Array.isArray(booted.data.books);
   let D = normalize(booted.data);
-  let filter = "", search = "";
+  let view = "woerter", filter = "", search = "";
   function save() { TW.save(KEY, D); TW.shareForOtherIcons(KEY, D); }
+  if (booted.data && !hadBooks) save();           // Bücherliste gerade erst aufgebaut → gleich sichern
   const apiKey = () => localStorage.getItem(TW.API_KEY) || "";
 
   /* ---------- Lernstand ---------- */
@@ -109,7 +164,7 @@
     const t = today();
     D.log[t] = D.words.map(v => v.due).filter(d => d && d > t).sort()[0] || "9999-12-31";
   }
-  const books = () => [...new Set(D.words.map(v => v.book).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
+  const wordBooks = () => [...new Set(D.words.map(v => v.book).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
 
   /* ---------- Claude: nachschlagen (eigener Schlüssel, nur lokal) ---------- */
   function jsonFrom(text) {
@@ -264,7 +319,7 @@
     const have = new Set(D.words.map(v => v.word.toLowerCase()));
     const sel = items.map(it => !have.has(String(it.word).toLowerCase()));
     const s = sheet("<h2>" + items.length + " Wörter gefunden</h2>"
-      + '<p class="tw-hint" style="margin-top:6px">Tipp an, was du behalten willst' + (D.lastBook ? " · Buch: " + esc(D.lastBook) : "") + ".</p>"
+      + '<p class="tw-hint" style="margin-top:6px">Tipp an, was du behalten willst' + (D.lastBook ? " · Buch: " + esc(splitTitle(D.lastBook).name) : "") + ".</p>"
       + '<ul class="tw-list pick">' + items.map((it, i) => '<li class="tw-row" data-i="' + i + '"><span class="tw-check' + (sel[i] ? " on" : "") + '">' + ico("check") + "</span>"
         + '<div class="tw-main"><div class="w-word" style="font-size:17px">' + esc(it.word) + "</div>"
         + '<div class="w-trans">' + (sel[i] ? esc(it.trans || "") : "schon gesammelt") + "</div></div></li>").join("") + "</ul>"
@@ -318,8 +373,249 @@
     }
   }
 
+  /* ---------- Bücher: was du gerade liest und schon gelesen hast ---------- */
+  const wordsOf = b => D.words.filter(v => v.book && same(v.book, b.title));
+  const findBook = title => D.books.find(b => same(b.title, title) || same(splitTitle(b.title).name, title)) || null;
+  const nextReading = except => (D.books.find(b => b.status === "lese" && b !== except) || {}).title || "";
+  const dayMonth = s => { const d = TW.parse(s); return d.getDate() + ". " + TW.MON_S[d.getMonth()]; };
+  function newBook(title) {
+    return { id: TW.uid(), title, status: "lese", started: today(), finished: null, tier: "", desc: "", notes: "", eng: false, created: Date.now() };
+  }
+  /* Neues Buch: steht unter „Gerade“, neue Wörter landen dort. Claude ergänzt Schreibweise und Autor. */
+  function addBook(title) {
+    const b = newBook(String(title).trim());
+    D.books.push(b);
+    D.lastBook = b.title;
+    save();
+    enrichBook(b);
+    return b;
+  }
+  /* Neue Wörter kommen aus diesem Buch – also liest du es gerade */
+  function setCurrent(b) {
+    if (b.status !== "lese") { b.status = "lese"; b.started = today(); b.finished = null; }
+    D.lastBook = b.title;
+    save();
+  }
+  /* Umbenennen: die Wörter wandern mit. Gibt es das Buch schon, werden beide zusammengeführt. */
+  function renameBook(b, title) {
+    title = String(title || "").trim();
+    if (!title || title === b.title) return b;
+    const other = D.books.find(x => x !== b && same(x.title, title));
+    wordsOf(b).forEach(v => { v.book = other ? other.title : title; });
+    if (same(D.lastBook, b.title)) D.lastBook = other ? other.title : title;
+    if (!other) { b.title = title; return b; }
+    if (!other.tier) other.tier = b.tier;
+    if (!other.desc) other.desc = b.desc;
+    if (b.notes && !other.notes.includes(b.notes)) other.notes = (other.notes ? other.notes + "\n" : "") + b.notes;
+    D.books.splice(D.books.indexOf(b), 1);
+    return other;
+  }
+  async function lookupBook(b) {
+    const text = await callClaude({
+      system: "Du bist ein sorgfältiger Bücher-Katalog. Der Nutzer tippt Titel oft falsch, unvollständig oder klein. "
+        + "Erkenne das gemeinte Buch und korrigiere die Schreibweise. Behalte die Sprache des eingegebenen Titels bei "
+        + "(ein englischer Originaltitel bleibt englisch, ein deutscher Titel deutsch). Hänge mit „ – “ den Autor an, z.B. „Dune – Frank Herbert“. "
+        + "Antworte AUSSCHLIESSLICH mit JSON, ohne Code-Fences: "
+        + '{"title":"<Titel> – <Autor>","desc":"<genau ein Satz auf Deutsch, höchstens 20 Wörter: worum es geht, ohne Spoiler>"}. '
+        + 'Wenn du das Buch nicht sicher erkennst, gib den Titel unverändert zurück und desc als "".',
+      userText: b.title,
+      maxTokens: 300
+    });
+    const o = text && jsonFrom(text);
+    if (!o || typeof o.title !== "string" || !o.title.trim()) return false;
+    const kept = renameBook(b, o.title);
+    if (typeof o.desc === "string" && o.desc.trim() && !kept.desc) kept.desc = o.desc.trim();
+    return true;
+  }
+  async function enrichBook(b) {
+    if (!apiKey()) return;
+    b.busy = true;
+    render();
+    try { await lookupBook(b); } catch {}           // klappt es nicht, bleibt der Titel so, wie du ihn getippt hast
+    delete b.busy;
+    save(); render();
+  }
+  function removeBook(b) {
+    const i = D.books.indexOf(b);
+    if (i < 0) return;
+    const tagged = wordsOf(b), wasCurrent = same(D.lastBook, b.title);
+    D.books.splice(i, 1);
+    tagged.forEach(v => { v.book = ""; });
+    if (wasCurrent) D.lastBook = nextReading();
+    save(); render();
+    toast("„" + splitTitle(b.title).name + "“ gelöscht" + (tagged.length ? " – die Wörter bleiben" : ""), {
+      action: () => {
+        D.books.splice(Math.min(i, D.books.length), 0, b);
+        tagged.forEach(v => { v.book = b.title; });
+        if (wasCurrent) D.lastBook = b.title;
+        save(); render();
+      }
+    });
+  }
+  const tierChips = cur => '<div class="tiers">' + TIERS.map(t => '<button class="chip' + (cur === t ? " on" : "") + '" data-tier="' + t + '">' + t + "</button>").join("") + "</div>";
+  function wireTiers(root, b) {
+    root.querySelectorAll("[data-tier]").forEach(x => x.addEventListener("click", () => {
+      b.tier = b.tier === x.dataset.tier ? "" : x.dataset.tier;      // nochmal tippen = keine Wertung
+      root.querySelectorAll("[data-tier]").forEach(y => y.classList.toggle("on", y.dataset.tier === b.tier));
+      save();
+    }));
+  }
+
+  /* Fertig gelesen: ein Tipp. Danach kurz Wertung und nächstes Buch – beides freiwillig. */
+  function finishBook(b) {
+    const before = { status: b.status, finished: b.finished, last: D.lastBook };
+    b.status = "fertig";
+    b.finished = today();
+    if (same(D.lastBook, b.title)) D.lastBook = nextReading(b);
+    save(); render();
+    const y = b.finished.slice(0, 4);
+    const nr = D.books.filter(x => x.status === "fertig" && (x.finished || "").startsWith(y)).length;
+    const s = sheet("<h2>Fertig gelesen ✓</h2>"
+      + '<p class="tw-hint" style="margin-top:6px">„' + esc(splitTitle(b.title).name) + "“ ist dein " + nr + ". Buch in " + y + ".</p>"
+      + '<label class="f-label">Wie fandest du es?</label>' + tierChips(b.tier)
+      + '<p class="tw-hint" style="margin-top:8px">S = Highlight · D = gar nicht · freiwillig</p>'
+      + '<label class="f-label">Was liest du als Nächstes?</label>'
+      + '<input class="f-input" id="fb-next" placeholder="Titel – Autor (freiwillig)" enterkeyhint="done">'
+      + '<div class="actions"><button class="btn primary" id="fb-ok">Fertig</button></div>'
+      + '<button class="tw-link" id="fb-undo" style="justify-content:center"><span>Doch noch nicht fertig</span></button>',
+      { onClose: () => render() });
+    wireTiers(s.el, b);
+    const ok = () => {
+      const next = s.el.querySelector("#fb-next").value.trim();
+      if (next) { const have = findBook(next); if (have) setCurrent(have); else addBook(next); }
+      s.close();
+    };
+    s.el.querySelector("#fb-ok").addEventListener("click", ok);
+    s.el.querySelector("#fb-next").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); ok(); } });
+    s.el.querySelector("#fb-undo").addEventListener("click", () => {
+      b.status = before.status; b.finished = before.finished; D.lastBook = before.last;
+      save(); s.close();
+    });
+  }
+
+  /* Ein Buch: Titel, Status, Wertung, die Wörter daraus, Notizen */
+  function bookSheet(b) {
+    const ws = wordsOf(b).sort((x, y) => (y.created || 0) - (x.created || 0));
+    const sits = ws.filter(v => v.learned).length;
+    const current = same(D.lastBook, b.title);
+    const title0 = b.title;
+    const finLabel = () => (b.finished ? dayMonth(b.finished) + " " + b.finished.slice(0, 4) : "ohne Datum");
+    const s = sheet('<input class="f-input f-big" id="bk-title" value="' + esc(b.title) + '" placeholder="Titel – Autor" aria-label="Titel und Autor" enterkeyhint="done">'
+      + (b.desc ? '<p class="b-desc">' + esc(b.desc) + "</p>" : "")
+      + '<label class="f-label">Status</label><div class="chips">'
+      + [["lese", "Lese ich"], ["fertig", "Fertig"], ["abgebrochen", "Abgebrochen"]]
+        .map(([k, l]) => '<button class="chip' + (b.status === k ? " on" : "") + '" data-st="' + k + '">' + l + "</button>").join("")
+      + "</div>"
+      + '<div class="f-row" id="bk-fin-row"' + (b.status === "fertig" ? "" : " hidden") + '><span class="k">Fertig gelesen</span>'
+      + '<label class="chip date"><span id="bk-fin-l">' + finLabel() + '</span><input type="date" id="bk-fin" value="' + esc(b.finished || "") + '" aria-label="Fertig gelesen am"></label></div>'
+      + '<label class="f-label">Wie fandest du es?</label>' + tierChips(b.tier)
+      + '<p class="tw-hint" style="margin-top:8px">S = Highlight · D = gar nicht · nochmal tippen = keine Wertung</p>'
+      + '<label class="f-label">Wörter aus diesem Buch' + (ws.length ? " · " + ws.length + (sits ? " · " + sits + " sitzen" : "") : "") + "</label>"
+      + (ws.length
+        ? '<ul class="b-words">' + ws.map((v, i) => '<li data-w="' + i + '"><span class="w">' + esc(v.word) + '</span><span class="t">' + esc(v.trans || "–") + "</span></li>").join("") + "</ul>"
+        : '<p class="tw-hint">Noch keine.' + (current ? " Neue Wörter landen automatisch hier." : "") + "</p>")
+      + (b.status === "lese" && !current ? '<button class="btn full" id="bk-cur" style="margin-top:14px">' + ico("plus") + "<span>Neue Wörter aus diesem Buch</span></button>" : "")
+      + '<label class="f-label">Notizen</label><textarea class="f-area" id="bk-notes" placeholder="Gedanken, Zitate … (freiwillig)">' + esc(b.notes) + "</textarea>"
+      + '<div class="stack"><button class="btn full danger" id="bk-del">' + ico("trash") + "<span>Löschen</span></button></div>",
+      { onClose: () => {
+        const t = s.el.querySelector("#bk-title").value.trim();
+        if (t && t !== title0) renameBook(b, t);
+        save(); render();
+      } });
+    s.el.querySelector("#bk-title").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } });
+    s.el.querySelectorAll("[data-st]").forEach(x => x.addEventListener("click", () => {
+      const st = x.dataset.st;
+      if (st === b.status) return;
+      b.status = st;
+      if (st === "fertig") { if (!b.finished) b.finished = today(); }
+      else b.finished = null;
+      if (st === "lese") { if (!b.started) b.started = today(); }
+      else if (same(D.lastBook, b.title)) D.lastBook = nextReading(b);
+      s.el.querySelectorAll("[data-st]").forEach(y => y.classList.toggle("on", y === x));
+      s.el.querySelector("#bk-fin-row").hidden = st !== "fertig";
+      s.el.querySelector("#bk-fin").value = b.finished || "";
+      s.el.querySelector("#bk-fin-l").textContent = finLabel();
+      save();
+    }));
+    const fin = s.el.querySelector("#bk-fin");
+    fin.addEventListener("change", () => { b.finished = isoDate(fin.value); s.el.querySelector("#bk-fin-l").textContent = finLabel(); save(); });
+    wireTiers(s.el, b);
+    s.el.querySelectorAll("[data-w]").forEach(li => li.addEventListener("click", () => { s.close(); setTimeout(() => detail(ws[+li.dataset.w]), 60); }));
+    const cur = s.el.querySelector("#bk-cur");
+    if (cur) cur.addEventListener("click", () => { setCurrent(b); s.close(); toast("Neue Wörter landen jetzt in „" + splitTitle(b.title).name + "“"); });
+    s.el.querySelector("#bk-notes").addEventListener("input", e => { b.notes = e.target.value; save(); });
+    s.el.querySelector("#bk-del").addEventListener("click", () => { s.close(); removeBook(b); });
+  }
+
+  /* Übersicht: gerade · gelesen nach Jahr · früher gelesen · nicht zu Ende */
+  function renderBooks() {
+    const y = today().slice(0, 4);
+    const byNew = (a, b) => (b.created || 0) - (a.created || 0);
+    const reading = D.books.filter(b => b.status === "lese").sort((a, b) => (b.started || "").localeCompare(a.started || "") || byNew(a, b));
+    const fin = D.books.filter(b => b.status === "fertig");
+    const dated = fin.filter(b => b.finished).sort((a, b) => b.finished.localeCompare(a.finished) || byNew(a, b));
+    const undated = fin.filter(b => !b.finished).sort(byNew);
+    const stopped = D.books.filter(b => b.status === "abgebrochen").sort(byNew);
+    const nYear = dated.filter(b => b.finished.startsWith(y)).length;
+    $("sub").textContent = nYear ? y + ": " + nYear + " gelesen · insgesamt " + fin.length
+      : fin.length ? fin.length + (fin.length === 1 ? " Buch" : " Bücher") + " gelesen"
+      : reading.length ? "Du liest gerade " + (reading.length === 1 ? "ein Buch" : reading.length + " Bücher")
+      : "Was du liest – und die Wörter daraus";
+    const box = $("b-list");
+    box.innerHTML = "";
+    if (!D.books.length) {
+      box.innerHTML = '<div class="tw-empty"><b>Noch keine Bücher.</b>Tipp oben ein, was du gerade liest. Wörter, die du dann sammelst, landen automatisch dort.</div>';
+      return;
+    }
+    const groups = [];
+    if (reading.length) groups.push(["Gerade", reading]);
+    [...new Set(dated.map(b => b.finished.slice(0, 4)))].forEach(yr => {
+      const list = dated.filter(b => b.finished.startsWith(yr));
+      groups.push([yr + " · " + list.length + (list.length === 1 ? " Buch" : " Bücher"), list]);
+    });
+    if (undated.length) groups.push(["Früher gelesen · " + undated.length, undated]);
+    if (stopped.length) groups.push(["Nicht zu Ende · " + stopped.length, stopped]);
+    groups.forEach(([title, list]) => {
+      box.insertAdjacentHTML("beforeend", '<div class="tw-section">' + esc(title) + "</div>");
+      const ul = document.createElement("ul");
+      ul.className = "tw-list";
+      list.forEach(b => ul.appendChild(bookRow(b)));
+      box.appendChild(ul);
+    });
+  }
+  function bookRow(b) {
+    const { name, author } = splitTitle(b.title);
+    const n = wordsOf(b).length;
+    const reading = b.status === "lese";
+    const when = reading ? (b.started ? "seit " + dayMonth(b.started) : "")
+      : b.status === "fertig" && b.finished ? TW.MON[TW.parse(b.finished).getMonth()] : "";
+    const meta = b.busy ? "Claude ergänzt den Autor …" : [author, when, n ? n + (n === 1 ? " Wort" : " Wörter") : ""].filter(Boolean).join(" · ");
+    const li = document.createElement("li");
+    li.className = "tw-swipe-wrap";
+    li.innerHTML = '<div class="tw-row">'
+      + (reading ? '<button class="tw-check no-swipe" aria-label="Fertig gelesen">' + ico("check") + "</button>" : "")
+      + '<div class="tw-main"><div class="tw-text">' + esc(name) + "</div>" + (meta ? '<div class="tw-meta">' + esc(meta) + "</div>" : "") + "</div>"
+      + (b.tier ? '<span class="tier' + (b.tier === "S" ? " top" : "") + '" title="Deine Wertung">' + b.tier + "</span>" : "")
+      + "</div>";
+    const row = li.querySelector(".tw-row");
+    li.querySelector(".tw-main").addEventListener("click", () => bookSheet(b));
+    if (reading) {
+      const c = li.querySelector(".tw-check");
+      c.addEventListener("click", () => { c.classList.add("on"); setTimeout(() => finishBook(b), 180); });
+    }
+    swipeRow(li, row, reading
+      ? { right: () => finishBook(b), rightLabel: "Fertig gelesen", left: () => removeBook(b) }
+      : { left: () => removeBook(b) });
+    return li;
+  }
+
   /* ---------- Darstellung ---------- */
   function render() {
+    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === view));
+    $("title").textContent = view === "buecher" ? "Bücher" : "Vokabeln";
+    $("v-words").hidden = view === "buecher";
+    $("v-books").hidden = view !== "buecher";
+    if (view === "buecher") { renderBooks(); return; }
     const t = today();
     const all = D.words;
     const dueNow = due();
@@ -344,7 +640,7 @@
     }
 
     /* Buch, in das neue Wörter kommen */
-    $("book-line").innerHTML = '<span>Buch:</span><b>' + esc(D.lastBook || "keins") + '</b><button class="chip" id="book-btn" style="padding:3px 10px;font-size:13px">ändern</button>';
+    $("book-line").innerHTML = '<span>Buch:</span><b>' + esc(D.lastBook ? splitTitle(D.lastBook).name : "keins") + '</b><button class="chip" id="book-btn" style="padding:3px 10px;font-size:13px">ändern</button>';
     $("book-btn").addEventListener("click", chooseBook);
 
     /* Hinweise */
@@ -369,11 +665,11 @@
     }
 
     /* Filter: Bücher und Suche – nur wenn es sich lohnt */
-    const bs = books();
+    const bs = wordBooks();
     const fl = $("filters");
     fl.innerHTML = "";
     if (bs.length > 1) {
-      fl.innerHTML = '<div class="filters">' + [["", "Alle"]].concat(bs.map(b => [b, b.length > 24 ? b.slice(0, 23) + "…" : b]))
+      fl.innerHTML = '<div class="filters">' + [["", "Alle"]].concat(bs.map(b => { const n = splitTitle(b).name; return [b, n.length > 24 ? n.slice(0, 23) + "…" : n]; }))
         .map(([k, l]) => '<button class="chip' + (filter === k ? " on" : "") + '" data-f="' + esc(k) + '">' + esc(l) + "</button>").join("") + "</div>";
       fl.querySelectorAll("[data-f]").forEach(b => b.addEventListener("click", () => { filter = b.dataset.f; render(); }));
     }
@@ -421,20 +717,21 @@
 
   /* ---------- Buch wählen ---------- */
   function chooseBook() {
-    const bs = books();
+    const opts = D.books.filter(b => b.status === "lese" || same(b.title, D.lastBook));
     const s = sheet("<h2>Aus welchem Buch?</h2>"
       + '<p class="tw-hint" style="margin-top:6px">Neue Wörter bekommen dieses Buch. Claude erklärt sie dann so, wie der Autor sie meint.</p>'
-      + '<div class="chips" style="margin-top:14px">' + bs.map((b, i) => '<button class="chip' + (D.lastBook === b ? " on" : "") + '" data-i="' + i + '">' + esc(b) + "</button>").join("")
+      + '<div class="chips" style="margin-top:14px">' + opts.map((b, i) => '<button class="chip' + (same(D.lastBook, b.title) ? " on" : "") + '" data-i="' + i + '">' + esc(splitTitle(b.title).name) + "</button>").join("")
       + '<button class="chip' + (!D.lastBook ? " on" : "") + '" data-i="-1">Kein Buch</button></div>'
       + '<label class="f-label">Neues Buch</label><input class="f-input" id="b-new" placeholder="Titel – Autor" enterkeyhint="done">'
       + '<div class="actions"><button class="btn primary" id="b-ok">Fertig</button></div>');
-    s.el.querySelectorAll("[data-i]").forEach(b => b.addEventListener("click", () => {
-      D.lastBook = +b.dataset.i < 0 ? "" : bs[+b.dataset.i];
-      save(); s.close(); render();
+    s.el.querySelectorAll("[data-i]").forEach(x => x.addEventListener("click", () => {
+      const i = +x.dataset.i;
+      if (i < 0) { D.lastBook = ""; save(); } else setCurrent(opts[i]);
+      s.close(); render();
     }));
     const take = () => {
       const v = s.el.querySelector("#b-new").value.trim();
-      if (v) { D.lastBook = v; save(); }
+      if (v) { const have = findBook(v); if (have) setCurrent(have); else addBook(v); }
       s.close(); render();
     };
     s.el.querySelector("#b-ok").addEventListener("click", take);
@@ -458,6 +755,7 @@
         v.trans = s.el.querySelector("#d-trans").value.trim();
         v.sentence = s.el.querySelector("#d-sent").value.trim();
         v.book = s.el.querySelector("#d-book").value.trim();
+        if (v.book) { const have = findBook(v.book); if (have) v.book = have.title; else D.books.push(newBook(v.book)); }
         save();
       };
       s.el.querySelector("#d-ok").addEventListener("click", () => { apply(); s.close(); });
@@ -561,7 +859,7 @@
       const askEn = v.kind === "term" ? "Wie heißt der Begriff?" : "Wie heißt es auf Englisch?";
       Q("q-src").textContent = v.learned
         ? "Auffrischung " + (v.refresh + 1) + " von " + REFRESH.length + " · " + (rev ? askEn : "Weißt du's noch?")
-        : rev ? "Letzter Schritt: " + askEn : (v.book || "");
+        : rev ? "Letzter Schritt: " + askEn : splitTitle(v.book).name;
       const speakable = canSpeak();
       Q("q-say").innerHTML = speakable && !rev ? sayBtn(true) : "";   // andersrum erst nach dem Aufdecken
       Q("q-answer").innerHTML = '<div class="quiz-t">' + esc(back) + "</div>"
@@ -712,7 +1010,8 @@
     { t: "Zum Schluss andersrum", d: "Deutsch → Englisch ist schwerer, baut aber mehr Wissen auf (Schreibweise, aktiver Gebrauch).", src: "Webb 2009; Terai u.a. 2021" },
     { t: "Bei Falsch: Lösung zeigen, abschreiben, aus dem Kopf", d: "Die Lösung nach einem Fehler ist die wichtigste Rückmeldung. Tippen prägt mehr ein als Lesen – aus dem Kopf am meisten.", src: "Pashler u.a. 2005; Forrin u.a. 2012; Karpicke & Roediger 2008" },
     { t: "Auffrischung nach 1 und 3 Monaten", d: "Lange Abstände führen zu Wissen, das Jahre hält.", src: "Bahrick u.a. 1993; Cepeda u.a. 2008" },
-    { t: "Lesen + gezielt üben", d: "Nur durch Lesen lernt man wenige Wörter; mit gezielten Übungen deutlich mehr. Erwachsene profitieren vom Lesen am meisten.", src: "Laufer 2003; Jeon & Day 2016" }
+    { t: "Lesen + gezielt üben", d: "Nur durch Lesen lernt man wenige Wörter; mit gezielten Übungen deutlich mehr. Erwachsene profitieren vom Lesen am meisten.", src: "Laufer 2003; Jeon & Day 2016" },
+    { t: "Sehen, was du gelesen hast", d: "Wer seinen Fortschritt festhält, erreicht seine Ziele eher – vor allem, wenn er ihn aufschreibt und sehen kann. Darum die Bücherliste: ein Tipp, wenn ein Buch fertig ist. Seiten zählst du nicht.", src: "Harkin u.a. 2016 (Psychological Bulletin)" }
   ];
   $("menu").innerHTML = ico("more");
   $("menu").addEventListener("click", () => menu("Vokabeln", [
@@ -725,6 +1024,22 @@
   ]));
 
   /* ---------- Eingabe ---------- */
+  document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => {
+    view = b.dataset.tab;
+    render();
+    window.scrollTo({ top: 0 });
+  }));
+  $("b-add").addEventListener("submit", e => {
+    e.preventDefault();
+    const title = $("b-add-input").value.trim();
+    if (!title) return;
+    $("b-add-input").value = "";
+    const have = findBook(title);
+    if (have) { bookSheet(have); return; }
+    const b = addBook(title);
+    render();
+    toast("Neue Wörter landen jetzt in „" + splitTitle(b.title).name + "“");
+  });
   $("photo-btn").innerHTML = ico("camera");
   $("photo-btn").addEventListener("click", () => {
     if (!apiKey()) { toast("Fürs Foto brauchst du den API-Schlüssel (⋯ → Einstellungen)."); return; }

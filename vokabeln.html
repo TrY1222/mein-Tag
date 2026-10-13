@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>Vokabeln</title>
-<meta name="description" content="Wörter aus dem Lesen sammeln und behalten.">
+<meta name="description" content="Wörter aus dem Lesen sammeln und behalten – und sehen, was du gelesen hast.">
 <link rel="manifest" href="vokabeln.webmanifest">
 <link rel="apple-touch-icon" href="apple-vokabeln.png">
 <link rel="icon" type="image/png" href="icon-vokabeln.png">
@@ -75,26 +75,52 @@
   .copy-hint { font-size: 14px; color: var(--muted); margin-top: 10px; min-height: 20px; }
   .qd-big { font-family: var(--display); font-size: 40px; font-weight: 800; }
   .pick .tw-row { cursor: pointer; }
+  /* Bücher */
+  .tier { flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--muted); background: var(--soft); border-radius: 8px; min-width: 28px; padding: 3px 7px; text-align: center; }
+  .tier.top { color: var(--accent); }
+  .tiers { display: flex; gap: 8px; }
+  .tiers .chip { width: 46px; padding: 8px 0; text-align: center; font-weight: 800; }
+  .tiers .chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .b-words { list-style: none; margin-top: 4px; }
+  .b-words li { display: flex; align-items: baseline; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .b-words li:last-child { border-bottom: none; }
+  .b-words .w { font-weight: 700; }
+  .b-words .t { color: var(--muted); font-size: 15px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .b-desc { font-size: 15px; color: var(--muted); line-height: 1.45; margin-top: 6px; }
+  .chip.date { position: relative; overflow: hidden; }
+  .chip.date input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="tw-head">
     <div>
-      <h1>Vokabeln</h1>
+      <h1 id="title">Vokabeln</h1>
       <p class="tw-sub" id="sub"></p>
     </div>
     <button class="tw-icon-btn" id="menu" aria-label="Menü"></button>
   </header>
-  <div id="top"></div>
-  <form class="tw-add" id="add" autocomplete="off">
-    <input id="add-input" type="text" placeholder="Neues Wort …" enterkeyhint="done" autocapitalize="none" spellcheck="false" aria-label="Neues Wort">
-    <button type="button" class="tw-icon-btn" id="photo-btn" aria-label="Seite fotografieren"></button>
-  </form>
-  <div class="book-line" id="book-line"></div>
-  <div id="notes"></div>
-  <div id="filters"></div>
-  <ul class="tw-list" id="list"></ul>
+  <nav class="tw-tabs" id="tabs" aria-label="Ansicht">
+    <button data-tab="woerter" class="on">Wörter</button>
+    <button data-tab="buecher">Bücher</button>
+  </nav>
+  <div id="v-words">
+    <div id="top"></div>
+    <form class="tw-add" id="add" autocomplete="off">
+      <input id="add-input" type="text" placeholder="Neues Wort …" enterkeyhint="done" autocapitalize="none" spellcheck="false" aria-label="Neues Wort">
+      <button type="button" class="tw-icon-btn" id="photo-btn" aria-label="Seite fotografieren"></button>
+    </form>
+    <div class="book-line" id="book-line"></div>
+    <div id="notes"></div>
+    <div id="filters"></div>
+    <ul class="tw-list" id="list"></ul>
+  </div>
+  <div id="v-books" hidden>
+    <form class="tw-add" id="b-add" autocomplete="off">
+      <input id="b-add-input" type="text" placeholder="Buch hinzufügen – Titel, Autor …" enterkeyhint="done" aria-label="Buch hinzufügen">
+    </form>
+    <div id="b-list"></div>
+  </div>
   <input type="file" id="photo" accept="image/*" hidden>
 </div>
 <script src="tw.js"></script>

@@ -87,6 +87,12 @@ Das alte Tagwerk mit Training, Läufen, Büchern, Tagebuch usw. bleibt unter `al
   Seite fotografieren geht mit einem Knopf daneben.
 - **Ein großer Knopf: „Üben · 12“.** Ist alles geübt, steht da „Heute alles geübt ✓“.
 - Statt einer Serie, die reißen kann: geübte Tage der letzten Woche als Punkte.
+- **Bücher (zweiter Tab):** was du gerade liest, was du gelesen hast (nach Jahr) und die Wörter aus jedem Buch.
+  Ein Tipp, wenn ein Buch fertig ist; danach freiwillig eine Wertung (S–D wie früher) und das nächste Buch.
+  Keine Seiten, kein Fortschrittsbalken. Wer seinen Fortschritt festhält, erreicht Ziele eher, vor allem wenn er ihn
+  aufschreibt und sehen kann (Harkin u.a. 2016). Mit API-Schlüssel ergänzt Claude Schreibweise und Autor.
+  Die Bücher aus dem alten Tagwerk kommen mit (ohne Spiele). Weil es dort kein Datum fürs Fertiglesen gab, stehen sie
+  unter „Früher gelesen“; ein Datum lässt sich im Buch nachtragen.
 
 ## Für alle drei
 
@@ -97,7 +103,7 @@ Das alte Tagwerk mit Training, Läufen, Büchern, Tagebuch usw. bleibt unter `al
 
 ## Was bewusst wegfällt (bleibt im Archiv)
 
-Trainingsplan mit Übungen und Wochentagen, Läufe mit Pace, Skills, Bücher-/Spiele-Tierlisten mit KI-Tipps, Tagebuch,
+Trainingsplan mit Übungen und Wochentagen, Läufe mit Pace, Skills, Spiele-Liste, KI-Tipps zu Büchern, Tagebuch,
 Rückblick, Jahresbilanz, Suche, Eskalations-Erinnerungen. Sie haben dich laut deiner eigenen Erfahrung nicht besser
 gemacht, aber Eintragen gekostet. Alles ist im Archiv noch da und kann einzeln zurückkommen, wenn du es vermisst.
 

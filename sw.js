@@ -1,6 +1,6 @@
 // Service Worker für Tagwerk (Startseite, drei Apps, Archiv)
 // Strategie: Netzwerk zuerst (damit Updates sofort ankommen), offline aus dem Cache.
-const CACHE = "tagwerk-v50";
+const CACHE = "tagwerk-v51";
 const KEEP = ["tw-transfer"];   // Datenübergabe an neu installierte Symbole – nie löschen
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./tw.css", "./tw.js",

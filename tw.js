@@ -467,7 +467,7 @@ const TW = (() => {
   }
 
   return {
-    $, esc, uid, pad, iso, today, parse, addDays, addMonths, between, monday, longDate, shortDate, relDay, WD, WD_S,
+    $, esc, uid, pad, iso, today, parse, addDays, addMonths, between, monday, longDate, shortDate, relDay, WD, WD_S, MON, MON_S,
     load, save, themeMode, setTheme, applyTheme, ico, sheet, menu, toast, hideToast, swipeRow, dots,
     download, pickFile, parseJSON, calendar, calendarSheet,
     legacy, getTransfer, putTransfer, shareForOtherIcons, boot, dataFromAny, importSheet, quickImport, LEGACY, API_KEY,
