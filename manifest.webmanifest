@@ -1,12 +1,13 @@
 {
+  "id": "./",
   "name": "Tagwerk",
   "short_name": "Tagwerk",
-  "description": "Tagwerk – dein Tag als Werk: Tagesplan, Aufgaben, Gewohnheiten, Körper und Geist.",
+  "description": "Drei kleine Apps: Aufgaben, Gewohnheiten, Vokabeln.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#131210",
-  "theme_color": "#131210",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "icon-192.png",
@@ -21,13 +22,36 @@
   ],
   "shortcuts": [
     {
-      "name": "Vokabeln",
-      "short_name": "Vokabeln",
-      "description": "Direkt zu deinen Vokabeln",
-      "url": "./?go=vokabeln",
+      "name": "Aufgaben",
+      "short_name": "Aufgaben",
+      "url": "aufgaben.html",
       "icons": [
         {
-          "src": "icon-192.png",
+          "src": "icon-aufgaben-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Gewohnheiten",
+      "short_name": "Gewohnheiten",
+      "url": "gewohnheiten.html",
+      "icons": [
+        {
+          "src": "icon-gewohnheiten-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Vokabeln",
+      "short_name": "Vokabeln",
+      "url": "vokabeln.html",
+      "icons": [
+        {
+          "src": "icon-vokabeln-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
@@ -36,24 +60,10 @@
     {
       "name": "Vokabeln abfragen",
       "short_name": "Abfragen",
-      "description": "Fällige Vokabeln abfragen",
-      "url": "./?go=abfrage",
+      "url": "vokabeln.html?go=abfrage",
       "icons": [
         {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Neues Wort",
-      "short_name": "Neues Wort",
-      "description": "Ein Wort nachschlagen",
-      "url": "./?go=wort",
-      "icons": [
-        {
-          "src": "icon-192.png",
+          "src": "icon-vokabeln-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }

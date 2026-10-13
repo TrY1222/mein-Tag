@@ -1,0 +1,31 @@
+{
+  "id": "gewohnheiten",
+  "name": "Gewohnheiten",
+  "short_name": "Gewohnheiten",
+  "description": "Kleine Wenn-dann-Pläne, ein Tipp am Tag.",
+  "start_url": "gewohnheiten.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon-gewohnheiten-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-gewohnheiten.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-gewohnheiten.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

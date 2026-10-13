@@ -2,99 +2,150 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#131210">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
 <title>Tagwerk</title>
+<meta name="description" content="Drei kleine Apps: Aufgaben, Gewohnheiten, Vokabeln.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Tagwerk">
-<link rel="stylesheet" href="style.css">
+<script>
+  // Alte Direkt-Links (?go=vokabeln | wort | abfrage) führen jetzt in die Vokabel-App
+  (() => {
+    const go = new URLSearchParams(location.search).get("go");
+    if (go === "vokabeln" || go === "wort") location.replace("vokabeln.html");
+    else if (go === "abfrage") location.replace("vokabeln.html?go=abfrage");
+  })();
+</script>
+<link rel="stylesheet" href="tw.css">
+<style>
+  .apps { list-style: none; margin-top: 18px; }
+  .app { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
+  .app:last-child { border-bottom: none; }
+  .app img { width: 58px; height: 58px; border-radius: 14px; flex-shrink: 0; background: #000; box-shadow: 0 0 0 1px var(--line); }
+  .app .n { font-size: 20px; font-weight: 700; }
+  .app .d { font-size: 15px; color: var(--muted); margin-top: 2px; }
+  .app .go { margin-left: auto; color: var(--faint); }
+  .app .go svg { width: 22px; height: 22px; }
+  .steps { margin: 10px 0 0 18px; font-size: 15px; line-height: 1.55; }
+  .steps li { margin-bottom: 4px; }
+  .copy-col { display: grid; gap: 8px; margin: 10px 0 6px; }
+  .copy-col .btn { justify-content: flex-start; }
+  .copy-col img { width: 24px; height: 24px; border-radius: 6px; }
+  .stat { font-size: 15px; margin-top: 4px; }
+</style>
 </head>
 <body>
+<div class="wrap">
+  <header class="tw-head">
+    <div>
+      <h1>Tagwerk</h1>
+      <p class="tw-sub">Drei kleine Apps – jede kann eine Sache gut.</p>
+    </div>
+  </header>
 
-<header class="top">
-  <div>
-    <div class="overline" id="greet"></div>
-    <h1 class="date" id="big-date"></h1>
+  <ul class="apps">
+    <li><a class="app" href="aufgaben.html"><img src="icon-aufgaben.png" alt=""><div><div class="n">Aufgaben</div><div class="d">Heute · Morgen · Später</div></div><span class="go" data-chev></span></a></li>
+    <li><a class="app" href="gewohnheiten.html"><img src="icon-gewohnheiten.png" alt=""><div><div class="n">Gewohnheiten</div><div class="d">Kleine Wenn-dann-Pläne, ein Tipp am Tag</div></div><span class="go" data-chev></span></a></li>
+    <li><a class="app" href="vokabeln.html"><img src="icon-vokabeln.png" alt=""><div><div class="n">Vokabeln</div><div class="d">Wörter aus dem Lesen · deine Bücher</div></div><span class="go" data-chev></span></a></li>
+  </ul>
+
+  <div class="tw-card" id="install">
+    <div class="q">Jede App als eigenes Symbol</div>
+    <ol class="steps">
+      <li>Link kopieren, in <b>Safari</b> einfügen, dann <b>Teilen</b> → <b>„Zum Home-Bildschirm“</b>.
+        <div class="copy-col">
+          <button class="btn small full" data-copy="aufgaben.html"><img src="icon-aufgaben-192.png" alt="">Link für Aufgaben kopieren</button>
+          <button class="btn small full" data-copy="gewohnheiten.html"><img src="icon-gewohnheiten-192.png" alt="">Link für Gewohnheiten kopieren</button>
+          <button class="btn small full" data-copy="vokabeln.html"><img src="icon-vokabeln-192.png" alt="">Link für Vokabeln kopieren</button>
+        </div>
+      </li>
+      <li id="step-copy">Zurück hierher und <b>„Daten kopieren“</b> tippen.
+        <div class="copy-col"><button class="btn small full primary" id="copy-data" style="justify-content:center">Daten kopieren</button></div>
+      </li>
+      <li>Das neue Symbol öffnen → <b>„Übernehmen“</b> → <b>„Einfügen“</b>.</li>
+    </ol>
+    <p class="tw-hint" style="margin-top:10px" id="copy-note">Danach die Apps nur noch über die neuen Symbole öffnen. Dieses Symbol bleibt dein Archiv – bitte nicht löschen.</p>
   </div>
-  <div class="head-btns">
-  <button class="gear" id="btn-search" title="Suchen">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-  </button>
-  <button class="gear" id="btn-settings" title="Einstellungen">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-  </button>
-  </div>
-</header>
 
-<main>
-  <!-- ============ HEUTE ============ -->
-  <section class="view visible" id="view-heute"></section>
+  <div id="legacy"></div>
 
-  <!-- ============ AUFGABEN ============ -->
-  <section class="view" id="view-todo"></section>
+  <button class="tw-link" id="why" style="margin-top:8px"><span>Warum drei kleine Apps statt einer großen?</span><span>›</span></button>
+  <button class="tw-link" id="design"><span>Hell oder dunkel</span><span>›</span></button>
+</div>
+<script src="tw.js"></script>
+<script>
+"use strict";
+(async () => {
+  const { $, esc, ico, toast } = TW;
+  document.querySelectorAll("[data-chev]").forEach(e => { e.innerHTML = ico("right"); });
 
-  <!-- ============ GEWOHNHEITEN ============ -->
-  <section class="view" id="view-habits">
-    <div class="seg" id="habit-seg">
-      <button data-hview="daily" class="on" style="--seg-accent: var(--habit)">Dranbleiben</button>
-      <button data-hview="avoid" style="--seg-accent: var(--avoid)">Vermeiden</button>
-    </div>
-    <div id="habits-body"></div>
-  </section>
+  /* Daten in diesem Speicher: altes Tagwerk und/oder die neuen Apps */
+  const L = TW.legacy();
+  const apps = { "tw.aufgaben": TW.load("tw.aufgaben", null), "tw.gewohnheiten": TW.load("tw.gewohnheiten", null), "tw.vokabeln": TW.load("tw.vokabeln", null) };
+  const hasAny = !!L || Object.values(apps).some(Boolean);
+  const payload = () => ({ kind: "tagwerk-transfer", v: 1, at: Date.now(), legacy: L, apps: Object.fromEntries(Object.entries(apps).filter(([, v]) => v)) });
+  // Für später installierte Symbole bereitlegen (klappt nur, wo der Cache geteilt wird)
+  if (hasAny) {
+    const p = payload();
+    const k = localStorage.getItem(TW.API_KEY);
+    if (k) p.apiKey = k;
+    TW.putTransfer(p);
+  }
 
-  <!-- ============ MEDIEN ============ -->
-  <section class="view" id="view-media">
-    <div class="seg" id="media-seg" style="--seg-accent: var(--media)">
-      <button data-media="book" class="on">Bücher</button>
-      <button data-media="game">Spiele</button>
-      <button data-media="vocab">Vokabeln</button>
-    </div>
-    <div id="media-body"></div>
-  </section>
+  /* Daten für ein neues Symbol in die Zwischenablage. Mit API-Schlüssel, damit das
+     Nachschlagen in der neuen Vokabel-App sofort klappt (er lässt sich bei Anthropic
+     nicht noch einmal anzeigen). Die Datei-Sicherung bleibt ohne Schlüssel. */
+  if (hasAny) {
+    if (localStorage.getItem(TW.API_KEY)) $("copy-note").insertAdjacentHTML("beforeend", " Der kopierte Text enthält auch deinen API-Schlüssel – nur in die Tagwerk-Apps einfügen.");
+    $("copy-data").addEventListener("click", async () => {
+      const p = payload();
+      const k = localStorage.getItem(TW.API_KEY);
+      if (k) p.apiKey = k;
+      const text = JSON.stringify(p);
+      try { await navigator.clipboard.writeText(text); toast("Kopiert – jetzt das neue Symbol öffnen und einfügen"); }
+      catch { prompt("Kopieren ging nicht – markiere den Text und kopiere ihn selbst:", text); }
+    });
+  } else {
+    $("step-copy").remove();
+  }
 
-  <!-- ============ SPORT ============ -->
-  <section class="view" id="view-sport">
-    <div class="seg" id="sport-seg">
-      <button data-sview="training" class="on" style="--seg-accent: var(--sport)">Training</button>
-      <button data-sview="runs" style="--seg-accent: var(--run)">Laufen</button>
-      <button data-sview="skills" style="--seg-accent: var(--skill)">Skills</button>
-    </div>
-    <div id="sport-body"></div>
-    <input type="file" id="run-photo" accept="image/*" hidden>
-    <input type="file" id="vocab-photo" accept="image/*" hidden>
-    <input type="file" id="backup-file" accept="application/json,.json,.txt" hidden>
-  </section>
-</main>
+  if (L) {
+    const t = TW.today();
+    const openTodos = (L.todos || []).filter(x => x && !x.done).length;
+    const habits = (L.dailies || []).length + (L.avoids || []).length;
+    const words = (L.vocab || []).length;
+    const books = (L.books || []).filter(b => b && (b.media || "book") === "book").length;
+    $("legacy").innerHTML = '<div class="tw-section">Deine Daten aus Tagwerk</div>'
+      + '<p class="stat">' + openTodos + " offene Aufgaben · " + habits + " Gewohnheiten · " + words + " Vokabeln · " + books + " Bücher</p>"
+      + '<p class="tw-hint" style="margin-top:4px">Kommen beim ersten Öffnen der Apps hier automatisch mit, die Bücher in die Vokabel-App. Training, Läufe, Spiele, Tagebuch und alles andere bleibt im Archiv.</p>'
+      + '<div class="stack">'
+      + '<button class="btn full" id="file-data">' + ico("download") + "<span>Sicherung als Datei</span></button>"
+      + '<a class="btn full" href="alt.html" style="text-decoration:none">' + ico("book") + "<span>Altes Tagwerk öffnen (Archiv)</span></a>"
+      + "</div>";
+    $("file-data").addEventListener("click", () => { TW.download("tagwerk-" + t + ".json", payload()); toast("Sicherung gespeichert"); });
+  }
 
-<button id="fab" title="Hinzufügen">＋</button>
+  document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", async () => {
+    const url = new URL(b.dataset.copy, location.href).href;
+    try { await navigator.clipboard.writeText(url); toast("Link kopiert – jetzt in Safari einfügen"); }
+    catch { prompt("Link kopieren:", url); }
+  }));
 
-<nav class="tabs">
-  <button data-tab="heute" class="on">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg>
-    <span>Heute</span>
-  </button>
-  <button data-tab="todo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5l2 2 4.5-4.5"/><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/></svg>
-    <span>Aufgaben</span>
-  </button>
-  <button data-tab="habits">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.7"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>
-    <span>Gewohnheiten</span>
-  </button>
-  <button data-tab="sport">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span>Körper</span>
-  </button>
-  <button data-tab="media">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-    <span>Geist</span>
-  </button>
-</nav>
-
-<script src="app.js"></script>
+  $("why").addEventListener("click", () => TW.why("Warum drei kleine Apps?", [
+    { t: "Viele Funktionen ermüden", d: "Vor dem Benutzen wirken viele Funktionen gut, im Alltag zählt, wie einfach es geht. Die Studie empfiehlt mehrere spezialisierte Produkte mit wenigen Funktionen.", src: "Thompson, Hamilton & Rust 2005" },
+    { t: "Kurze Momente", d: "Rund 40 % aller App-Nutzungen dauern unter 15 Sekunden. Jede App öffnet darum direkt mit ihrer einen Aufgabe.", src: "Ferreira u.a. 2014", url: "https://www.nngroup.com/articles/mobile-microsessions/" },
+    { t: "Weniger eintragen", d: "Wer zu viel protokollieren muss, hört irgendwann ganz auf. Darum: ein Tipp statt Formulare.", src: "Cordeiro u.a. 2015; Epstein u.a. 2015" },
+    { t: "Das Symbol als Auslöser", d: "Gewohnheiten brauchen Auslöser im Alltag. Ein eigenes Symbol für jede Sache erinnert beim Entsperren an genau diese Sache.", src: "Stawarz u.a. 2015; Fogg 2009" },
+    { t: "Erinnern über den Kalender", d: "Ohne eigenen Server kann eine Web-App bei geschlossener App nicht zuverlässig erinnern. Ein Kalendertermin mit Alarm kann es." }
+  ]));
+  $("design").addEventListener("click", () => { const s = TW.sheet("<h2>Design</h2>" + '<label class="f-label">Hell oder dunkel</label>' + TW.themeChipsHtml()); TW.wireThemeChips(s.el); });
+  TW.registerSW();
+})();
+</script>
 </body>
 </html>

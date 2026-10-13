@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Aufgaben</title>
+<meta name="description" content="Heute, morgen, später – sonst nichts.">
+<link rel="manifest" href="aufgaben.webmanifest">
+<link rel="apple-touch-icon" href="apple-aufgaben.png">
+<link rel="icon" type="image/png" href="icon-aufgaben.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Aufgaben">
+<link rel="stylesheet" href="tw.css">
+<style>
+  .tw-row .tw-main .tw-meta .age { color: var(--muted); }
+  .done-head { margin-top: 22px; }
+  .plan-link { margin-top: 18px; border-top: 1px solid var(--line); }
+  .week { font-size: 13px; color: var(--muted); text-align: center; margin-top: 26px; }
+  .triage .tw-row { padding: 12px 0; }
+  .triage .tw-row .chips { flex-shrink: 0; }
+  .focus-title { font-family: var(--display); font-size: 24px; font-weight: 700; line-height: 1.25; max-width: 22ch; }
+  .focus-time { font-family: var(--display); font-size: 88px; font-weight: 200; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .focus-note { font-size: 15px; color: var(--muted); max-width: 30ch; }
+  .chip.date { position: relative; overflow: hidden; }
+  .chip.date input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="tw-head">
+    <div>
+      <h1 id="title">Heute</h1>
+      <p class="tw-sub" id="date"></p>
+    </div>
+    <button class="tw-icon-btn" id="menu" aria-label="Menü"></button>
+  </header>
+
+  <nav class="tw-tabs" id="tabs" aria-label="Listen">
+    <button data-tab="heute" class="on">Heute<span class="n"></span></button>
+    <button data-tab="morgen">Morgen<span class="n"></span></button>
+    <button data-tab="spaeter">Später<span class="n"></span></button>
+  </nav>
+
+  <form class="tw-add" id="add" autocomplete="off">
+    <input id="add-input" type="text" placeholder="Nächster kleiner Schritt …" enterkeyhint="done" aria-label="Neue Aufgabe">
+  </form>
+
+  <div id="notes"></div>
+  <ul class="tw-list" id="list"></ul>
+  <div id="after"></div>
+</div>
+<script src="tw.js"></script>
+<script src="aufgaben.js"></script>
+</body>
+</html>
