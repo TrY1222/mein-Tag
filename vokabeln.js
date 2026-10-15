@@ -174,27 +174,38 @@
     if (a >= 0 && b > a) { try { return JSON.parse(s.slice(a, b + 1)); } catch {} }
     return null;
   }
+  /* Fehler von Anthropic in verständliche Sätze übersetzen */
+  function apiProblem(status, body) {
+    const msg = String((body && body.error && body.error.message) || "");
+    if (status === 401) return "Der API-Schlüssel ist ungültig oder wurde gelöscht. Leg in der Anthropic Console einen neuen an und trag ihn hier ein.";
+    if (/credit balance/i.test(msg)) return "Dein Guthaben bei Anthropic ist aufgebraucht. In der Anthropic Console unter Billing aufladen.";
+    if (status === 403) return "Dieser Schlüssel darf das nicht (keine Berechtigung).";
+    if (status === 429) return "Zu viele Anfragen oder Ausgabenlimit erreicht – kurz warten oder das Limit in der Console prüfen.";
+    if (status === 529 || status >= 500) return "Anthropic ist gerade überlastet – in ein paar Minuten nochmal.";
+    return msg || "Fehler " + status;
+  }
   async function callClaude({ system, userText, maxTokens = 1000, image = null }) {
     const key = apiKey();
-    if (!key) { toast("Für Claude brauchst du deinen API-Schlüssel (⋯ → Einstellungen)."); return null; }
+    if (!key) throw new Error("In dieser App ist noch kein API-Schlüssel gespeichert (⋯ → Einstellungen).");
     const content = image
       ? [{ type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } }, { type: "text", text: userText }]
       : userText;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content }] })
-    });
-    const body = await res.json();
-    if (!res.ok) {
-      if (res.status === 401) throw new Error("Der API-Schlüssel wurde nicht akzeptiert.");
-      throw new Error((body && body.error && body.error.message) || res.statusText);
-    }
+    let res, body = null;
+    try {
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content }] })
+      });
+    } catch { throw new Error("Keine Verbindung zu Anthropic – bist du online?"); }
+    try { body = await res.json(); } catch {}
+    if (!res.ok) throw new Error(apiProblem(res.status, body));
+    if (!body) throw new Error("Anthropic hat keine lesbare Antwort geschickt.");
     if (body.stop_reason === "refusal") throw new Error("Claude hat die Anfrage abgelehnt.");
     const u = body.usage || {};
     D.usage.input += u.input_tokens || 0;
@@ -275,12 +286,18 @@
     D.words.push(v);
     D.importAsked = true;
     save();
-    if (!apiKey()) { render(); detail(v, true); return; }
+    if (!apiKey()) {
+      render(); detail(v, true);
+      toast("Kein API-Schlüssel in dieser App – trag die Übersetzung selbst ein oder hinterleg den Schlüssel unter ⋯ → Einstellungen.", { ms: 7000 });
+      return;
+    }
     v.busy = true;
     render();
-    try { await lookup(v); }
-    catch (err) { toast("Nachschlagen ging nicht: " + err.message); }
+    let problem = "";
+    try { if (!(await lookup(v))) problem = "Claude hat keine brauchbare Antwort geliefert."; }
+    catch (err) { problem = err.message; }
     finally { delete v.busy; save(); render(); }
+    if (problem) toast("Nachschlagen ging nicht: " + problem, { ms: 10000, label: "Einstellungen", action: settings });
   }
 
   /* ---------- Seite fotografieren: Claude sucht die schweren Wörter ---------- */
@@ -652,7 +669,7 @@
         + '<div class="row"><button class="btn small primary" id="n-imp">Übernehmen</button><button class="btn small" id="n-new">Neu anfangen</button></div></div>';
       $("n-imp").addEventListener("click", () => openImport(true));
       $("n-new").addEventListener("click", () => { D.importAsked = true; save(); render(); });
-    } else if (!apiKey() && all.length < 3 && !D.keyHintSeen) {
+    } else if (!apiKey() && !D.keyHintSeen) {
       notes.innerHTML = '<div class="tw-card"><div class="q">Tipp: Mit Claude schlägst du Wörter automatisch nach</div>'
         + '<div class="tw-hint">Übersetzung, Lautschrift, Beispielsatz – und Seiten fotografieren. Dafür unter ⋯ → Einstellungen deinen API-Schlüssel eintragen. Ohne geht es auch: dann tippst du die Übersetzung selbst.</div>'
         + '<div class="row"><button class="btn small" id="n-ok">Verstanden</button></div></div>';
@@ -975,15 +992,29 @@
   function settings() {
     const s = sheet("<h2>Einstellungen</h2>"
       + '<label class="f-label">Claude-API-Schlüssel</label><input class="f-input" type="password" id="s-key" placeholder="sk-ant-…" value="' + esc(apiKey()) + '" autocomplete="off">'
+      + '<div class="actions" style="margin-top:10px"><button class="btn" id="s-test">Schlüssel testen</button></div>'
+      + '<p class="tw-hint" id="s-test-r" style="margin-top:8px"></p>'
       + '<p class="tw-hint" style="margin-top:8px">Bleibt auf diesem Gerät und geht nur direkt an Anthropic. Kosten bisher: $' + D.usage.cost.toFixed(4) + "</p>"
       + '<label class="f-label">Aussprache</label><div class="chips" id="s-acc">'
       + [["en-GB", "Britisch"], ["en-US", "Amerikanisch"]].map(([k, l]) => '<button class="chip' + (D.accent === k ? " on" : "") + '" data-acc="' + k + '">' + l + "</button>").join("") + "</div>"
       + '<div class="f-row" style="margin-top:10px"><span class="k">Beim Aufdecken vorlesen</span><label class="switch"><input type="checkbox" id="s-speak"' + (D.speak ? " checked" : "") + "><span></span></label></div>"
       + '<p class="tw-hint">' + (canSpeak() ? "iPhone: Unter Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Englisch eine „Erweitert“-Stimme laden – klingt deutlich natürlicher." : "Dieser Browser kann leider nicht vorlesen.") + "</p>"
       + '<label class="f-label">Hell oder dunkel</label>' + TW.themeChipsHtml(), { onClose: () => render() });
-    s.el.querySelector("#s-key").addEventListener("change", e => {
-      const v = e.target.value.trim();
+    const storeKey = () => {
+      const v = s.el.querySelector("#s-key").value.replace(/\s+/g, "");      // Leerzeichen/Zeilenumbruch vom Einfügen weg
       try { if (v) localStorage.setItem(TW.API_KEY, v); else localStorage.removeItem(TW.API_KEY); } catch {}
+    };
+    s.el.querySelector("#s-key").addEventListener("change", storeKey);
+    s.el.querySelector("#s-test").addEventListener("click", async e => {
+      storeKey();
+      const out = s.el.querySelector("#s-test-r"), btn = e.currentTarget;
+      if (!apiKey()) { out.textContent = "✗ Kein Schlüssel eingetragen."; return; }
+      btn.disabled = true; out.textContent = "Teste …";
+      try {
+        await callClaude({ system: "Antworte nur mit OK.", userText: "Test", maxTokens: 5 });
+        out.textContent = "✓ Der Schlüssel funktioniert. Nachschlagen sollte klappen.";
+      } catch (err) { out.textContent = "✗ " + err.message; }
+      btn.disabled = false;
     });
     s.el.querySelectorAll("[data-acc]").forEach(b => b.addEventListener("click", () => {
       D.accent = b.dataset.acc; save();
