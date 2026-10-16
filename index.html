@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>Tagwerk</title>
-<meta name="description" content="Drei kleine Apps: Aufgaben, Gewohnheiten, Vokabeln.">
+<meta name="description" content="Kleine Apps: Aufgaben, Gewohnheiten, Vokabeln, Urlaub.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -44,7 +44,7 @@
   <header class="tw-head">
     <div>
       <h1>Tagwerk</h1>
-      <p class="tw-sub">Drei kleine Apps – jede kann eine Sache gut.</p>
+      <p class="tw-sub">Kleine Apps – jede kann eine Sache gut.</p>
     </div>
   </header>
 
@@ -52,6 +52,7 @@
     <li><a class="app" href="aufgaben.html"><img src="icon-aufgaben.png" alt=""><div><div class="n">Aufgaben</div><div class="d">Heute · Morgen · Später</div></div><span class="go" data-chev></span></a></li>
     <li><a class="app" href="gewohnheiten.html"><img src="icon-gewohnheiten.png" alt=""><div><div class="n">Gewohnheiten</div><div class="d">Kleine Wenn-dann-Pläne, ein Tipp am Tag</div></div><span class="go" data-chev></span></a></li>
     <li><a class="app" href="vokabeln.html"><img src="icon-vokabeln.png" alt=""><div><div class="n">Vokabeln</div><div class="d">Wörter aus dem Lesen · deine Bücher</div></div><span class="go" data-chev></span></a></li>
+    <li><a class="app" href="urlaub.html"><img src="icon-urlaub.png" alt=""><div><div class="n">Urlaub</div><div class="d">Reisekosten in jeder Währung</div></div><span class="go" data-chev></span></a></li>
   </ul>
 
   <div class="tw-card" id="install">
@@ -62,6 +63,7 @@
           <button class="btn small full" data-copy="aufgaben.html"><img src="icon-aufgaben-192.png" alt="">Link für Aufgaben kopieren</button>
           <button class="btn small full" data-copy="gewohnheiten.html"><img src="icon-gewohnheiten-192.png" alt="">Link für Gewohnheiten kopieren</button>
           <button class="btn small full" data-copy="vokabeln.html"><img src="icon-vokabeln-192.png" alt="">Link für Vokabeln kopieren</button>
+          <button class="btn small full" data-copy="urlaub.html"><img src="icon-urlaub-192.png" alt="">Link für Urlaub kopieren</button>
         </div>
       </li>
       <li id="step-copy">Zurück hierher und <b>„Daten kopieren“</b> tippen.
@@ -74,7 +76,7 @@
 
   <div id="legacy"></div>
 
-  <button class="tw-link" id="why" style="margin-top:8px"><span>Warum drei kleine Apps statt einer großen?</span><span>›</span></button>
+  <button class="tw-link" id="why" style="margin-top:8px"><span>Warum kleine Apps statt einer großen?</span><span>›</span></button>
   <button class="tw-link" id="design"><span>Hell oder dunkel</span><span>›</span></button>
 </div>
 <script src="tw.js"></script>
@@ -86,7 +88,7 @@
 
   /* Daten in diesem Speicher: altes Tagwerk und/oder die neuen Apps */
   const L = TW.legacy();
-  const apps = { "tw.aufgaben": TW.load("tw.aufgaben", null), "tw.gewohnheiten": TW.load("tw.gewohnheiten", null), "tw.vokabeln": TW.load("tw.vokabeln", null) };
+  const apps = { "tw.aufgaben": TW.load("tw.aufgaben", null), "tw.gewohnheiten": TW.load("tw.gewohnheiten", null), "tw.vokabeln": TW.load("tw.vokabeln", null), "tw.urlaub": TW.load("tw.urlaub", null) };
   const hasAny = !!L || Object.values(apps).some(Boolean);
   const payload = () => ({ kind: "tagwerk-transfer", v: 1, at: Date.now(), legacy: L, apps: Object.fromEntries(Object.entries(apps).filter(([, v]) => v)) });
   // Für später installierte Symbole bereitlegen (klappt nur, wo der Cache geteilt wird)
@@ -136,7 +138,7 @@
     catch { prompt("Link kopieren:", url); }
   }));
 
-  $("why").addEventListener("click", () => TW.why("Warum drei kleine Apps?", [
+  $("why").addEventListener("click", () => TW.why("Warum kleine Apps?", [
     { t: "Viele Funktionen ermüden", d: "Vor dem Benutzen wirken viele Funktionen gut, im Alltag zählt, wie einfach es geht. Die Studie empfiehlt mehrere spezialisierte Produkte mit wenigen Funktionen.", src: "Thompson, Hamilton & Rust 2005" },
     { t: "Kurze Momente", d: "Rund 40 % aller App-Nutzungen dauern unter 15 Sekunden. Jede App öffnet darum direkt mit ihrer einen Aufgabe.", src: "Ferreira u.a. 2014", url: "https://www.nngroup.com/articles/mobile-microsessions/" },
     { t: "Weniger eintragen", d: "Wer zu viel protokollieren muss, hört irgendwann ganz auf. Darum: ein Tipp statt Formulare.", src: "Cordeiro u.a. 2015; Epstein u.a. 2015" },

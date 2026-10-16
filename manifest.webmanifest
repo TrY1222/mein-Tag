@@ -68,6 +68,18 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Urlaub",
+      "short_name": "Urlaub",
+      "url": "urlaub.html",
+      "icons": [
+        {
+          "src": "icon-urlaub-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

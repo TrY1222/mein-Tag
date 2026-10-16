@@ -94,6 +94,16 @@ Das alte Tagwerk mit Training, Läufen, Büchern, Tagebuch usw. bleibt unter `al
   Die Bücher aus dem alten Tagwerk kommen mit (ohne Spiele). Weil es dort kein Datum fürs Fertiglesen gab, stehen sie
   unter „Früher gelesen“; ein Datum lässt sich im Buch nachtragen.
 
+## Urlaub (vierte App, Oktober 2026)
+
+- **Ein Tipp pro Ausgabe:** Betrag eintippen, Kategorie antippen – gespeichert. Notiz und Datum nur, wenn man will.
+- **Jede Währung:** gespeichert wird in der Währung, in der man bezahlt hat, plus der Kurs von genau diesem Moment.
+  Kurse von ExchangeRate-API (über 160 Währungen, ohne Konto), Ersatz: Frankfurter (EZB). Der Kurs lässt sich von Hand
+  ändern, wenn die Bank anders abgerechnet hat.
+- **Offline:** Kurse liegen auf dem Gerät; ohne Kurs Eingetragenes bekommt ihn nach, sobald man online ist.
+- **Tagesschnitt** (Flug und vorab Gebuchtes zählen als „Vorab“, nicht in den Schnitt), freiwilliges Tagesbudget,
+  Auswertung nach Kategorie und Tag, Anzeige in jeder Währung, Umrechner, Export als Tabelle (CSV).
+
 ## Für alle drei
 
 - Hell/Dunkel nach dem System, schwarz/weiß, eine Akzentfarbe je App.
