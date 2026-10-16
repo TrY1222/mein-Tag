@@ -1,6 +1,6 @@
 // Service Worker für Tagwerk (Startseite, drei Apps, Archiv)
 // Strategie: Netzwerk zuerst (damit Updates sofort ankommen), offline aus dem Cache.
-const CACHE = "tagwerk-v52";
+const CACHE = "tagwerk-v53";
 const KEEP = ["tw-transfer"];   // Datenübergabe an neu installierte Symbole – nie löschen
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./tw.css", "./tw.js",
@@ -10,6 +10,7 @@ const ASSETS = [
   "./icon-aufgaben.png", "./icon-aufgaben-192.png", "./apple-aufgaben.png",
   "./icon-gewohnheiten.png", "./icon-gewohnheiten-192.png", "./apple-gewohnheiten.png",
   "./icon-vokabeln.png", "./icon-vokabeln-192.png", "./apple-vokabeln.png",
+  "./urlaub.html", "./urlaub.js", "./urlaub.webmanifest", "./icon-urlaub.png", "./icon-urlaub-192.png", "./apple-urlaub.png",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png",
   "./alt.html", "./app.js", "./style.css"
 ];
