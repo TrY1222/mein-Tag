@@ -16,7 +16,8 @@
   const CAT = Object.fromEntries(CATS.map(([k, e, l]) => [k, { e, l }]));
   // Falls noch nie Kurse geladen wurden: die üblichen Währungen zur Auswahl
   const COMMON = ["EUR", "USD", "GBP", "CHF", "TRY", "THB", "JPY", "CNY", "AUD", "CAD", "NZD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF",
-    "RON", "BGN", "ISK", "MAD", "EGP", "ZAR", "AED", "INR", "IDR", "VND", "PHP", "MYR", "SGD", "HKD", "KRW", "MXN", "BRL", "ARS", "CLP", "PEN", "COP"];
+    "RON", "BGN", "ISK", "MAD", "EGP", "ZAR", "AED", "INR", "IDR", "VND", "PHP", "MYR", "SGD", "HKD", "KRW", "MXN", "BRL", "ARS", "CLP", "PEN", "COP",
+    "GTQ", "BZD", "HNL", "NIO", "CRC", "PAB", "DOP", "CUP", "BOB", "UYU", "PYG"];
   const RATES_MAX_AGE = 6 * 3600 * 1000;
 
   /* ---------- Daten ---------- */
@@ -289,6 +290,7 @@
       + "</div>" + budget + "</div>"
       + '<div class="amount-row"><input id="amt" inputmode="decimal" placeholder="Betrag" autocomplete="off" enterkeyhint="done" aria-label="Betrag">'
       + '<button class="cur-btn" id="cur" aria-label="Währung">' + entryCur + "</button></div>"
+      + quickCurs(t)
       + '<div class="conv" id="conv"></div>'
       + '<div style="display:flex;gap:10px;align-items:center"><input class="note-in" id="note" placeholder="Wofür? (freiwillig)" autocomplete="off" enterkeyhint="done">'
       + '<label class="chip date"><span id="day-l">' + esc(dayLabel(entryDay)) + '</span><input type="date" id="day" value="' + entryDay + '" aria-label="Tag"></label></div>'
@@ -306,6 +308,12 @@
     amt.addEventListener("input", conv);
     conv();
     $("cur").addEventListener("click", () => pickCurrency("Bezahlt in", entryCur, c => { entryCur = c; render(); }));
+    // Schnellwechsel, z.B. Quetzal ↔ Dollar – der getippte Betrag bleibt stehen
+    $("view").querySelectorAll("[data-qc]").forEach(b => b.addEventListener("click", () => {
+      const keepAmt = $("amt").value, keepNote = $("note").value;
+      entryCur = b.dataset.qc; render();
+      $("amt").value = keepAmt; $("note").value = keepNote; $("amt").dispatchEvent(new Event("input"));
+    }));
     $("day").addEventListener("change", e => { entryDay = e.target.value || today(); $("day-l").textContent = dayLabel(entryDay); });
     $("cats").querySelectorAll("[data-cat]").forEach(b => b.addEventListener("click", () => {
       const a = parseAmount(amt.value);
@@ -322,6 +330,12 @@
       if (e.key === "Enter" && entryCat) { e.preventDefault(); const a = parseAmount(amt.value); if (isFinite(a) && a > 0) addSpend(t, a, entryCat, $("note").value.trim()); }
     });
     renderList(t);
+  }
+  /* Die Währungen, mit denen du auf dieser Reise zahlst – je ein Tipp */
+  function quickCurs(t) {
+    const used = [...new Set(spendsOf(t).slice().sort((a, b) => b.created - a.created).map(x => x.cur))];
+    const list = [...new Set([t.cur, ...used, ...D.recent.filter(c => c !== t.home), t.home])].slice(0, 4);
+    return '<div class="chips" style="margin-top:8px">' + list.map(c => '<button class="chip' + (c === entryCur ? " on" : "") + '" data-qc="' + c + '">' + c + "</button>").join("") + "</div>";
   }
   const dayLabel = d => (d === today() ? "Heute" : TW.relDay(d).replace(/^./, c => c.toUpperCase()));
 
